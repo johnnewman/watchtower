@@ -34,7 +34,7 @@ class MotionDetector:
         self.reset_base_frame_date()
 
         if logger is None:
-            logger = logging.getLogger('Motion')
+            logger = logging.getLogger(__name__)
         logger.info('Updating base frame.')
 
     def detect(self):
@@ -71,7 +71,7 @@ class MotionDetector:
                 (x, y, w, h) = cv2.boundingRect(contour)
                 cv2.rectangle(current_frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
-        return motion, cv2.imencode('.jpg', current_frame)[1]
+        return True, cv2.imencode('.jpg', current_frame)[1]
 
     @staticmethod
     def downsize_image(image_array):

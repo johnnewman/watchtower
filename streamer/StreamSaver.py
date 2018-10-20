@@ -30,13 +30,13 @@ class StreamSaver(Thread):
         self.__lock.release()
 
     def run(self):
-        logger = logging.getLogger(self.name)
+        logger = logging.getLogger(__name__ + '.' + self.name)
         try:
             # Returns bytes read at the position and the updated position
             def read_from_stream(position):
                 cur_position = self.__stream.tell()
                 if cur_position == position:
-                    logger.debug('Stream position has not moved. Not performing a read.')
+                    logger.debug('Stream position has not moved. Not reading.')
                     return '', position
 
                 if position == -1:

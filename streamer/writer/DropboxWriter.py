@@ -17,7 +17,7 @@ class DropboxWriter(ByteWriter.ByteWriter):
     def append_bytes(self, byte_string, close=False):
         global logger
         if logger is None:
-            logger = logging.getLogger('DropboxWriter')
+            logger = logging.getLogger(__name__)
 
         if self.__cursor is None:
             session_start_result = self.__dbx.files_upload_session_start(byte_string)
