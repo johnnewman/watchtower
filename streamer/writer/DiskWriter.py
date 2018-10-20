@@ -1,4 +1,4 @@
-import ByteWriter
+from streamer.writer import ByteWriter
 import os
 
 
