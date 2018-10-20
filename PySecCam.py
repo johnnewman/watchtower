@@ -4,8 +4,9 @@ import datetime as dt
 import time
 import io
 import motion
-from streamer import StreamSaver as StreamSaver
-from streamer.writer import DiskWriter as DiskWriter, DropboxWriter as DropboxWriter
+import streamer
+import streamer.writer as writer
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--min-area", type=int, default=2000, help="minimum area to trigger motion")
@@ -16,6 +17,8 @@ parser.add_argument("-c", "--cam-name", type=str, default='Cam', help="name of t
 parser.add_argument("-m", "--min_motion_time", type=int, default=8, help="minimum time to capture motion")
 parser.add_argument("-T", "--dropbox_token", type=str, help="token for Dropbox")
 supplied_args = vars(parser.parse_args())
+
+dropbox_token = supplied_args["dropbox_token"]
 
 
 def wait(camera):
@@ -34,38 +37,32 @@ def init_camera():
 
 
 def save_jpeg_bytes(jpeg_bytes, path, debug_name):
-    local_jpg_writer = DiskWriter.DiskWriter(full_path=path)
-    StreamSaver.StreamSaver(stream=io.BytesIO(jpeg_bytes),
-                            byte_writer=local_jpg_writer,
-                            name=debug_name + '-LOCAL_JPG',
-                            stop_when_empty=True).start()
+    streamer.StreamSaver(stream=io.BytesIO(jpeg_bytes),
+                         byte_writer=writer.DiskWriter(path),
+                         name=debug_name + '-LOCAL_JPG',
+                         stop_when_empty=True).start()
 
-    if supplied_args["dropbox_token"] is not None:
-        cloud_jpg_writer = DropboxWriter.DropboxWriter(full_path='/' + path,
-                                                       dropbox_token=supplied_args["dropbox_token"])
-        StreamSaver.StreamSaver(stream=io.BytesIO(jpeg_bytes),
-                                byte_writer=cloud_jpg_writer,
-                                name=debug_name + '-CLOUD_JPG',
-                                stop_when_empty=True).start()
+    if dropbox_token is not None:
+        dropbox_writer = writer.DropboxWriter(full_path='/' + path,
+                                              dropbox_token=dropbox_token)
+        streamer.StreamSaver(stream=io.BytesIO(jpeg_bytes),
+                             byte_writer=dropbox_writer,
+                             name=debug_name + '-CLOUD_JPG',
+                             stop_when_empty=True).start()
 
 
 def save_video(stream, path, debug_name):
-    local_vid_writer = DiskWriter.DiskWriter(full_path=path)
-    local_vid_streamer = StreamSaver.StreamSaver(stream=stream,
-                                                 byte_writer=local_vid_writer,
-                                                 name=debug_name + '-LOCAL_VID')
-    local_vid_streamer.start()
-    streamers = [local_vid_streamer]
+    streamers = [streamer.StreamSaver(stream=stream,
+                                      byte_writer=writer.DiskWriter(path),
+                                      name=debug_name + '-LOCAL_VID')]
 
-    if supplied_args["dropbox_token"] is not None:
-        cloud_vid_writer = DropboxWriter.DropboxWriter(full_path='/' + path,
-                                                       dropbox_token=supplied_args["dropbox_token"])
-        cloud_vid_streamer = StreamSaver.StreamSaver(stream=stream,
-                                                     byte_writer=cloud_vid_writer,
-                                                     name=debug_name + '-CLOUD_VID')
-        cloud_vid_streamer.start()
-        streamers.append(cloud_vid_streamer)
-
+    if dropbox_token is not None:
+        dropbox_writer = writer.DropboxWriter(full_path='/' + path,
+                                              dropbox_token=dropbox_token)
+        streamers.append(streamer.StreamSaver(stream=stream,
+                                              byte_writer=dropbox_writer,
+                                              name=debug_name + '-CLOUD_VID'))
+    map(lambda x: x.start(), streamers)
     return streamers
 
 
