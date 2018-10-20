@@ -3,7 +3,7 @@ import argparse
 import datetime as dt
 import time
 import io
-from motion import MotionDetector as MotionDetector
+import motion
 from streamer import StreamSaver as StreamSaver
 from streamer.writer import DiskWriter as DiskWriter, DropboxWriter as DropboxWriter
 
@@ -72,8 +72,7 @@ def save_video(stream, path, debug_name):
 def main():
     camera = init_camera()
     with camera:
-        motion_detector = MotionDetector.MotionDetector(camera, supplied_args["min_delta"], supplied_args["min_area"])
-
+        motion_detector = motion.MotionDetector(camera, supplied_args['min_delta'], supplied_args['min_area'])
         stream = picamera.PiCameraCircularIO(camera, seconds=supplied_args['min_motion_time'])
         camera.start_recording(stream, format='h264')
 
