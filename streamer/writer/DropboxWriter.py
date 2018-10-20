@@ -1,5 +1,8 @@
 import dropbox
 from streamer.writer import ByteWriter
+import logging
+
+logger = None
 
 
 class DropboxWriter(ByteWriter.ByteWriter):
@@ -12,16 +15,20 @@ class DropboxWriter(ByteWriter.ByteWriter):
         self.__commit = None
 
     def append_bytes(self, byte_string, close=False):
+        global logger
+        if logger is None:
+            logger = logging.getLogger('DropboxWriter')
+
         if self.__cursor is None:
             session_start_result = self.__dbx.files_upload_session_start(byte_string)
             self.__cursor = dropbox.files.UploadSessionCursor(session_start_result.session_id, offset=len(byte_string))
             self.__commit = dropbox.files.CommitInfo(self.full_path, mode=dropbox.files.WriteMode.add)
-            # print('[DropboxWriter] Started upload task with path \"%s\"' % self.full_path)
+            logger.debug('Started upload task with path \"%s\"' % self.full_path)
             return
 
         if close:
             self.__dbx.files_upload_session_finish(byte_string, self.__cursor, self.__commit)
-            # print('[DropboxWriter] Closed Dropbox file: \"%s\"' % self.full_path)
+            logger.debug('Closed Dropbox file \"%s\"' % self.full_path)
         else:
             self.__dbx.files_upload_session_append_v2(byte_string, self.__cursor)
             self.__cursor.offset = self.__cursor.offset + len(byte_string)

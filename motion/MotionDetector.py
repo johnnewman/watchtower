@@ -1,8 +1,10 @@
 from picamera.array import PiRGBArray
 import cv2
 import datetime as dt
+import logging
 
 BASE_FRAME_RESET_INTERVAL = 45  # Seconds. Also serves as the minimum event time.
+logger = None
 
 # This implementation is based heavily on "Basic motion detection and tracking with Python and OpenCV"
 # by Adrian Rosebrock.
@@ -27,9 +29,13 @@ class MotionDetector:
         self.__base_frame_date = dt.datetime.now()
 
     def __reset_base_frame(self):
+        global logger
         self.__base_frame = MotionDetector.post_process_image(self.capture_image().array)
         self.reset_base_frame_date()
-        print("[MotionDetector] Updating base frame.")
+
+        if logger is None:
+            logger = logging.getLogger('Motion')
+        logger.info('Updating base frame.')
 
     def detect(self):
         past_time_interval = (dt.datetime.now() - self.__base_frame_date).seconds > BASE_FRAME_RESET_INTERVAL

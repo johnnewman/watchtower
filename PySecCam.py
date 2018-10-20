@@ -6,6 +6,9 @@ import io
 import motion
 import streamer
 import streamer.writer as writer
+import logging.config
+import os
+import json
 
 
 parser = argparse.ArgumentParser()
@@ -13,12 +16,19 @@ parser.add_argument("-a", "--min-area", type=int, default=2000, help="minimum ar
 parser.add_argument("-W", "--video-width", type=int, default=1280, help="video capture width")
 parser.add_argument("-H", "--video-height", type=int, default=720, help="video capture height")
 parser.add_argument("-t", "--min-delta", type=int, default=50, help="minimum delta gray value to threshold")
-parser.add_argument("-c", "--cam-name", type=str, default='Cam', help="name of the camera")
+parser.add_argument("-c", "--cam-name", type=str, default='PySecCam', help="name of the camera")
 parser.add_argument("-m", "--min_motion_time", type=int, default=8, help="minimum time to capture motion")
 parser.add_argument("-T", "--dropbox_token", type=str, help="token for Dropbox")
 supplied_args = vars(parser.parse_args())
 
 dropbox_token = supplied_args["dropbox_token"]
+
+log_dir = 'logs/'
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+with open('logConfig.json', 'r') as config_file:
+    logging.config.dictConfig(json.load(config_file))
+logger = logging.getLogger('PySecCam')
 
 
 def wait(camera):
@@ -72,6 +82,7 @@ def main():
         motion_detector = motion.MotionDetector(camera, supplied_args['min_delta'], supplied_args['min_area'])
         stream = picamera.PiCameraCircularIO(camera, seconds=supplied_args['min_motion_time'])
         camera.start_recording(stream, format='h264')
+        logger.info('Initialized.')
 
         # Allow the camera time to initialize
         camera.wait_recording(1)
@@ -82,7 +93,7 @@ def main():
                 motion_detected, motion_frame_bytes = motion_detector.detect()
                 if motion_detected:
                     motion_detector.reset_base_frame_date()
-                    print('[%s] Motion detected! ' % supplied_args["cam_name"])
+                    logger.info('Motion detected!')
 
                     event_date = dt.datetime.now()
                     day_dir = event_date.strftime('%Y-%m-%d')
@@ -113,7 +124,7 @@ def main():
                     # Now that motion is done, stop uploading
                     map(lambda x: x.stop(), video_streamers)
                     elapsed_time = (dt.datetime.now() - event_date).seconds
-                    print('>>>> Motion stopped; ended recording. Elapsed time %ds' % elapsed_time)
+                    logger.info('Motion stopped; ended recording. Elapsed time %ds' % elapsed_time)
         finally:
             camera.stop_recording()
 
