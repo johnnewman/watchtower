@@ -28,7 +28,7 @@ if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 with open('logConfig.json', 'r') as config_file:
     logging.config.dictConfig(json.load(config_file))
-logger = logging.getLogger('PySecCam')
+logger = logging.getLogger(__name__)
 
 
 def wait(camera):
@@ -49,7 +49,7 @@ def init_camera():
 def save_jpeg_bytes(jpeg_bytes, path, debug_name):
     streamer.StreamSaver(stream=io.BytesIO(jpeg_bytes),
                          byte_writer=writer.DiskWriter(path),
-                         name=debug_name + '-LOCAL_JPG',
+                         name=debug_name + '.jpg',
                          stop_when_empty=True).start()
 
     if dropbox_token is not None:
@@ -57,21 +57,21 @@ def save_jpeg_bytes(jpeg_bytes, path, debug_name):
                                               dropbox_token=dropbox_token)
         streamer.StreamSaver(stream=io.BytesIO(jpeg_bytes),
                              byte_writer=dropbox_writer,
-                             name=debug_name + '-CLOUD_JPG',
+                             name=debug_name + '.jpg',
                              stop_when_empty=True).start()
 
 
 def save_video(stream, path, debug_name):
     streamers = [streamer.StreamSaver(stream=stream,
                                       byte_writer=writer.DiskWriter(path),
-                                      name=debug_name + '-LOCAL_VID')]
+                                      name=debug_name + '.vid')]
 
     if dropbox_token is not None:
         dropbox_writer = writer.DropboxWriter(full_path='/' + path,
                                               dropbox_token=dropbox_token)
         streamers.append(streamer.StreamSaver(stream=stream,
                                               byte_writer=dropbox_writer,
-                                              name=debug_name + '-CLOUD_VID'))
+                                              name=debug_name + '.vid'))
     map(lambda x: x.start(), streamers)
     return streamers
 
@@ -96,12 +96,12 @@ def main():
                     logger.info('Motion detected!')
 
                     event_date = dt.datetime.now()
-                    day_dir = event_date.strftime('%Y-%m-%d')
-                    time_dir = event_date.strftime('%H.%M.%S')
-                    full_dir = supplied_args["cam_name"] + '/' + day_dir + '/' + time_dir
+                    day_str = event_date.strftime('%Y-%m-%d')
+                    time_str = event_date.strftime('%H.%M.%S')
+                    full_dir = supplied_args["cam_name"] + '/' + day_str + '/' + time_str
 
-                    video_streamers = save_video(stream, path=full_dir + '/video.h264', debug_name=full_dir)
-                    save_jpeg_bytes(motion_frame_bytes, path=full_dir + '/motion.jpg', debug_name=full_dir)
+                    video_streamers = save_video(stream, path=full_dir + '/video.h264', debug_name=time_str)
+                    save_jpeg_bytes(motion_frame_bytes, path=full_dir + '/motion.jpg', debug_name=time_str)
 
                     # Capture a minimum amount of video after motion
                     while (dt.datetime.now() - event_date).seconds < supplied_args['min_motion_time']:
@@ -114,10 +114,11 @@ def main():
                         if time.time() - last_motion_check >= 1:  # Check for new motion every second
                             motion_detected, motion_frame_bytes = motion_detector.detect()
                             if motion_detected:
+                                logger.debug('More motion detected!')
                                 motion_count += 1
                                 save_jpeg_bytes(motion_frame_bytes,
                                                 path=full_dir + '/' + str(motion_count) + 'motion.jpg',
-                                                debug_name=full_dir)
+                                                debug_name=time_str)
                             last_motion_check = time.time()
                         wait(camera)
 
