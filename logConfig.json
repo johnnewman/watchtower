@@ -1,0 +1,31 @@
+{
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s %(name)-12s %(levelname)-6s %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+            "level": 10
+        },
+        "file": {
+            "backupCount": 7,
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": "logs/pyseccam.log",
+            "formatter": "default",
+            "interval": 1,
+            "level": 10,
+            "when": "d"
+        }
+    },
+    "root": {
+        "handlers": [
+            "console",
+            "file"
+        ],
+        "level": 10
+    },
+    "version": 1
+}
