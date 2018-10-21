@@ -35,7 +35,7 @@ def init_logging():
 def init_command_receiver():
     if supplied_args['command_port'] is not None:
         remote.CommandReceiver(set_running_callback=set_running,
-                               get_running_calback=get_running,
+                               get_running_callback=get_running,
                                port=supplied_args['command_port']).start()
     return Lock(), True
 
