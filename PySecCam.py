@@ -9,6 +9,8 @@ import streamer.writer as writer
 import logging.config
 import os
 import json
+from threading import Lock
+import remote
 
 
 def init_camera():
@@ -44,8 +46,25 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
     return streamers
 
 
+def set_running(r):
+    global running
+    status_lock.acquire()
+    running = r
+    status_lock.release()
+
+
+def get_running():
+    status_lock.acquire()
+    status = running
+    status_lock.release()
+    return status
+
+
 def main():
     camera = init_camera()
+    if supplied_args['command_port'] is not None:
+        remote.CommandReceiver(set_running, port=supplied_args['command_port']).start()
+
     with camera:
         min_capture_time = supplied_args['min_capture_time']
         motion_detector = motion.MotionDetector(camera, supplied_args['min_delta'], supplied_args['min_area'])
@@ -58,6 +77,10 @@ def main():
 
         try:
             while True:
+                if not get_running():
+                    time.sleep(1)
+                    continue
+
                 wait(camera)
                 motion_detected, motion_frame_bytes = motion_detector.detect()
                 if motion_detected:
@@ -116,6 +139,7 @@ if __name__ == '__main__':
     parser.add_argument("-c", "--cam-name", type=str, default='PySecCam', help="name of the camera")
     parser.add_argument("-m", "--min_capture_time", type=int, default=8, help="minimum time to capture motion")
     parser.add_argument("-T", "--dropbox_token", type=str, help="token for Dropbox")
+    parser.add_argument("-p", "--command_port", type=int, help="port to listen for commands")
     supplied_args = vars(parser.parse_args())
 
     log_dir = 'logs/'
@@ -124,5 +148,8 @@ if __name__ == '__main__':
     with open('logConfig.json', 'r') as config_file:
         logging.config.dictConfig(json.load(config_file))
     logger = logging.getLogger(__name__)
+
+    status_lock = Lock()
+    running = True
 
     main()
