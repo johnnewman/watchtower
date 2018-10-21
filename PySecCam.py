@@ -12,6 +12,9 @@ import streamer.writer as writer
 from threading import Lock
 import time
 
+WAIT_TIME = 0.2
+INITIALIZATION_TIME = 3  # In Seconds
+
 
 def init_camera():
     camera = picamera.PiCamera(resolution=(supplied_args["video_width"], supplied_args["video_height"]),
@@ -44,7 +47,7 @@ def wait(camera):
     annotation on the feed."""
 
     camera.annotate_text = supplied_args["cam_name"] + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    camera.wait_recording(0.2)
+    camera.wait_recording(WAIT_TIME)
 
 
 def save_stream(stream, path, debug_name, stop_when_empty=False):
@@ -93,8 +96,8 @@ def main():
         camera.start_recording(stream, format='h264')
         logger.info('Initialized.')
 
-        # Allow the camera time to initialize
-        for i in range(3):
+        # Allow the camera a few seconds to initialize
+        for i in range(int(INITIALIZATION_TIME / WAIT_TIME)):
             wait(camera)
 
         try:
