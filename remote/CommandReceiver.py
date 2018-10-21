@@ -42,7 +42,7 @@ class CommandReceiver(Thread):
         try:
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.bind(('', self.__port))
-            logger.debug('Waiting for a command on socket %d' % self.__port)
+            logger.info('Waiting for a command on socket %d' % self.__port)
         except Exception as e:
             logger.exception('An exception occurred setting up the server socket: %s' % e.message)
             return
@@ -72,7 +72,7 @@ class CommandReceiver(Thread):
                 elif message == STOP_COMMAND:
                     self.__set_running_callback(False)
                 else:
-                    logger.warning('Received unknown message \"%s\"' % message)
+                    logger.warning('Unsupported message.')
                 client_socket.close()
 
             except Exception as e:
