@@ -23,6 +23,15 @@ def init_camera():
     return camera
 
 
+def init_logging():
+    log_dir = 'logs/'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    with open('logConfig.json', 'r') as config_file:
+        logging.config.dictConfig(json.load(config_file))
+    return logging.getLogger(__name__)
+
+
 def init_command_receiver():
     if supplied_args['command_port'] is not None:
         remote.CommandReceiver(set_running_callback=set_running,
@@ -147,13 +156,6 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--command-port", type=int, help="port to listen for commands")
     supplied_args = vars(parser.parse_args())
 
-    log_dir = 'logs/'
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-    with open('logConfig.json', 'r') as config_file:
-        logging.config.dictConfig(json.load(config_file))
-    logger = logging.getLogger(__name__)
-
-
+    logger = init_logging()
     status_lock, running = init_command_receiver()
     main()
