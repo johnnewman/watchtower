@@ -57,8 +57,8 @@ class StreamSaver(Thread):
         logger = logging.getLogger(__name__ + '.' + self.name)
         try:
             # Returns bytes read at the position and the updated position
-            def read_from_stream(position):
-                cur_position = self.__stream.tell()
+            def read_from_stream(stream, position):
+                cur_position = stream.tell()
                 if cur_position == position:
                     logger.debug('Stream position has not moved. Not reading.')
                     return '', position
@@ -67,13 +67,13 @@ class StreamSaver(Thread):
                     position = 0
                     logger.debug('Using stream start 0.')
 
-                self.__stream.seek(position)
-                _read_bytes = self.__stream.read(MAX_READ_BYTES)  # Read from where we left off
-                if _read_bytes is None:
-                    _read_bytes = ''
-                _stream_pos = position + len(_read_bytes)
-                self.__stream.seek(cur_position)  # Restore where the stream was
-                return _read_bytes, _stream_pos
+                stream.seek(position)
+                __read_bytes = stream.read(MAX_READ_BYTES)  # Read from where we left off
+                if __read_bytes is None:
+                    __read_bytes = ''
+                __stream_pos = position + len(__read_bytes)
+                stream.seek(cur_position)  # Restore where the stream was
+                return __read_bytes, __stream_pos
 
             stream_pos = -1
             stopped = False
@@ -87,10 +87,10 @@ class StreamSaver(Thread):
                                 if frame.frame_type == picamera.PiVideoFrameType.sps_header:
                                     stream_pos = frame.position
                                     logger.debug('Found first sps header at position %d' % frame.position)
-                        read_bytes, stream_pos = read_from_stream(stream_pos)
+                        read_bytes, stream_pos = read_from_stream(self.__stream, stream_pos)
                 # Assuming the stream supports read() and seek()
                 else:
-                    read_bytes, stream_pos = read_from_stream(stream_pos)
+                    read_bytes, stream_pos = read_from_stream(self.__stream, stream_pos)
 
                 logger.debug('Read %d bytes.' % len(read_bytes))
                 total_bytes += len(read_bytes)
