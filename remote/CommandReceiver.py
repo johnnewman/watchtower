@@ -5,6 +5,13 @@ import time
 
 TIMEOUT = 10
 
+STATUS_COMMAND = 'get_status'
+START_COMMAND = 'start_running'
+STOP_COMMAND = 'stop_running'
+
+RUNNING_RESPONSE = 'running'
+NOT_RUNNING_RESPONSE = '!running'
+
 
 class CommandReceiver(Thread):
     """A thread class that listens for commands over a socket.  It uses
@@ -47,14 +54,14 @@ class CommandReceiver(Thread):
                             raise RuntimeError('Socket connection is broken')
                         total_sent += sent
 
-                if message == 'get_status':
+                if message == STATUS_COMMAND:
                     if self.__get_running_callback():
-                        send_response('monitoring')
+                        send_response(RUNNING_RESPONSE)
                     else:
-                        send_response('!monitoring')
-                elif message == 'start_monitoring':
+                        send_response(NOT_RUNNING_RESPONSE)
+                elif message == START_COMMAND:
                     self.__set_running_callback(True)
-                elif message == 'stop_monitoring':
+                elif message == STOP_COMMAND:
                     self.__set_running_callback(False)
                 else:
                     logger.warning('Received unknown message \"%s\"' % message)
