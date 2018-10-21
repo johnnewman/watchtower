@@ -90,7 +90,7 @@ def main():
                                 logger.debug('More motion detected!')
                                 motion_count += 1
                                 save_stream(io.BytesIO(motion_frame_bytes),
-                                            path=full_dir +  '/' + str(motion_count) + 'motion.jpg',
+                                            path=full_dir + '/' + str(motion_count) + 'motion.jpg',
                                             debug_name=time_str + '.jpg',
                                             stop_when_empty=True)
                             last_motion_check = time.time()
