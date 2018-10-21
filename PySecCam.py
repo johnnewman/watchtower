@@ -29,7 +29,7 @@ def init_logging():
     log_dir = 'logs/'
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    with open('logConfig.json', 'r') as config_file:
+    with open('config/log_config.json', 'r') as config_file:
         logging.config.dictConfig(json.load(config_file))
     return logging.getLogger(__name__)
 
