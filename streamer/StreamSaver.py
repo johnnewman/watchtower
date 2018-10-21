@@ -56,37 +56,32 @@ class StreamSaver(Thread):
         try:
             # Returns bytes read at the position and the updated position
             def read_from_stream(stream, position):
-                cur_position = stream.tell()
-                if cur_position == position:
-                    logger.debug('Stream position has not moved. Not reading.')
-                    return '', position
-
                 if position == -1:
                     position = 0
                     logger.debug('Using stream start 0.')
 
+                __restore_position = stream.tell()
                 stream.seek(position)
                 __read_bytes = stream.read(MAX_READ_BYTES)  # Read from where we left off
                 if __read_bytes is None:
                     __read_bytes = ''
                 __stream_pos = position + len(__read_bytes)
-                stream.seek(cur_position)  # Restore where the stream was
+                stream.seek(__restore_position)  # Restore where the stream was
                 return __read_bytes, __stream_pos
 
             stream_pos = -1
             stopped = False
             total_bytes = 0
             while not stopped:
-                # The live camera stream needs to be locked while we access it
                 if isinstance(self.__stream, picamera.PiCameraCircularIO):
-                    with self.__stream.lock:
+                    with self.__stream.lock:  # Live camera stream needs to be locked while read
                         if stream_pos == -1:
                             for frame in self.__stream.frames:
                                 if frame.frame_type == picamera.PiVideoFrameType.sps_header:
                                     stream_pos = frame.position
                                     logger.debug('Found first sps header at position %d' % frame.position)
+                                    break
                         read_bytes, stream_pos = read_from_stream(self.__stream, stream_pos)
-                # Assuming the stream supports read() and seek()
                 else:
                     read_bytes, stream_pos = read_from_stream(self.__stream, stream_pos)
 
