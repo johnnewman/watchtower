@@ -34,7 +34,7 @@ class MotionDetector:
         """
         self.__camera = camera
         self.min_delta = min_delta
-        self.min_area_px = camera.resolution[0] * camera.resolution[1] * min_area_perc / DOWNSIZE_FACTOR
+        self.min_area = camera.resolution[0] * camera.resolution[1] * min_area_perc / DOWNSIZE_FACTOR
         self.__base_frame = None
         self.__base_frame_date = dt.datetime.now()
 
@@ -83,24 +83,21 @@ class MotionDetector:
         # Compute the difference of the base frame and the current
         frame_delta = cv2.absdiff(self.__base_frame, gray_frame)
 
-        # Now filter the delta to only show high levels
+        # Now filter the delta to only show high levels of change
         threshold = cv2.threshold(frame_delta, self.min_delta, 255, cv2.THRESH_BINARY)[1]
 
         # Dilate the white threshold areas to bubble them together
         dilated = cv2.dilate(threshold, None, iterations=2)
 
-        # Find and separate all the white areas
-        contours = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
+        # Find and separate all the dilated areas
+        contours = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
 
-        # Iterate over every contour and find the ones over the min area
-        motion = False
+        # Filter out small contours. Draw the large ones.
+        contours = filter(lambda c: cv2.contourArea(c) >= self.min_area, contours)
         for contour in contours:
-            if cv2.contourArea(contour) > self.min_area_px:
-                motion = True
-                (x, y, w, h) = cv2.boundingRect(contour)
-                cv2.rectangle(current_frame, (x, y), (x + w, y + h), color=MOTION_COLOR, thickness=MOTION_BORDER)
-
-        return motion, cv2.imencode('.jpg', current_frame)[1]
+            (x, y, w, h) = cv2.boundingRect(contour)
+            cv2.rectangle(current_frame, (x, y), (x + w, y + h), color=MOTION_COLOR, thickness=MOTION_BORDER)
+        return len(contours) > 0, cv2.imencode('.jpg', current_frame)[1]
 
     def downsize_image(self, image_array):
         return cv2.resize(image_array,
