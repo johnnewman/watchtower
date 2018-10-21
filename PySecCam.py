@@ -76,14 +76,15 @@ def main():
                                                   debug_name=time_str+'.vid')
 
                     # Capture a minimum amount of video after motion
-                    while (dt.datetime.now() - event_date).seconds < supplied_args['min_motion_time']:
+                    min_capture_time = supplied_args['min_capture_time']
+                    while (dt.datetime.now() - event_date).seconds < min_capture_time:
                         wait(camera)
 
                     # Wait for motion to stop
                     last_motion_check = time.time()
                     motion_count = 0
                     while motion_detected:
-                        if time.time() - last_motion_check >= 1:  # Check for new motion every second
+                        if time.time() - last_motion_check >= min_capture_time:
                             motion_detected, motion_frame_bytes = motion_detector.detect()
                             if motion_detected:
                                 logger.debug('More motion detected!')
@@ -112,7 +113,7 @@ if __name__ == '__main__':
     parser.add_argument("-H", "--video-height", type=int, default=720, help="video capture height")
     parser.add_argument("-t", "--min-delta", type=int, default=50, help="minimum delta gray value to threshold")
     parser.add_argument("-c", "--cam-name", type=str, default='PySecCam', help="name of the camera")
-    parser.add_argument("-m", "--min_motion_time", type=int, default=8, help="minimum time to capture motion")
+    parser.add_argument("-m", "--min_capture_time", type=int, default=8, help="minimum time to capture motion")
     parser.add_argument("-T", "--dropbox_token", type=str, help="token for Dropbox")
     supplied_args = vars(parser.parse_args())
 
