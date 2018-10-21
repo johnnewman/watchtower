@@ -71,7 +71,7 @@ class MotionDetector:
                 (x, y, w, h) = cv2.boundingRect(contour)
                 cv2.rectangle(current_frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
-        return True, cv2.imencode('.jpg', current_frame)[1]
+        return motion, cv2.imencode('.jpg', current_frame)[1]
 
     @staticmethod
     def downsize_image(image_array):
