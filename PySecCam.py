@@ -47,8 +47,9 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
 def main():
     camera = init_camera()
     with camera:
+        min_capture_time = supplied_args['min_capture_time']
         motion_detector = motion.MotionDetector(camera, supplied_args['min_delta'], supplied_args['min_area'])
-        stream = picamera.PiCameraCircularIO(camera, seconds=supplied_args['min_motion_time'])
+        stream = picamera.PiCameraCircularIO(camera, seconds=min_capture_time)
         camera.start_recording(stream, format='h264')
         logger.info('Initialized.')
 
@@ -77,7 +78,6 @@ def main():
                                                   debug_name=time_str+'.vid')
 
                     # Capture a minimum amount of video after motion
-                    min_capture_time = supplied_args['min_capture_time']
                     while (dt.datetime.now() - event_date).seconds < min_capture_time:
                         wait(camera)
 
