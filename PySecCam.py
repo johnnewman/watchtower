@@ -56,7 +56,7 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
 
     streamers = [streamer.StreamSaver(stream=stream,
                                       byte_writer=writer.DiskWriter(path),
-                                      name=debug_name,
+                                      name=debug_name+'.loc',
                                       stop_when_empty=stop_when_empty)]
 
     if supplied_args["dropbox_token"] is not None:
@@ -64,7 +64,7 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
                                               dropbox_token=supplied_args["dropbox_token"])
         streamers.append(streamer.StreamSaver(stream=stream,
                                               byte_writer=dropbox_writer,
-                                              name=debug_name,
+                                              name=debug_name+'.dbx',
                                               stop_when_empty=stop_when_empty))
     map(lambda x: x.start(), streamers)
     return streamers
