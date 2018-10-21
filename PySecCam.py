@@ -23,6 +23,14 @@ def init_camera():
     return camera
 
 
+def init_command_receiver():
+    if supplied_args['command_port'] is not None:
+        remote.CommandReceiver(set_running_callback=set_running,
+                               get_running_calback=get_running,
+                               port=supplied_args['command_port']).start()
+    return Lock(), True
+
+
 def wait(camera):
     camera.annotate_text = supplied_args["cam_name"] + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     camera.wait_recording(0.2)
@@ -62,11 +70,6 @@ def get_running():
 
 def main():
     camera = init_camera()
-    if supplied_args['command_port'] is not None:
-        remote.CommandReceiver(set_running_callback=set_running,
-                               get_running_calback=get_running,
-                               port=supplied_args['command_port']).start()
-
     with camera:
         min_capture_time = supplied_args['min_capture_time']
         motion_detector = motion.MotionDetector(camera, supplied_args['min_delta'], supplied_args['min_area'])
@@ -151,7 +154,6 @@ if __name__ == '__main__':
         logging.config.dictConfig(json.load(config_file))
     logger = logging.getLogger(__name__)
 
-    status_lock = Lock()
-    running = True
 
+    status_lock, running = init_command_receiver()
     main()
