@@ -14,22 +14,30 @@ NOT_RUNNING_RESPONSE = '!running'
 
 
 class CommandReceiver(Thread):
-    """A thread class that listens for commands over a socket.  It uses
-    callback functions as getters and setters for the responding object's
-    running status."""
+    """
+    A thread class that listens for commands over a socket. It uses callback
+    functions as getters and setters for the responding object's running
+    status.
+    """
 
-    def __init__(self, set_running_callback, get_running_callback, port):
-        """Accepts two function callbacks for a getter and setter, as well
-        as the port to receive commands."""
+    def __init__(self, get_running_callback, set_running_callback, port):
+        """
+        Initializes the command receiver but does not open any ports until
+        ``run()`` is called.
 
+        :param get_running_callback: Should be thread-safe
+        :param set_running_callback: Should be thread-safe
+        :param port: The port to use to listen for commands.
+        """
         super(CommandReceiver, self).__init__()
-        self.__set_running_callback = set_running_callback
         self.__get_running_callback = get_running_callback
+        self.__set_running_callback = set_running_callback
         self.__port = port
 
     def run(self):
-        """Infinitely loops, waiting for socket connections and commands."""
-
+        """
+        Infinitely loops, waiting for socket connections and commands.
+        """
         logger = logging.getLogger(__name__)
         try:
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -8,25 +8,23 @@ SLEEP_TIME = 0.5  # Seconds
 
 
 class StreamSaver(Thread):
-    """A threaded class that loops over its stream in chunks and uploads read
+    """
+    A threaded class that loops over its stream in chunks and uploads read
     bytes into its ``byte_writer``."""
 
     def __init__(self, stream, byte_writer, name, stop_when_empty=False):
         """Initializes the streamer.
 
-        The ``stream`` must respond to ``read()`` and ``seek()``. If it is a
+        :param stream: must respond to ``read()`` and ``seek()``. If it is a
         ``PiCameraCircularIO`` type, the ``lock`` will be used to ensure the
         camera doesn't modify the stream while it is read.
-
-        The ``byte_writer`` should be a subclass of the ``ByteWriter`` class.
-
-        The string in ``name`` should be unique for the steam. It is used for
-        log statements.
-
-        If ``stop_when_empty`` is True, the streamer will stop writing to the
+        :param byte_writer: should be a subclass of the ``ByteWriter`` class.
+        :param name: should be unique for the steam. It is used for log
+        statements.
+        :param stop_when_empty: if True, the streamer will stop writing to the
         ByteWriter and will close the ByteWriter when it reaches the end of the
-        stream. This is useful for finite streams."""
-
+        stream. This is useful for finite streams.
+        """
         super(StreamSaver, self).__init__()
         self.__stream = stream
         self.__byte_writer = byte_writer
