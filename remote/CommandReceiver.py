@@ -7,6 +7,13 @@ TIMEOUT = 10
 
 
 class CommandReceiver(Thread):
+    """A thread class that listens for commands over a socket.  It uses
+    callback functions as getters and setters for the responding object's
+    running status."""
+
+    def __init__(self, set_running_callback, get_running_callback, port):
+        """Accepts two function callbacks for a getter and setter, as well
+        as the port to receive commands."""
 
     def __init__(self, set_running_callback, get_running_calback, port):
         super(CommandReceiver, self).__init__()
@@ -15,6 +22,8 @@ class CommandReceiver(Thread):
         self.__port = port
 
     def run(self):
+        """Infinitely loops, waiting for socket connections and commands."""
+
         logger = logging.getLogger(__name__)
         try:
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
