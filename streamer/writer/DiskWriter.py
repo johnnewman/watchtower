@@ -16,6 +16,6 @@ class DiskWriter(ByteWriter.ByteWriter):
 
     def append_bytes(self, byte_string, close=False):
         if self.file is not None:
-            self.file.write(byte_string)
+            self.file.write(byte_string) if len(byte_string) > 0 else None
             if close:
                 self.file.close()
