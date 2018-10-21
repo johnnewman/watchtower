@@ -4,9 +4,10 @@ import datetime as dt
 import logging
 
 BASE_FRAME_RESET_INTERVAL = 45  # Seconds. Also serves as the minimum event time.
+BLUR_SIZE = (21, 21)
+DOWNSIZE_FACTOR = 2
 MOTION_COLOR = (0, 0, 255)
 MOTION_BORDER = 2
-DOWNSIZE_FACTOR = 2
 
 logger = None
 
@@ -112,4 +113,4 @@ class MotionDetector:
         """
         bgr_array = self.downsize_image(bgr_array)
         gray_array = cv2.cvtColor(bgr_array, cv2.COLOR_BGR2GRAY)
-        return cv2.GaussianBlur(gray_array, (21, 21), 0)
+        return cv2.GaussianBlur(gray_array, BLUR_SIZE, 0)
