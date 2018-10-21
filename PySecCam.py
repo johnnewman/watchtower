@@ -95,7 +95,7 @@ def main():
         logger.info('Initialized.')
 
         # Allow the camera time to initialize
-        camera.wait_recording(1)
+        wait(camera)
 
         try:
             while True:
