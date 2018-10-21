@@ -1,6 +1,6 @@
 import dropbox
-from streamer.writer import ByteWriter
 import logging
+from streamer.writer import ByteWriter
 
 logger = None
 

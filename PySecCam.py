@@ -1,16 +1,16 @@
-import picamera
 import argparse
 import datetime as dt
-import time
 import io
+import json
+import logging.config
 import motion
+import os
+import picamera
+import remote
 import streamer
 import streamer.writer as writer
-import logging.config
-import os
-import json
 from threading import Lock
-import remote
+import time
 
 
 def init_camera():
