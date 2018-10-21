@@ -77,4 +77,4 @@ class StreamSaver(Thread):
                     time.sleep(SLEEP_TIME)  # Wait for more data in the stream
             logger.debug('Processed %d bytes' % total_bytes)
         except Exception as e:
-            logger.exception('An exception occurred with stream: %s' % e.message)
+            logger.exception('An exception occurred: %s' % e.message)
