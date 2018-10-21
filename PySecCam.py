@@ -153,6 +153,7 @@ def main():
             logger.exception('An exception occurred: %s' % e.message)
         finally:
             camera.stop_recording()
+            camera.close()
 
 
 if __name__ == '__main__':
