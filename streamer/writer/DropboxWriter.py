@@ -23,7 +23,6 @@ class DropboxWriter(ByteWriter.ByteWriter):
             session_start_result = self.__dbx.files_upload_session_start(byte_string)
             self.__cursor = dropbox.files.UploadSessionCursor(session_start_result.session_id, offset=len(byte_string))
             self.__commit = dropbox.files.CommitInfo(self.full_path, mode=dropbox.files.WriteMode.add)
-            logger.debug('Started upload task with path \"%s\"' % self.full_path)
             return
 
         if close:

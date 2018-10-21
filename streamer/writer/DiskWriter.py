@@ -15,4 +15,3 @@ class DiskWriter(ByteWriter.ByteWriter):
             self.file.write(byte_string)
             if close:
                 self.file.close()
-                # print('[DiskWriter] Closed file: \"%s\"' % self.full_path)
