@@ -32,6 +32,6 @@ class DropboxWriter(ByteWriter.ByteWriter):
         if close:
             self.__dbx.files_upload_session_finish(byte_string, self.__cursor, self.__commit)
             logger.debug('Closed Dropbox file \"%s\"' % self.full_path)
-        else:
+        elif len(byte_string) > 0:
             self.__dbx.files_upload_session_append_v2(byte_string, self.__cursor)
             self.__cursor.offset = self.__cursor.offset + len(byte_string)
