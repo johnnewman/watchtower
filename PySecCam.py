@@ -94,7 +94,8 @@ def main():
         logger.info('Initialized.')
 
         # Allow the camera time to initialize
-        wait(camera)
+        for i in range(3):
+            wait(camera)
 
         try:
             while True:
