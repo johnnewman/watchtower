@@ -77,4 +77,6 @@ class StreamSaver(Thread):
                     time.sleep(SLEEP_TIME)  # Wait for more data in the stream
             logger.info('Processed %d bytes' % total_bytes)
         except Exception as e:
+            # Try to close if we have an exception
+            self.__byte_writer.append_bytes('', close=True)
             logger.exception('An exception occurred: %s' % e.message)
