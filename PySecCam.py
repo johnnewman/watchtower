@@ -118,8 +118,8 @@ def main():
                     full_dir = supplied_args["cam_name"] + '/' + day_str + '/' + time_str
 
                     save_stream(io.BytesIO(motion_frame_bytes),
-                                path=full_dir + '/motion.jpg',
-                                debug_name=time_str + '.jpg',
+                                path=full_dir + '/motion0.jpg',
+                                debug_name=time_str + '.jpg0',
                                 stop_when_empty=True)
                     video_streamers = save_stream(stream,
                                                   path=full_dir+'/video.h264',
@@ -139,8 +139,8 @@ def main():
                                 logger.debug('More motion detected!')
                                 motion_count += 1
                                 save_stream(io.BytesIO(motion_frame_bytes),
-                                            path=full_dir + '/' + str(motion_count) + 'motion.jpg',
-                                            debug_name=time_str + '.jpg',
+                                            path=full_dir + '/motion' + str(motion_count) + '.jpg',
+                                            debug_name=time_str + '.jpg' + str(motion_count),
                                             stop_when_empty=True)
                             last_motion_check = time.time()
                         wait(camera)
