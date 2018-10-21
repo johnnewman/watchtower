@@ -14,10 +14,9 @@ import time
 
 
 def init_camera():
-    camera = picamera.PiCamera()
+    camera = picamera.PiCamera(resolution=(supplied_args["video_width"], supplied_args["video_height"]),
+                               framerate=15)
     camera.rotation = 180
-    camera.framerate = 15
-    camera.resolution = (supplied_args["video_width"], supplied_args["video_height"])
     camera.annotate_background = picamera.Color('black')
     camera.annotate_text_size = 12
     return camera
