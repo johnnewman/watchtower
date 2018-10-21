@@ -26,6 +26,7 @@ def wait(camera):
     camera.wait_recording(0.2)
 
 
+# Saves a stream to disk and dropbox (if a DBX token was supplied)
 def save_stream(stream, path, debug_name, stop_when_empty=False):
     streamers = [streamer.StreamSaver(stream=stream,
                                       byte_writer=writer.DiskWriter(path),
