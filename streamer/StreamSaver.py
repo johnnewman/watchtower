@@ -85,7 +85,7 @@ class StreamSaver(Thread):
                 else:
                     read_bytes, stream_pos = read_from_stream(self.__stream, stream_pos)
 
-                logger.debug('Read %d bytes.' % len(read_bytes))
+                logger.debug('Read %d bytes.' % len(read_bytes)) if len(read_bytes) > 0 else None
                 total_bytes += len(read_bytes)
                 stopped = self.__should_stop() or (self.__stop_when_empty and len(read_bytes) == 0)
                 self.__byte_writer.append_bytes(read_bytes, stopped)
