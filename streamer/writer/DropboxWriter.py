@@ -6,6 +6,10 @@ logger = None
 
 
 class DropboxWriter(ByteWriter.ByteWriter):
+    """
+    A class that creates an upload session on Dropbox and writes all bytes to
+    that session.
+    """
 
     def __init__(self, full_path, dropbox_token):
         super(DropboxWriter, self).__init__(full_path)

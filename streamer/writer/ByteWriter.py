@@ -2,6 +2,10 @@ from abc import ABCMeta, abstractmethod
 
 
 class ByteWriter:
+    """
+    Abstract class used to define an interface that ``streamer.StreamSaver``
+    can use to pass bytes to a writer.
+    """
     __metaclass__ = ABCMeta
 
     def __init__(self, full_path):
