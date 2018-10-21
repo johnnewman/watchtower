@@ -137,9 +137,9 @@ if __name__ == '__main__':
     parser.add_argument("-H", "--video-height", type=int, default=720, help="video capture height")
     parser.add_argument("-t", "--min-delta", type=int, default=50, help="minimum delta gray value to threshold")
     parser.add_argument("-c", "--cam-name", type=str, default='PySecCam', help="name of the camera")
-    parser.add_argument("-m", "--min_capture_time", type=int, default=8, help="minimum time to capture motion")
-    parser.add_argument("-T", "--dropbox_token", type=str, help="token for Dropbox")
-    parser.add_argument("-p", "--command_port", type=int, help="port to listen for commands")
+    parser.add_argument("-m", "--min-capture-time", type=int, default=8, help="minimum time to capture motion")
+    parser.add_argument("-T", "--dropbox-token", type=str, help="token for Dropbox")
+    parser.add_argument("-p", "--command-port", type=int, help="port to listen for commands")
     supplied_args = vars(parser.parse_args())
 
     log_dir = 'logs/'
