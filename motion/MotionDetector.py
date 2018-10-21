@@ -67,8 +67,8 @@ class MotionDetector:
         camera frame. If big enough areas have changed, each of these is
         outlined.
 
-        :return: a flag indicating motion and the current frame jpg with motion
-        areas outlined.
+        :return: a tuple containing a flag that indicates motion and the
+        current frame jpg with motion areas outlined.
         """
         past_time_interval = (dt.datetime.now() - self.__base_frame_date).seconds > BASE_FRAME_RESET_INTERVAL
         need_new_base = past_time_interval or self.__base_frame is None
