@@ -99,6 +99,8 @@ def main():
                     map(lambda x: x.stop(), video_streamers)
                     elapsed_time = (dt.datetime.now() - event_date).seconds
                     logger.info('Motion stopped; ended recording. Elapsed time %ds' % elapsed_time)
+        except Exception as e:
+            logger.exception('An exception occurred: %s' % e.message)
         finally:
             camera.stop_recording()
 
