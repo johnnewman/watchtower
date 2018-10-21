@@ -1,9 +1,9 @@
-from picamera.array import PiRGBArray
 import cv2
 import datetime as dt
 import logging
+from picamera.array import PiRGBArray
 
-BASE_FRAME_RESET_INTERVAL = 45  # Seconds. Also serves as the minimum event time.
+BASE_FRAME_RESET_INTERVAL = 45  # In seconds. Also serves as the maximum event time.
 BLUR_SIZE = (21, 21)
 DOWNSIZE_FACTOR = 2
 MOTION_COLOR = (0, 0, 255)
