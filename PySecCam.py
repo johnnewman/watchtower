@@ -41,12 +41,17 @@ def init_command_receiver():
 
 
 def wait(camera):
+    """Single point where we record camera data. This also updates the
+    annotation on the feed."""
+
     camera.annotate_text = supplied_args["cam_name"] + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     camera.wait_recording(0.2)
 
 
-# Saves a stream to disk and dropbox (if a DBX token was supplied)
 def save_stream(stream, path, debug_name, stop_when_empty=False):
+    """Saves the ``stream`` to disk and optionally Dropbox, if a Dropbox token
+     was supplied as a parameter to the program."""
+
     streamers = [streamer.StreamSaver(stream=stream,
                                       byte_writer=writer.DiskWriter(path),
                                       name=debug_name,
@@ -64,6 +69,9 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
 
 
 def set_running(r):
+    """Thread-safe setter to turn motion detection on and off. Even when off,
+    the camera still records to an in-memory buffer."""
+
     global running
     status_lock.acquire()
     running = r
