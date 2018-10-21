@@ -11,31 +11,6 @@ import os
 import json
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-a", "--min-area", type=int, default=2000, help="minimum area to trigger motion")
-parser.add_argument("-W", "--video-width", type=int, default=1280, help="video capture width")
-parser.add_argument("-H", "--video-height", type=int, default=720, help="video capture height")
-parser.add_argument("-t", "--min-delta", type=int, default=50, help="minimum delta gray value to threshold")
-parser.add_argument("-c", "--cam-name", type=str, default='PySecCam', help="name of the camera")
-parser.add_argument("-m", "--min_motion_time", type=int, default=8, help="minimum time to capture motion")
-parser.add_argument("-T", "--dropbox_token", type=str, help="token for Dropbox")
-supplied_args = vars(parser.parse_args())
-
-dropbox_token = supplied_args["dropbox_token"]
-
-log_dir = 'logs/'
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-with open('logConfig.json', 'r') as config_file:
-    logging.config.dictConfig(json.load(config_file))
-logger = logging.getLogger(__name__)
-
-
-def wait(camera):
-    camera.annotate_text = supplied_args["cam_name"] + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    camera.wait_recording(0.2)
-
-
 def init_camera():
     camera = picamera.PiCamera()
     camera.rotation = 180
@@ -46,32 +21,24 @@ def init_camera():
     return camera
 
 
-def save_jpeg_bytes(jpeg_bytes, path, debug_name):
-    streamer.StreamSaver(stream=io.BytesIO(jpeg_bytes),
-                         byte_writer=writer.DiskWriter(path),
-                         name=debug_name + '.jpg',
-                         stop_when_empty=True).start()
-
-    if dropbox_token is not None:
-        dropbox_writer = writer.DropboxWriter(full_path='/' + path,
-                                              dropbox_token=dropbox_token)
-        streamer.StreamSaver(stream=io.BytesIO(jpeg_bytes),
-                             byte_writer=dropbox_writer,
-                             name=debug_name + '.jpg',
-                             stop_when_empty=True).start()
+def wait(camera):
+    camera.annotate_text = supplied_args["cam_name"] + dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    camera.wait_recording(0.2)
 
 
-def save_video(stream, path, debug_name):
+def save_stream(stream, path, debug_name, stop_when_empty=False):
     streamers = [streamer.StreamSaver(stream=stream,
                                       byte_writer=writer.DiskWriter(path),
-                                      name=debug_name + '.vid')]
+                                      name=debug_name,
+                                      stop_when_empty=stop_when_empty)]
 
-    if dropbox_token is not None:
+    if supplied_args["dropbox_token"] is not None:
         dropbox_writer = writer.DropboxWriter(full_path='/' + path,
-                                              dropbox_token=dropbox_token)
+                                              dropbox_token=supplied_args["dropbox_token"])
         streamers.append(streamer.StreamSaver(stream=stream,
                                               byte_writer=dropbox_writer,
-                                              name=debug_name + '.vid'))
+                                              name=debug_name,
+                                              stop_when_empty=stop_when_empty))
     map(lambda x: x.start(), streamers)
     return streamers
 
@@ -100,8 +67,13 @@ def main():
                     time_str = event_date.strftime('%H.%M.%S')
                     full_dir = supplied_args["cam_name"] + '/' + day_str + '/' + time_str
 
-                    video_streamers = save_video(stream, path=full_dir + '/video.h264', debug_name=time_str)
-                    save_jpeg_bytes(motion_frame_bytes, path=full_dir + '/motion.jpg', debug_name=time_str)
+                    save_stream(io.BytesIO(motion_frame_bytes),
+                                path=full_dir + '/motion.jpg',
+                                debug_name=time_str + '.jpg',
+                                stop_when_empty=True)
+                    video_streamers = save_stream(stream,
+                                                  path=full_dir+'/video.h264',
+                                                  debug_name=time_str+'.vid')
 
                     # Capture a minimum amount of video after motion
                     while (dt.datetime.now() - event_date).seconds < supplied_args['min_motion_time']:
@@ -116,9 +88,10 @@ def main():
                             if motion_detected:
                                 logger.debug('More motion detected!')
                                 motion_count += 1
-                                save_jpeg_bytes(motion_frame_bytes,
-                                                path=full_dir + '/' + str(motion_count) + 'motion.jpg',
-                                                debug_name=time_str)
+                                save_stream(io.BytesIO(motion_frame_bytes),
+                                            path=full_dir +  '/' + str(motion_count) + 'motion.jpg',
+                                            debug_name=time_str + '.jpg',
+                                            stop_when_empty=True)
                             last_motion_check = time.time()
                         wait(camera)
 
@@ -130,4 +103,22 @@ def main():
             camera.stop_recording()
 
 
-main()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-a", "--min-area", type=int, default=2000, help="minimum area to trigger motion")
+    parser.add_argument("-W", "--video-width", type=int, default=1280, help="video capture width")
+    parser.add_argument("-H", "--video-height", type=int, default=720, help="video capture height")
+    parser.add_argument("-t", "--min-delta", type=int, default=50, help="minimum delta gray value to threshold")
+    parser.add_argument("-c", "--cam-name", type=str, default='PySecCam', help="name of the camera")
+    parser.add_argument("-m", "--min_motion_time", type=int, default=8, help="minimum time to capture motion")
+    parser.add_argument("-T", "--dropbox_token", type=str, help="token for Dropbox")
+    supplied_args = vars(parser.parse_args())
+
+    log_dir = 'logs/'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    with open('logConfig.json', 'r') as config_file:
+        logging.config.dictConfig(json.load(config_file))
+    logger = logging.getLogger(__name__)
+
+    main()
