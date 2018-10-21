@@ -63,7 +63,9 @@ def get_running():
 def main():
     camera = init_camera()
     if supplied_args['command_port'] is not None:
-        remote.CommandReceiver(set_running, port=supplied_args['command_port']).start()
+        remote.CommandReceiver(set_running_callback=set_running,
+                               get_running_calback=get_running,
+                               port=supplied_args['command_port']).start()
 
     with camera:
         min_capture_time = supplied_args['min_capture_time']
