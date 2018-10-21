@@ -16,7 +16,7 @@ class MotionDetector:
     def __init__(self, camera, min_delta, min_area):
         self.__camera = camera
         self.min_delta = min_delta
-        self.min_area = min_area
+        self.min_area_px = camera.resolution[0] * camera.resolution[1] * min_area / 2
         self.__base_frame = None
         self.__base_frame_date = dt.datetime.now()
 
@@ -30,7 +30,7 @@ class MotionDetector:
 
     def __reset_base_frame(self):
         global logger
-        self.__base_frame = MotionDetector.post_process_image(self.capture_image().array)
+        self.__base_frame = self.post_process_image(self.capture_image().array)
         self.reset_base_frame_date()
 
         if logger is None:
@@ -45,8 +45,8 @@ class MotionDetector:
             return False, None
 
         bgr_frame = self.capture_image()
-        current_frame = MotionDetector.downsize_image(bgr_frame.array)
-        gray_frame = MotionDetector.post_process_image(bgr_frame.array)
+        current_frame = self.downsize_image(bgr_frame.array)
+        gray_frame = self.post_process_image(bgr_frame.array)
 
         # Compute the difference of the base frame and the current
         frame_delta = cv2.absdiff(self.__base_frame, gray_frame)
@@ -66,20 +66,18 @@ class MotionDetector:
         # Iterate over every contour and find the ones over the min area
         motion = False
         for contour in contours:
-            if cv2.contourArea(contour) > self.min_area:
+            if cv2.contourArea(contour) > self.min_area_px:
                 motion = True
                 (x, y, w, h) = cv2.boundingRect(contour)
                 cv2.rectangle(current_frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
         return motion, cv2.imencode('.jpg', current_frame)[1]
 
-    @staticmethod
-    def downsize_image(image_array):
-        return cv2.resize(image_array, (640, 360), interpolation=cv2.INTER_AREA)
+    def downsize_image(self, image_array):
+        return cv2.resize(image_array, tuple(i/2 for i in self.__camera.resolution), interpolation=cv2.INTER_AREA)
 
     # Will gray and blur the bgr image data
-    @staticmethod
-    def post_process_image(bgr_array):
-        bgr_array = MotionDetector.downsize_image(bgr_array)
+    def post_process_image(self, bgr_array):
+        bgr_array = self.downsize_image(bgr_array)
         gray_array = cv2.cvtColor(bgr_array, cv2.COLOR_BGR2GRAY)
         return cv2.GaussianBlur(gray_array, (21, 21), 0)

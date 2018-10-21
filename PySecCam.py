@@ -109,7 +109,7 @@ def main():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--min-area", type=int, default=2000, help="minimum area to trigger motion")
+    parser.add_argument("-a", "--min-area", type=int, default=.005, help="minimum percent of video for motion")
     parser.add_argument("-W", "--video-width", type=int, default=1280, help="video capture width")
     parser.add_argument("-H", "--video-height", type=int, default=720, help="video capture height")
     parser.add_argument("-t", "--min-delta", type=int, default=50, help="minimum delta gray value to threshold")
