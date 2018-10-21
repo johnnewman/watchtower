@@ -15,10 +15,9 @@ class CommandReceiver(Thread):
         """Accepts two function callbacks for a getter and setter, as well
         as the port to receive commands."""
 
-    def __init__(self, set_running_callback, get_running_calback, port):
         super(CommandReceiver, self).__init__()
         self.__set_running_callback = set_running_callback
-        self.__get_running_callback = get_running_calback
+        self.__get_running_callback = get_running_callback
         self.__port = port
 
     def run(self):
