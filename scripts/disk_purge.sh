@@ -25,13 +25,13 @@ check_usage() {
 }
 
 purge_one_day() {
-    regex=".*/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}"
+    regex="^.*/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}$"
     oldest_path=`find "$supplied_dir" -maxdepth 1 -type d -regextype sed -regex "$regex" | sort | sed 1q`
     oldest_dir=`basename "$oldest_path"`
     dir_date=`date -d "$oldest_dir" +%s`
     if [ "$dir_date" -le $(( $today_sec - $days_to_save * 24 * 60 * 60 )) ]; then
-        rm -rf "$supplied_dir"/"$oldest_dir"
         echo `date`: Purging "$oldest_path".
+        rm -rf "$oldest_path"
         check_usage
     fi
 }
