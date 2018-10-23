@@ -3,6 +3,7 @@
 # mp4_wrapper.sh
 #
 # John Newman
+# 2018-10-22
 #
 # Copies all files from input directory into the output directory and
 # the .h264 files into .mp4 files.

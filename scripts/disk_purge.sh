@@ -3,6 +3,7 @@
 # disk_purge.sh
 #
 # John Newman
+# 2018-10-22
 #
 # Use as a cron job. If the supplied motion event directory's partition
 # is over $min_usage percent full, the oldest motion event directory
