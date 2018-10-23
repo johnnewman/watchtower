@@ -19,7 +19,7 @@ check_usage() {
     usage=`df -h "$supplied_dir" | grep -vE '^Filesystem' | awk '{ print $5}'`
     usage=`expr "$usage" : '\([0-9]*\)'`
     if [ "$usage" -gt "$min_usage" ]; then
-        echo `date`: Disk usage "$usage"% is above min usage "$min_usage"%. >> ~/disk_purge.log
+        echo `date`: Disk usage "$usage"% is above min usage "$min_usage"%.
         purge_one_day
     fi
 }
@@ -30,8 +30,8 @@ purge_one_day() {
     oldest_dir=`basename "$oldest_path"`
     dir_date=`date -d "$oldest_dir" +%s`
     if [ "$dir_date" -le $(( $today_sec - $days_to_save * 24 * 60 * 60 )) ]; then
-        echo `date`: Purging "$supplied_dir"/"$oldest_dir". >> ~/disk_purge.log
         rm -rf "$supplied_dir"/"$oldest_dir"
+        echo `date`: Purging "$oldest_path".
         check_usage
     fi
 }
