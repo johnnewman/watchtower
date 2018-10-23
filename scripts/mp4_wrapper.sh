@@ -1,5 +1,12 @@
 #!/bin/sh
 
+# mp4_wrapper.sh
+#
+# John Newman
+#
+# Copies all files from input directory into the output directory and
+# the .h264 files into .mp4 files.
+
 fps=15
 
 cp -r "$1" "$2"
