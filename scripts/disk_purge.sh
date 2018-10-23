@@ -1,28 +1,26 @@
 #!/bin/sh
 
-MIN_USAGE=85
-DAYS_TO_SAVE=3
-SUPPLIED_DIR=$1
-TODAY=`date +%Y-%m-%d`
-TODAY_SEC=`date -d $TODAY +%s`
+min_usage=85
+days_to_save=3
+supplied_dir=$1
+today=`date +%Y-%m-%d`
+today_sec=`date -d "$today" +%s`
 
 check_usage() {
-    USAGE=`df -h $SUPPLIED_DIR | grep -vE '^Filesystem' | awk '{ print $5}'`
-    USAGE=`expr "$USAGE" : '\([0-9]*\)'`
-    if [ $USAGE -gt $MIN_USAGE ]
-    then
-        echo `date`: Disk usage $USAGE% is above min usage $MIN_USAGE%. >> ~/disk_purge.log
+    usage=`df -h "$supplied_dir" | grep -vE '^Filesystem' | awk '{ print $5}'`
+    usage=`expr "$usage" : '\([0-9]*\)'`
+    if [ "$usage" -gt "$min_usage" ]; then
+        echo `date`: Disk usage "$usage"% is above min usage "$min_usage"%. >> ~/disk_purge.log
         purge_one_day
     fi
 }
 
 purge_one_day() {
-    OLDEST_DIR=`ls -1 $SUPPLIED_DIR | sed 1q`
-    DIR_DATE=`date -d $OLDEST_DIR +%s`
-    if [ $DIR_DATE -le $(( $TODAY_SEC - $DAYS_TO_SAVE * 24 * 60 * 60 )) ]
-    then
-        echo `date`: Purging $SUPPLIED_DIR/$OLDEST_DIR. >> ~/disk_purge.log
-        rm -rf $SUPPLIED_DIR/$OLDEST_DIR
+    oldest_dir=`ls -1 "$supplied_dir" | sed 1q`
+    dir_date=`date -d "$oldest_dir" +%s`
+    if [ "$dir_date" -le $(( $today_sec - $days_to_save * 24 * 60 * 60 )) ]; then
+        echo `date`: Purging "$supplied_dir"/"$oldest_dir". >> ~/disk_purge.log
+        rm -rf "$supplied_dir"/"$oldest_dir"
         check_usage
     fi
 }
