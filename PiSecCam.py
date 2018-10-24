@@ -104,7 +104,7 @@ def main():
     camera = init_camera()
     with camera:
         motion_detector = motion.MotionDetector(camera, config['min_delta'], config['min_trigger_area'])
-        stream = picamera.PiCameraCircularIO(camera, seconds=config['min_rec_time_after_trigger'])
+        stream = picamera.PiCameraCircularIO(camera, seconds=config['rec_time_before_trigger'])
         camera.start_recording(stream, format='h264')
         logger.info('Initialized.')
 
@@ -144,7 +144,7 @@ def main():
                     # Wait for motion to stop
                     last_motion_trigger = time.time()
                     # motion_count = 0
-                    while time.time() - last_motion_trigger <= config['min_rec_time_after_trigger']:
+                    while time.time() - last_motion_trigger <= config['rec_time_after_trigger']:
                         more_motion, motion_frame_bytes = motion_detector.detect()
                         if more_motion:
                             logger.debug('More motion detected!')
