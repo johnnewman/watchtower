@@ -20,7 +20,7 @@ class CamStreamSaver(StreamSaver):
         with self.stream.lock:  # Lock the live camera stream while searching
             start_frame = None
             for frame in self.stream.frames:
-                if frame.timestamp is not None and frame.timestamp / 1000000 <= self.__start_time:
+                if frame.timestamp is not None and (frame.timestamp / 1000000) <= self.__start_time:
                     start_frame = frame
             if start_frame is not None:
                 self.logger.debug('Found frame with timestamp: %d' % (start_frame.timestamp / 1000000))
