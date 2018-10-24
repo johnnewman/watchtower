@@ -2,6 +2,11 @@ from StreamSaver import StreamSaver
 
 
 class CamStreamSaver(StreamSaver):
+    """
+    A StreamSaver that uses a camera stream. Safely locks the camera stream
+    while accessing it. Also determines the best starting point to read the
+    stream based on frame timestamps.
+    """
 
     def __init__(self, stream, byte_writer, name, start_time, stop_when_empty=False):
         super(CamStreamSaver, self).__init__(stream, byte_writer, name, stop_when_empty)
@@ -27,7 +32,7 @@ class CamStreamSaver(StreamSaver):
         """
         Overridden so the camera stream can be locked while it is read. This
         will also find the distance to the last frame in the stream and
-        use this as the length to read.
+        use this as the read length.
         """
         with self.stream.lock:  # Live camera stream needs to be locked while read
             last_frame = next(reversed(self.stream.frames))  # Read to the last frame.
