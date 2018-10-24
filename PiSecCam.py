@@ -67,18 +67,36 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
     """Saves the ``stream`` to disk and optionally Dropbox, if a Dropbox token
      was supplied as a parameter to the program."""
 
-    streamers = [streamer.StreamSaver(stream=stream,
-                                      byte_writer=writer.DiskWriter(path),
-                                      name=debug_name+'.loc',
-                                      stop_when_empty=stop_when_empty)]
-
-    if config['dropbox_token'] is not None:
-        dropbox_writer = writer.DropboxWriter(full_path='/' + path,
-                                              dropbox_token=config['dropbox_token'])
+    streamers = []
+    if isinstance(stream, picamera.PiCameraCircularIO):
+        stream_start_time = max(0, int(time.time() - start_time - config['rec_time_before_trigger']))
+        streamers.append(streamer.CamStreamSaver(stream=stream,
+                                                 byte_writer=writer.DiskWriter(path),
+                                                 name=debug_name+'.loc',
+                                                 start_time=stream_start_time,
+                                                 stop_when_empty=stop_when_empty))
+        if config['dropbox_token'] is not None:
+            dropbox_writer = writer.DropboxWriter(full_path='/' + path,
+                                                  dropbox_token=config['dropbox_token'])
+            streamers.append(streamer.CamStreamSaver(stream=stream,
+                                                     byte_writer=dropbox_writer,
+                                                     name=debug_name+'.dbx',
+                                                     start_time=stream_start_time,
+                                                     stop_when_empty=stop_when_empty))
+    else:
         streamers.append(streamer.StreamSaver(stream=stream,
-                                              byte_writer=dropbox_writer,
-                                              name=debug_name+'.dbx',
+                                              byte_writer=writer.DiskWriter(path),
+                                              name=debug_name+'.loc',
                                               stop_when_empty=stop_when_empty))
+
+        if config['dropbox_token'] is not None:
+            dropbox_writer = writer.DropboxWriter(full_path='/' + path,
+                                                  dropbox_token=config['dropbox_token'])
+            streamers.append(streamer.StreamSaver(stream=stream,
+                                                  byte_writer=dropbox_writer,
+                                                  name=debug_name+'.dbx',
+                                                  stop_when_empty=stop_when_empty))
+
     map(lambda x: x.start(), streamers)
     return streamers
 
@@ -174,4 +192,5 @@ if __name__ == '__main__':
     config = init_config()
     logger = init_logging()
     status_lock, running = init_command_receiver()
+    start_time = time.time()
     main()
