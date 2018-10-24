@@ -14,6 +14,7 @@ import time
 
 WAIT_TIME = 0.1
 INITIALIZATION_TIME = 3  # In Seconds
+MOTION_INTERVAL_WHILE_SAVING = 1.0  # In Seconds
 
 
 def init_config():
