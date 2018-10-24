@@ -5,10 +5,10 @@
     "dropbox_token": null,
     "framerate": 15,
     "min_delta": 50,
-    "rec_time_after_trigger": 8,
-    "rec_time_before_trigger": 8,
     "min_trigger_area": 0.005,
     "overlay_date_format": "%Y-%m-%d %H:%M:%S",
+    "rec_time_after_trigger": 8,
+    "rec_time_before_trigger": 8,
     "rotation": 180,
     "time_dir_date_format": "%H.%M.%S",
     "video_size": [
