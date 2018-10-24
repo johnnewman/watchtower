@@ -39,17 +39,17 @@ def init_logging():
 
 
 def init_command_receiver():
-    if config['command_port'] is not None:
+    if command_port is not None:
         remote.CommandReceiver(get_running_callback=get_running,
                                set_running_callback=set_running,
-                               port=config['command_port']).start()
+                               port=command_port).start()
     return Lock(), True
 
 
 def init_camera():
-    camera = picamera.PiCamera(resolution=(tuple(config['video_size'])),
-                               framerate=config['framerate'])
-    camera.rotation = config['rotation']
+    camera = picamera.PiCamera(resolution=(video_size),
+                               framerate=framerate)
+    camera.rotation = rotation
     camera.annotate_background = picamera.Color('black')
     camera.annotate_text_size = 12
     return camera
@@ -59,7 +59,7 @@ def wait(camera):
     """Single point where we record camera data. This also updates the
     annotation on the feed."""
 
-    camera.annotate_text = config['cam_name'] + dt.datetime.now().strftime(config['overlay_date_format'])
+    camera.annotate_text = cam_name + dt.datetime.now().strftime(overlay_date_format)
     camera.wait_recording(WAIT_TIME)
 
 
@@ -69,15 +69,15 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
 
     streamers = []
     if isinstance(stream, picamera.PiCameraCircularIO):
-        stream_start_time = max(0, int(time.time() - start_time - config['rec_time_before_trigger']))
+        stream_start_time = max(0, int(time.time() - start_time - rec_time_before_trigger))
         streamers.append(streamer.CamStreamSaver(stream=stream,
                                                  byte_writer=writer.DiskWriter(path),
                                                  name=debug_name+'.loc',
                                                  start_time=stream_start_time,
                                                  stop_when_empty=stop_when_empty))
-        if config['dropbox_token'] is not None:
+        if dropbox_token is not None:
             dropbox_writer = writer.DropboxWriter(full_path='/' + path,
-                                                  dropbox_token=config['dropbox_token'])
+                                                  dropbox_token=dropbox_token)
             streamers.append(streamer.CamStreamSaver(stream=stream,
                                                      byte_writer=dropbox_writer,
                                                      name=debug_name+'.dbx',
@@ -89,9 +89,9 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
                                               name=debug_name+'.loc',
                                               stop_when_empty=stop_when_empty))
 
-        if config['dropbox_token'] is not None:
+        if dropbox_token is not None:
             dropbox_writer = writer.DropboxWriter(full_path='/' + path,
-                                                  dropbox_token=config['dropbox_token'])
+                                                  dropbox_token=dropbox_token)
             streamers.append(streamer.StreamSaver(stream=stream,
                                                   byte_writer=dropbox_writer,
                                                   name=debug_name+'.dbx',
@@ -121,8 +121,8 @@ def get_running():
 def main():
     camera = init_camera()
     with camera:
-        motion_detector = motion.MotionDetector(camera, config['min_delta'], config['min_trigger_area'])
-        stream = picamera.PiCameraCircularIO(camera, seconds=config['rec_time_before_trigger'])
+        motion_detector = motion.MotionDetector(camera, min_delta, min_trigger_area)
+        stream = picamera.PiCameraCircularIO(camera, seconds=rec_time_before_trigger)
         camera.start_recording(stream, format='h264')
         logger.info('Initialized.')
 
@@ -143,9 +143,9 @@ def main():
                     logger.info('Motion detected!')
 
                     event_date = dt.datetime.now()
-                    day_str = event_date.strftime(config['day_dir_date_format'])
-                    time_str = event_date.strftime(config['time_dir_date_format'])
-                    full_dir = config['cam_name'] + '/' + day_str + '/' + time_str
+                    day_str = event_date.strftime(day_dir_date_format)
+                    time_str = event_date.strftime(time_dir_date_format)
+                    full_dir = cam_name + '/' + day_str + '/' + time_str
 
                     save_stream(io.BytesIO(motion_frame_bytes),
                                 path=full_dir + '/motion0.jpg',
@@ -158,7 +158,7 @@ def main():
                     # Wait for motion to stop
                     last_motion_trigger = time.time()
                     # motion_count = 0
-                    while time.time() - last_motion_trigger <= config['rec_time_after_trigger']:
+                    while time.time() - last_motion_trigger <= rec_time_after_trigger:
                         more_motion, motion_frame_bytes = motion_detector.detect()
                         if more_motion:
                             logger.debug('More motion detected!')
@@ -186,6 +186,21 @@ def main():
 
 if __name__ == '__main__':
     config = init_config()
+
+    cam_name = config['cam_name']
+    command_port = config['command_port']
+    day_dir_date_format = config['day_dir_date_format']
+    dropbox_token = config['dropbox_token']
+    framerate = config['framerate']
+    min_delta = config['min_delta']
+    min_trigger_area = config['min_trigger_area']
+    overlay_date_format = config['overlay_date_format']
+    rec_time_after_trigger = config['rec_time_after_trigger']
+    rec_time_before_trigger = config['rec_time_before_trigger']
+    rotation = config['rotation']
+    time_dir_date_format = config['time_dir_date_format']
+    video_size = tuple(config['video_size'])
+
     logger = init_logging()
     status_lock, running = init_command_receiver()
     start_time = time.time()
