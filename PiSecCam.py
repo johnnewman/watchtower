@@ -12,7 +12,7 @@ import streamer.writer as writer
 from threading import Lock
 import time
 
-WAIT_TIME = 0.2
+WAIT_TIME = 0.1
 INITIALIZATION_TIME = 3  # In Seconds
 
 
