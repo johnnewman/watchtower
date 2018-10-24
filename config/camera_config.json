@@ -1,0 +1,17 @@
+{
+    "cam_name": "PiSecCam",
+    "command_port": null,
+    "day_dir_date_format": "%Y-%m-%d",
+    "dropbox_token": null,
+    "framerate": 15,
+    "min_delta": 50,
+    "min_rec_time_after_trigger": 8,
+    "min_trigger_area": 0.005,
+    "overlay_date_format": "%Y-%m-%d %H:%M:%S",
+    "rotation": 180,
+    "time_dir_date_format": "%H.%M.%S",
+    "video_size": [
+        1280,
+        720
+    ]
+}
