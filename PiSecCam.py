@@ -141,20 +141,22 @@ def main():
                         wait(camera)
 
                     # Wait for motion to stop
-                    last_motion_check = time.time()
+                    last_motion_trigger = time.time()
                     motion_count = 0
-                    while motion_detected:
-                        if time.time() - last_motion_check >= config['min_rec_time_after_trigger']:
-                            motion_detected, motion_frame_bytes = motion_detector.detect()
-                            if motion_detected:
-                                logger.debug('More motion detected!')
-                                motion_count += 1
-                                save_stream(io.BytesIO(motion_frame_bytes),
-                                            path=full_dir + '/motion' + str(motion_count) + '.jpg',
-                                            debug_name=time_str + '.jpg' + str(motion_count),
-                                            stop_when_empty=True)
-                            last_motion_check = time.time()
-                        wait(camera)
+                    while time.time() - last_motion_trigger <= config['min_rec_time_after_trigger']:
+                        more_motion, motion_frame_bytes = motion_detector.detect()
+                        if more_motion:
+                            logger.debug('More motion detected!')
+                            motion_count += 1
+                            last_motion_trigger = time.time()
+                            save_stream(io.BytesIO(motion_frame_bytes),
+                                        path=full_dir + '/motion' + str(motion_count) + '.jpg',
+                                        debug_name=time_str + '.jpg' + str(motion_count),
+                                        stop_when_empty=True)
+
+                        # Timeout for a second
+                        for i in range(int(CONTINUOUS_MOTION_INTERVAL / WAIT_TIME)):
+                            wait(camera)
 
                     # Now that motion is done, stop uploading
                     map(lambda x: x.stop(), video_streamers)
