@@ -16,14 +16,14 @@ class CamStreamSaver(StreamSaver):
         """
         :return: The position of the most recent frame before ``__start_time``.
         """
-        self.logger.debug('Using start_time %d' % self.__start_time)
+        self.logger.debug('Using start time %ds' % self.__start_time)
         with self.stream.lock:  # Lock the live camera stream while searching
             start_frame = None
             for frame in self.stream.frames:
                 if frame.timestamp is not None and frame.timestamp / 1000000 <= self.__start_time:
                     start_frame = frame
             if start_frame is not None:
-                self.logger.debug('Found frame with timestamp: %d' % int(start_frame.timestamp / 1000000))
+                self.logger.debug('Found frame with timestamp: %d' % (start_frame.timestamp / 1000000))
             else:
                 self.logger.debug('Did not find a start frame.')
             return start_frame.position if start_frame is not None else 0
