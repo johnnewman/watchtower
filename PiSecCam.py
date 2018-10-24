@@ -155,10 +155,6 @@ def main():
                                                   path=full_dir+'/video.h264',
                                                   debug_name=time_str+'.vid')
 
-                    # Capture a minimum amount of video after motion
-                    while (dt.datetime.now() - event_date).seconds < config['min_rec_time_after_trigger']:
-                        wait(camera)
-
                     # Wait for motion to stop
                     last_motion_trigger = time.time()
                     # motion_count = 0
