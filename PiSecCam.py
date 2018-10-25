@@ -67,35 +67,34 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
     """Saves the ``stream`` to disk and optionally Dropbox, if a Dropbox token
      was supplied as a parameter to the program."""
 
+    stream_start_time = max(0, int(time.time() - start_time - rec_time_before_trigger))
+
+    def create_cam_stream(_debug_name, byte_writer):
+        return streamer.CamStreamSaver(stream=stream,
+                                       byte_writer=byte_writer,
+                                       name=_debug_name,
+                                       start_time=stream_start_time,
+                                       stop_when_empty=stop_when_empty)
+
+    def create_stream(_debug_name, byte_writer):
+        return streamer.StreamSaver(stream=stream,
+                                    byte_writer=byte_writer,
+                                    name=_debug_name,
+                                    stop_when_empty=stop_when_empty)
+
+    def create_dropbox_writer(path):
+        return writer.DropboxWriter(full_path='/' + path,
+                                    dropbox_token=dropbox_token)
+
     streamers = []
     if isinstance(stream, picamera.PiCameraCircularIO):
-        stream_start_time = max(0, int(time.time() - start_time - rec_time_before_trigger))
-        streamers.append(streamer.CamStreamSaver(stream=stream,
-                                                 byte_writer=writer.DiskWriter(path),
-                                                 name=debug_name+'.loc',
-                                                 start_time=stream_start_time,
-                                                 stop_when_empty=stop_when_empty))
+        streamers.append(create_cam_stream(debug_name+'.loc', writer.DiskWriter(path)))
         if dropbox_token is not None:
-            dropbox_writer = writer.DropboxWriter(full_path='/' + path,
-                                                  dropbox_token=dropbox_token)
-            streamers.append(streamer.CamStreamSaver(stream=stream,
-                                                     byte_writer=dropbox_writer,
-                                                     name=debug_name+'.dbx',
-                                                     start_time=stream_start_time,
-                                                     stop_when_empty=stop_when_empty))
+            streamers.append(create_cam_stream(debug_name+'.dbx', create_dropbox_writer('/'+path)))
     else:
-        streamers.append(streamer.StreamSaver(stream=stream,
-                                              byte_writer=writer.DiskWriter(path),
-                                              name=debug_name+'.loc',
-                                              stop_when_empty=stop_when_empty))
-
+        streamers.append(create_stream(debug_name+'loc', writer.DiskWriter(path)))
         if dropbox_token is not None:
-            dropbox_writer = writer.DropboxWriter(full_path='/' + path,
-                                                  dropbox_token=dropbox_token)
-            streamers.append(streamer.StreamSaver(stream=stream,
-                                                  byte_writer=dropbox_writer,
-                                                  name=debug_name+'.dbx',
-                                                  stop_when_empty=stop_when_empty))
+            streamers.append(create_stream(debug_name+'.dbx', create_dropbox_writer('/'+path)))
 
     map(lambda x: x.start(), streamers)
     return streamers
