@@ -156,19 +156,11 @@ def main():
 
                     # Wait for motion to stop
                     last_motion_trigger = time.time()
-                    # motion_count = 0
                     while time.time() - last_motion_trigger <= rec_time_after_trigger:
                         more_motion, motion_frame_bytes = motion_detector.detect()
                         if more_motion:
                             logger.debug('More motion detected!')
-                            # motion_count += 1
                             last_motion_trigger = time.time()
-                            # save_stream(io.BytesIO(motion_frame_bytes),
-                            #             path=full_dir + '/motion' + str(motion_count) + '.jpg',
-                            #             debug_name=time_str + '.jpg' + str(motion_count),
-                            #             stop_when_empty=True)
-
-                        # Timeout for a second
                         for i in range(int(MOTION_INTERVAL_WHILE_SAVING / WAIT_TIME)):
                             wait(camera)
 
