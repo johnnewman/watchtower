@@ -87,16 +87,15 @@ class StreamSaver(Thread):
             total_bytes = 0
             while not stopped:
                 read_bytes, stream_pos = self.read(stream_pos)
-                # self.logger.debug('Read %d bytes.' % len(read_bytes)) if len(read_bytes) > 0 else None
                 total_bytes += len(read_bytes)
                 stopped = self.__should_stop() or (self.__stop_when_empty and len(read_bytes) == 0)
                 self.__byte_writer.append_bytes(read_bytes, stopped)
-
+                self.logger.debug('Read %d bytes.' % len(read_bytes)) if len(read_bytes) > 0 else None
                 if len(read_bytes) == 0:
                     time.sleep(EMPTY_WAIT_TIME)  # Wait for more data
                 else:
                     time.sleep(READ_DATA_WAIT_TIME)  # Avoid consuming the CPU
-            self.logger.info('Processed %d total bytes.' % total_bytes)
+            self.logger.debug('Processed %d total bytes.' % total_bytes)
 
         except Exception as e:
             self.__byte_writer.append_bytes('', close=True)  # Try to close if we have an exception
