@@ -82,8 +82,8 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
                                     name=_debug_name,
                                     stop_when_empty=stop_when_empty)
 
-    def create_dropbox_writer(path):
-        return writer.DropboxWriter(full_path='/' + path,
+    def create_dropbox_writer(_path):
+        return writer.DropboxWriter(full_path=_path,
                                     dropbox_token=dropbox_token)
 
     streamers = []
