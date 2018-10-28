@@ -11,6 +11,7 @@ class CamStreamSaver(StreamSaver):
     def __init__(self, stream, byte_writer, name, start_time, stop_when_empty=False):
         super(CamStreamSaver, self).__init__(stream, byte_writer, name, stop_when_empty)
         self.__start_time = start_time
+        self.__last_streamed_frame = None
 
     def start_pos(self):
         """
@@ -22,6 +23,7 @@ class CamStreamSaver(StreamSaver):
             for frame in self.stream.frames:
                 if frame.timestamp is not None and (frame.timestamp / 1000000) <= self.__start_time:
                     start_frame = frame
+                    self.__last_streamed_frame = start_frame
             if start_frame is not None:
                 self.logger.debug('Found frame with timestamp: %d' % (start_frame.timestamp / 1000000))
             else:
@@ -30,11 +32,27 @@ class CamStreamSaver(StreamSaver):
 
     def read(self, position, length=None):
         """
-        Overridden so the camera stream can be locked while it is read. This
-        will also find the distance to the last frame in the stream and
-        use this as the read length.
+        Overridden to use the stream's ``frames`` property to locate the read
+        position (useful if the stream is still being appended to) and compute
+        the distance to the last frame in the stream.
+
+        :param position: Does not matter because it is recalculated using the
+        ``frames`` property of the stream.
+        :param length: Is not used because the length is computed using the
+        last frame in the stream.
+        :return: a tuple of the bytes read and the position where reading
+        stopped.
         """
-        with self.stream.lock:  # Live camera stream needs to be locked while read
-            last_frame = next(reversed(self.stream.frames))  # Read to the last frame.
-            length = last_frame.position - position
+        with self.stream.lock:
+            for frame in reversed(self.stream.frames):
+                # We have to find the frame in the updated stream each time the
+                # stream is read. In the case of a circular stream that's still
+                # being written to, the frame will likely have a new position.
+                if frame.index == self.__last_streamed_frame.index:
+                    self.__last_streamed_frame = frame
+                    break
+            position = self.__last_streamed_frame.position
+            last_frame = next(reversed(self.stream.frames))  # Read to the last frame
+            length = last_frame.position - self.__last_streamed_frame.position
+            self.__last_streamed_frame = last_frame
             return super(CamStreamSaver, self).read(position, length)
