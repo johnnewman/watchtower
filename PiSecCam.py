@@ -101,9 +101,10 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
 
 
 def set_running(r):
-    """Thread-safe setter to turn motion detection on and off. Even when off,
-    the camera still records to an in-memory buffer."""
-
+    """
+    Thread-safe setter to turn motion detection on and off. Even when off,
+    the camera still records to an in-memory buffer.
+    """
     global running
     status_lock.acquire()
     running = r
