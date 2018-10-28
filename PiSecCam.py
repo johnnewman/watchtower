@@ -140,7 +140,7 @@ def main():
                 if motion_detected:
                     motion_detector.reset_base_frame_date()
                     logger.info('Motion detected!')
-
+                    event_time = time.time()
                     event_date = dt.datetime.now()
                     day_str = event_date.strftime(day_dir_date_format)
                     time_str = event_date.strftime(time_dir_date_format)
@@ -156,7 +156,8 @@ def main():
 
                     # Wait for motion to stop
                     last_motion_trigger = time.time()
-                    while time.time() - last_motion_trigger <= rec_time_after_trigger:
+                    while time.time() - last_motion_trigger <= rec_time_after_trigger and \
+                            time.time() - event_time <= max_trigger_time:
                         more_motion, motion_frame_bytes = motion_detector.detect()
                         if more_motion:
                             logger.debug('More motion detected!')
@@ -167,7 +168,7 @@ def main():
                     # Now that motion is done, stop uploading
                     map(lambda x: x.stop(), video_streamers)
                     elapsed_time = (dt.datetime.now() - event_date).seconds
-                    logger.info('Motion stopped; ended recording. Elapsed time %ds' % elapsed_time)
+                    logger.info('Ending recording. Elapsed time %ds' % elapsed_time)
         except Exception as e:
             logger.exception('An exception occurred: %s' % e.message)
         finally:
@@ -183,6 +184,7 @@ if __name__ == '__main__':
     day_dir_date_format = config['day_dir_date_format']
     dropbox_token = config['dropbox_token']
     framerate = config['framerate']
+    max_trigger_time = config['max_trigger_time']
     min_delta = config['min_delta']
     min_trigger_area = config['min_trigger_area']
     overlay_date_format = config['overlay_date_format']
