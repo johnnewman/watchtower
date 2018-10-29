@@ -68,10 +68,10 @@ class CommandReceiver(Thread):
                     else:
                         send_response(NOT_RUNNING_RESPONSE)
                 elif message == START_COMMAND:
-                    logger.info('Received \"%s\".' % STATUS_COMMAND)
+                    logger.info('Received \"%s\".' % START_COMMAND)
                     self.__set_running_callback(True)
                 elif message == STOP_COMMAND:
-                    logger.info('Received \"%s\".' % STATUS_COMMAND)
+                    logger.info('Received \"%s\".' % STOP_COMMAND)
                     self.__set_running_callback(False)
                 else:
                     logger.warning('Unsupported message.')
