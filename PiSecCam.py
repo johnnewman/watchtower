@@ -158,7 +158,7 @@ def main():
 
                     # Wait for motion to stop
                     last_motion_trigger = time.time()
-                    while time.time() - last_motion_trigger <= rec_time_after_trigger and \
+                    while get_running() and time.time() - last_motion_trigger <= rec_time_after_trigger and \
                             time.time() - event_time <= max_trigger_time:
                         more_motion, motion_frame_bytes = motion_detector.detect()
                         if more_motion:
