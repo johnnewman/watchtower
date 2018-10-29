@@ -84,7 +84,8 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
 
     def create_dropbox_writer(_path):
         return writer.DropboxWriter(full_path=_path,
-                                    dropbox_token=dropbox_token)
+                                    dropbox_token=dropbox_token,
+                                    file_chunk_size=dropbox_file_chunk_megs)
 
     streamers = []
     if isinstance(stream, picamera.PiCameraCircularIO):
@@ -186,6 +187,7 @@ if __name__ == '__main__':
     dropbox_token = config['dropbox_token']
     framerate = config['framerate']
     max_trigger_time = config['max_trigger_time']
+    dropbox_file_chunk_megs = config['dropbox_file_chunk_megs']
     min_delta = config['min_delta']
     min_trigger_area = config['min_trigger_area']
     overlay_date_format = config['overlay_date_format']

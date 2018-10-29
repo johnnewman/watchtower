@@ -2,6 +2,7 @@
     "cam_name": "PiSecCam",
     "command_port": null,
     "day_dir_date_format": "%Y-%m-%d",
+    "dropbox_file_chunk_megs": null,
     "dropbox_token": null,
     "framerate": 15,
     "max_trigger_time": 60,
