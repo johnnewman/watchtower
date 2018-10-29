@@ -17,8 +17,8 @@ class DropboxWriter(ByteWriter.ByteWriter):
         """
         :param full_path: The full path of the file.
         :param dropbox_token: Token that will be supplied to Dropbox.
-        :param file_chunk_size: A maximum size before a new file will be
-        created.
+        :param file_chunk_size: A maximum size, in bytes, before a new file
+        will be created.
         """
         super(DropboxWriter, self).__init__(full_path)
         self.__dropbox_token = dropbox_token
