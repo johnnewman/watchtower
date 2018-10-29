@@ -188,6 +188,8 @@ if __name__ == '__main__':
     framerate = config['framerate']
     max_trigger_time = config['max_trigger_time']
     dropbox_file_chunk_megs = config['dropbox_file_chunk_megs']
+    if dropbox_file_chunk_megs is not None:
+        dropbox_file_chunk_megs *= 1024*1024
     min_delta = config['min_delta']
     min_trigger_area = config['min_trigger_area']
     overlay_date_format = config['overlay_date_format']
