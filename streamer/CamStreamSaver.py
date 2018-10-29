@@ -44,12 +44,13 @@ class CamStreamSaver(StreamSaver):
         stopped.
         """
         with self.stream.lock:
+            last_streamed_index = self.__last_streamed_frame.index
             for frame in reversed(self.stream.frames):
                 # We have to find the frame in the updated stream each time the
                 # stream is read. In the case of a circular stream that's still
                 # being written to, the frame will likely have a new position.
-                if frame.index == self.__last_streamed_frame.index:
-                    self.__last_streamed_frame = frame
+                self.__last_streamed_frame = frame
+                if frame.index == last_streamed_index:
                     break
             position = self.__last_streamed_frame.position
             last_frame = next(reversed(self.stream.frames))  # Read to the last frame
