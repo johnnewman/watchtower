@@ -8,7 +8,7 @@
 # Copies all files from input directory into the output directory and
 # the .h264 files into .mp4 files.
 
-fps=15
+fps=20
 
 cp -r "$1" "$2"
 find "$2" -name "*.h264" | while read file; do

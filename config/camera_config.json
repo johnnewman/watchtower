@@ -4,7 +4,7 @@
     "day_dir_date_format": "%Y-%m-%d",
     "dropbox_file_chunk_megs": null,
     "dropbox_token": null,
-    "framerate": 15,
+    "framerate": 20,
     "max_trigger_time": 60,
     "min_delta": 50,
     "min_trigger_area": 0.005,
