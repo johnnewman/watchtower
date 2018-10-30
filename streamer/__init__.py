@@ -1,2 +1,3 @@
 from StreamSaver import StreamSaver
 from CamStreamSaver import CamStreamSaver
+from MJPEGStreamSaver import MJPEGStreamSaver
