@@ -38,12 +38,13 @@ def init_logging():
     return logging.getLogger(__name__)
 
 
-def init_command_receiver():
+def init_command_server():
     if command_port is not None:
-        remote.CommandReceiver(get_running_callback=get_running,
-                               set_running_callback=set_running,
-                               port=command_port).start()
-    return Lock(), True
+        remote.CommandServer(get_camera_callback=get_camera,
+                             get_running_callback=get_running,
+                             set_running_callback=set_running,
+                             port=command_port).start()
+    return Lock(), False
 
 
 def init_camera():
@@ -119,8 +120,11 @@ def get_running():
     return status
 
 
+def get_camera():
+    return camera
+
+
 def main():
-    camera = init_camera()
     with camera:
         motion_detector = motion.MotionDetector(camera, min_delta, min_trigger_area)
         stream = picamera.PiCameraCircularIO(camera, seconds=rec_time_before_trigger)
@@ -200,6 +204,7 @@ if __name__ == '__main__':
     video_size = tuple(config['video_size'])
 
     logger = init_logging()
-    status_lock, running = init_command_receiver()
+    status_lock, running = init_command_server()
     start_time = time.time()
+    camera = init_camera()
     main()
