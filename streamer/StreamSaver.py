@@ -34,6 +34,7 @@ class StreamSaver(Thread):
         self.__stop = False
         self.name = name
         self.logger = logging.getLogger(__name__ + '.' + self.name)
+        self.read_wait_time = READ_DATA_WAIT_TIME
 
     def __should_stop(self):
         self.__lock.acquire()
@@ -94,7 +95,7 @@ class StreamSaver(Thread):
                 if len(read_bytes) == 0:
                     time.sleep(EMPTY_WAIT_TIME)  # Wait for more data
                 else:
-                    time.sleep(READ_DATA_WAIT_TIME)  # Avoid consuming the CPU
+                    time.sleep(self.read_wait_time)  # Avoid consuming the CPU
             self.logger.debug('Processed %d total bytes.' % total_bytes)
 
         except Exception as e:
