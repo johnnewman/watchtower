@@ -2,7 +2,7 @@ import socket
 from streamer.writer import ByteWriter
 
 
-BOUNDARY='FRAME'
+BOUNDARY = 'FRAME'
 
 
 class SocketWriter(ByteWriter.ByteWriter):
