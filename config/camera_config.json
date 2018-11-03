@@ -1,20 +1,32 @@
 {
     "cam_name": "PiSecCam",
-    "command_port": null,
-    "day_dir_date_format": "%Y-%m-%d",
-    "dropbox_file_chunk_megs": null,
-    "dropbox_token": null,
     "framerate": 20,
-    "max_trigger_time": 60,
-    "min_delta": 50,
-    "min_trigger_area": 0.005,
-    "overlay_date_format": "%Y-%m-%d %H:%M:%S",
-    "rec_time_after_trigger": 8,
-    "rec_time_before_trigger": 8,
     "rotation": 180,
-    "time_dir_date_format": "%H.%M.%S",
     "video_size": [
         1280,
         720
-    ]
+    ],
+    "dropbox": {
+        "file_chunk_megs": 3,
+        "token": null
+    },
+    "formats": {
+        "overlay_date_format": "%Y-%m-%d %H:%M:%S",
+        "day_directory_format": "%Y-%m-%d",
+        "time_directory_format": "%H.%M.%S"
+    },
+    "motion": {
+        "max_event_time": 60,
+        "min_trigger_area": 0.005,
+        "min_pixel_delta_trigger": 50,
+        "rec_sec_after": 8,
+        "rec_sec_before": 8
+    },
+    "server": {
+        "enabled": true,
+        "certfile_path": null,
+        "keyfile_path": null,
+        "mjpeg_rate_sec": 1.5,
+        "server_port": 8080
+    }
 }
