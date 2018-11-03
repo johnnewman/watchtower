@@ -147,7 +147,7 @@ def main():
         try:
             while True:
                 if not get_running():
-                    time.sleep(1)
+                    wait(camera)
                     continue
 
                 wait(camera)
