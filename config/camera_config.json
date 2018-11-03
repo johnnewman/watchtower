@@ -26,7 +26,7 @@
         "enabled": true,
         "certfile_path": null,
         "keyfile_path": null,
-        "mjpeg_rate_sec": 1.5,
+        "min_mjpeg_rate_sec": 1.5,
         "server_port": 8080
     }
 }

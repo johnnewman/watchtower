@@ -45,7 +45,7 @@ def init_command_server():
                          port=config['server']['server_port'],
                          certfile=config['server']['certfile_path'],
                          keyfile=config['server']['keyfile_path'],
-                         mjpeg_rate=config['server']['mjpeg_rate_sec']).start()
+                         min_mjpeg_rate=config['server']['min_mjpeg_rate_sec']).start()
 
 
 def init_camera():
