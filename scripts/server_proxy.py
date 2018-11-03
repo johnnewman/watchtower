@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from __future__ import print_function
+import cgi
 import datetime
 import json
 import os
@@ -99,6 +100,17 @@ def send_to_boundary(buf, boundary):
     return buf
 
 
+def extract_fps():
+    fps = cgi.FieldStorage().getvalue('fps', default=1.0)
+    if isinstance(fps, str):
+        try:
+            fps = float(fps)
+        except Exception:
+            print_err('Exception turning FPS into float. Falling back to config file default.')
+            fps = float(config_json['fps'])
+    return fps
+
+
 def stream_camera():
     """
     Creates a socket connection to the camera address and port defined in the
@@ -111,9 +123,7 @@ def stream_camera():
                                ca_certs=config_json['cert_location'],
                                cert_reqs=ssl.CERT_REQUIRED)
         conn.connect((config_json['camera_address'], config_json['port']))
-        conn.send('GET /stream')
-        # fps = float(config_json['fps'])
-        # conn.send('GET /stream?fps=' + fps)
+        conn.send('GET /stream?fps={}'.format(str(extract_fps())))
     except Exception as e:
         print_err('Exception connecting to socket.', repr(e), e.message)
         stop_with_error('Failed to load stream.')
