@@ -24,7 +24,14 @@ class CommandServer(Thread):
     status.
     """
 
-    def __init__(self, get_camera_callback, get_running_callback, set_running_callback, port, certfile=None, keyfile=None):
+    def __init__(self,
+                 get_camera_callback,
+                 get_running_callback,
+                 set_running_callback,
+                 port,
+                 certfile=None,
+                 keyfile=None,
+                 mjpeg_rate=2.5):
         """
         Initializes the command receiver but does not open any ports until
         ``run()`` is called.
@@ -38,6 +45,7 @@ class CommandServer(Thread):
         self.__get_running_callback = get_running_callback
         self.__set_running_callback = set_running_callback
         self.__port = port
+        self.__mjpeg_rate = mjpeg_rate
         if certfile is not None and keyfile is not None:
             print('Using SSL.')
             self.__context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -84,7 +92,8 @@ class CommandServer(Thread):
                     MJPEGStreamSaver(self.__get_camera_callback(),
                                      byte_writer=MJPEGSocketWriter(comm_socket),
                                      name='MJPEG',
-                                     timeout=60).start()
+                                     rate=self.__mjpeg_rate,
+                                     timeout=30).start()
 
                 else:
                     if message == START_COMMAND:
