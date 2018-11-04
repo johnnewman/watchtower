@@ -17,9 +17,6 @@ START_ENDPOINT = 'start'
 STOP_ENDPOINT = 'stop'
 STREAM_ENDPOINT = 'stream'
 
-RUNNING_RESPONSE = 'running'
-NOT_RUNNING_RESPONSE = '!running'
-
 
 class CommandServer(Thread):
     """
@@ -116,15 +113,9 @@ class CommandServer(Thread):
                          timeout=30).start()
 
     def handle_status_endpoint(self, comm_socket):
-        def write_document_message(message):
-            writer = SocketWriter(comm_socket)
-            writer.append_bytes('HTTP/1.1 200 OK\r\n\r\n')
-            writer.append_bytes(json.dumps(dict(message=message)), close=True)
-
-        if self.__get_running_callback():
-            write_document_message(RUNNING_RESPONSE)
-        else:
-            write_document_message(NOT_RUNNING_RESPONSE)
+        writer = SocketWriter(comm_socket)
+        writer.append_bytes('HTTP/1.1 200 OK\r\n\r\n')
+        writer.append_bytes(json.dumps(dict(running=self.__get_running_callback())), close=True)
 
     def run(self):
         """
