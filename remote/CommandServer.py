@@ -1,4 +1,5 @@
 import logging
+import json
 import re
 import socket
 import ssl
@@ -9,10 +10,12 @@ from streamer import MJPEGStreamSaver
 
 TIMEOUT = 10
 
-STATUS_COMMAND = 'get_status'
-START_COMMAND = 'start_running'
-STOP_COMMAND = 'stop_running'
-STREAM_ENDPOINT = '/stream'
+API_KEY_HEADER_NAME = 'x-api-key'
+
+STATUS_ENDPOINT = 'status'
+START_ENDPOINT = 'start'
+STOP_ENDPOINT = 'stop'
+STREAM_ENDPOINT = 'stream'
 
 RUNNING_RESPONSE = 'running'
 NOT_RUNNING_RESPONSE = '!running'
@@ -57,13 +60,48 @@ class CommandServer(Thread):
         else:
             self.__context = None
 
-    def handle_stream(self, comm_socket, re_result):
+    def verify_api_key(self, comm_socket, request):
+        if self.__api_key is None:
+            return True
+
+        def write_forbidden():
+            writer = SocketWriter(comm_socket)
+            writer.append_bytes('HTTP/1.1 403 Forbidden\r\n\r\n', close=True)
+            return False
+
+        index = request.find('{}: {}'.format(API_KEY_HEADER_NAME, self.__api_key))
+        if index == -1:
+            self.__logger.warning('Bad API key supplied.')
+            return write_forbidden()
+        else:
+            return True
+
+    def get_endpoint(self, comm_socket, request):
+        supported_endpoints = [STATUS_ENDPOINT, START_ENDPOINT, STOP_ENDPOINT, STREAM_ENDPOINT]
+        re_result = re.match('^GET /(?P<endpoint>({}|{}|{}|{}))(\?|\s)'.format(*supported_endpoints), request)
+
+        def write_not_found():
+            writer = SocketWriter(comm_socket)
+            writer.append_bytes('HTTP/1.1 404 Not Found\r\n\r\n', close=True)
+            return None
+
+        if re_result is None:
+            self.__logger.warning('Did not find endpoint in the URL.')
+            return write_not_found()
+        elif re_result.group('endpoint') is None:
+            self.__logger.warning('Regex \'endpoint\' does not exist.')
+            return write_not_found()
+        else:
+            return re_result.group('endpoint')
+
+    def handle_stream(self, comm_socket, request):
+        re_result = re.match('^GET {}(\?fps=(?P<fps>\d+\.?\d+))?'.format(STREAM_ENDPOINT), request)
         self.__logger.info('Received \"%s\".' % STREAM_ENDPOINT)
-        fps = re_result.group('fps')
-        if fps is None:
+        if re_result is None:
             self.__logger.info('No FPS supplied. Using 1.0.')
             fps = 1.0
         else:
+            fps = re_result.group('fps')
             fps = float(fps)
             if fps == 0:
                 self.__logger.warning('0 FPS supplied. Using 1.0.')
@@ -74,6 +112,17 @@ class CommandServer(Thread):
                          name='MJPEG',
                          rate=max(fps, self.__min_mjpeg_rate),
                          timeout=30).start()
+
+    def handle_status_endpoint(self, comm_socket):
+        def write_document_message(message):
+            writer = SocketWriter(comm_socket)
+            writer.append_bytes('HTTP/1.1 200 OK\r\n\r\n')
+            writer.append_bytes(json.dumps(dict(message=message)), close=True)
+
+        if self.__get_running_callback():
+            write_document_message(RUNNING_RESPONSE)
+        else:
+            write_document_message(NOT_RUNNING_RESPONSE)
 
     def run(self):
         """
@@ -97,31 +146,34 @@ class CommandServer(Thread):
                 else:
                     comm_socket = client_socket
 
-                message = comm_socket.recv(1024).rstrip()
-                self.__logger.info(message)
-                stream_result = re.match('^GET {}(\?fps=(?P<fps>\d+\.?\d+))?'.format(STREAM_ENDPOINT), message)
+                request = comm_socket.recv(2048)
+                if not self.verify_api_key(comm_socket, request):
+                    continue
+                endpoint = self.get_endpoint(comm_socket, request)
+                if endpoint is None:
+                    continue
 
-                if message == STATUS_COMMAND:
-                    self.__logger.info('Received \"%s\".' % STATUS_COMMAND)
-                    writer = SocketWriter(comm_socket)
-                    if self.__get_running_callback():
-                        writer.append_bytes(RUNNING_RESPONSE, close=True)
-                    else:
-                        writer.append_bytes(NOT_RUNNING_RESPONSE, close=True)
-                elif stream_result:
-                    self.handle_stream(comm_socket, stream_result)
-                else:
-                    if message == START_COMMAND:
-                        self.__logger.info('Received \"%s\".' % START_COMMAND)
-                        self.__set_running_callback(True)
-                    elif message == STOP_COMMAND:
-                        self.__logger.info('Received \"%s\".' % STOP_COMMAND)
-                        self.__set_running_callback(False)
-                    else:
-                        self.__logger.warning('Unsupported message.')
+                self.__logger.info('Hit endpoint: \'%s\'', endpoint)
+                if endpoint == STATUS_ENDPOINT:
+                    self.handle_status_endpoint(comm_socket)
+                elif endpoint == STREAM_ENDPOINT:
+                    self.handle_stream(comm_socket, request)
+                elif endpoint == START_ENDPOINT:
+                    self.__set_running_callback(True)
+                    self.write_success(comm_socket)
+                elif endpoint == STOP_ENDPOINT:
+                    self.__set_running_callback(False)
+                    self.write_success(comm_socket)
+                else:  # Should not be possible after the endpoint regex.
+                    self.__logger.warning('Unsupported message.')
                     comm_socket.shutdown(socket.SHUT_RDWR)
                     comm_socket.close()
 
             except Exception as e:
                 self.__logger.exception('An exception occurred listening for commands: %s' % e.message)
                 time.sleep(TIMEOUT)
+
+    @staticmethod
+    def write_success(comm_socket):
+        writer = SocketWriter(comm_socket)
+        writer.append_bytes('HTTP/1.1 200 OK\r\n\r\n', close=True)
