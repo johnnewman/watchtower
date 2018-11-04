@@ -24,6 +24,7 @@
     },
     "server": {
         "enabled": true,
+        "api_key": null,
         "certfile_path": null,
         "keyfile_path": null,
         "min_mjpeg_rate_sec": 1.5,

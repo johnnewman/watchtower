@@ -43,6 +43,7 @@ def init_command_server():
                          get_running_callback=get_running,
                          set_running_callback=set_running,
                          port=config['server']['server_port'],
+                         api_key=config['server']['api_key'],
                          certfile=config['server']['certfile_path'],
                          keyfile=config['server']['keyfile_path'],
                          min_mjpeg_rate=config['server']['min_mjpeg_rate_sec']).start()

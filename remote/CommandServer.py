@@ -30,6 +30,7 @@ class CommandServer(Thread):
                  get_running_callback,
                  set_running_callback,
                  port,
+                 api_key=None,
                  certfile=None,
                  keyfile=None,
                  min_mjpeg_rate=2.5):
@@ -46,6 +47,7 @@ class CommandServer(Thread):
         self.__get_running_callback = get_running_callback
         self.__set_running_callback = set_running_callback
         self.__port = port
+        self.__api_key = api_key
         self.__min_mjpeg_rate = min_mjpeg_rate
         self.__logger = logging.getLogger(__name__)
         if certfile is not None and keyfile is not None:
