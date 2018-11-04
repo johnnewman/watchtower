@@ -27,7 +27,7 @@
         "api_key": null,
         "certfile_path": null,
         "keyfile_path": null,
-        "min_mjpeg_rate_sec": 1.5,
+        "mjpeg_framerate_cap": 1.5,
         "server_port": 8080
     }
 }

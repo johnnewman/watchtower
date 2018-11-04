@@ -5,7 +5,7 @@ import time
 
 class MJPEGStreamSaver(StreamSaver):
 
-    def __init__(self, camera, byte_writer, name, rate=2.5, timeout=10):
+    def __init__(self, camera, byte_writer, name, rate=1, timeout=10):
         super(MJPEGStreamSaver, self).__init__(stream=io.BytesIO(),
                                                byte_writer=byte_writer,
                                                name=name,

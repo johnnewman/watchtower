@@ -46,7 +46,7 @@ def init_command_server():
                          api_key=config['server']['api_key'],
                          certfile=config['server']['certfile_path'],
                          keyfile=config['server']['keyfile_path'],
-                         min_mjpeg_rate=config['server']['min_mjpeg_rate_sec']).start()
+                         mjpeg_rate_cap=config['server']['mjpeg_framerate_cap']).start()
 
 
 def init_camera():

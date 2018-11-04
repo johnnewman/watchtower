@@ -36,7 +36,7 @@ class CommandServer(Thread):
                  api_key=None,
                  certfile=None,
                  keyfile=None,
-                 min_mjpeg_rate=2.5):
+                 mjpeg_rate_cap=2.5):
         """
         Initializes the command receiver but does not open any ports until
         ``run()`` is called.
@@ -51,7 +51,7 @@ class CommandServer(Thread):
         self.__set_running_callback = set_running_callback
         self.__port = port
         self.__api_key = api_key
-        self.__min_mjpeg_rate = min_mjpeg_rate
+        self.__mjpeg_rate_cap = mjpeg_rate_cap
         self.__logger = logging.getLogger(__name__)
         if certfile is not None and keyfile is not None:
             print('Using SSL.')
@@ -106,11 +106,13 @@ class CommandServer(Thread):
             if fps == 0:
                 self.__logger.warning('0 FPS supplied. Using 1.0.')
                 fps = 1.0
+
+        fps = min(fps, self.__mjpeg_rate_cap)
         self.__logger.info('Using FPS: %s' % str(fps))
         MJPEGStreamSaver(self.__get_camera_callback(),
                          byte_writer=MJPEGSocketWriter(comm_socket),
                          name='MJPEG',
-                         rate=max(fps, self.__min_mjpeg_rate),
+                         rate=1.0/fps,
                          timeout=30).start()
 
     def handle_status_endpoint(self, comm_socket):
