@@ -92,8 +92,7 @@ class CommandServer(Thread):
             return re_result.group('endpoint')
 
     def handle_stream(self, comm_socket, request):
-        re_result = re.match('^GET {}(\?fps=(?P<fps>\d+\.?\d+))?'.format(STREAM_ENDPOINT), request)
-        self.__logger.info('Received \"%s\".' % STREAM_ENDPOINT)
+        re_result = re.match('^GET /{}(\?fps=(?P<fps>\d+\.?\d*))?'.format(STREAM_ENDPOINT), request)
         if re_result is None:
             self.__logger.info('No FPS supplied. Using 1.0.')
             fps = 1.0
