@@ -10,8 +10,6 @@ from streamer import MJPEGStreamSaver
 
 TIMEOUT = 10
 
-API_KEY_HEADER_NAME = 'x-api-key'
-
 STATUS_ENDPOINT = 'status'
 START_ENDPOINT = 'start'
 STOP_ENDPOINT = 'stop'
@@ -31,6 +29,7 @@ class CommandServer(Thread):
                  set_running_callback,
                  port,
                  api_key=None,
+                 api_key_header_name=None,
                  certfile=None,
                  keyfile=None,
                  mjpeg_rate_cap=2.5):
@@ -48,6 +47,7 @@ class CommandServer(Thread):
         self.__set_running_callback = set_running_callback
         self.__port = port
         self.__api_key = api_key
+        self.__api_key_header_name = api_key_header_name
         self.__mjpeg_rate_cap = mjpeg_rate_cap
         self.__logger = logging.getLogger(__name__)
         if certfile is not None and keyfile is not None:
@@ -66,7 +66,7 @@ class CommandServer(Thread):
             writer.append_bytes('HTTP/1.1 403 Forbidden\r\n\r\n', close=True)
             return False
 
-        index = request.find('{}: {}'.format(API_KEY_HEADER_NAME, self.__api_key))
+        index = request.find('{}: {}'.format(self.__api_key_header_name, self.__api_key))
         if index == -1:
             self.__logger.warning('Bad API key supplied.')
             return write_forbidden()

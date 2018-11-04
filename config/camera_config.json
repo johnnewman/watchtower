@@ -25,6 +25,7 @@
     "server": {
         "enabled": true,
         "api_key": null,
+        "api_key_header_name": "x-api-key",
         "certfile_path": null,
         "keyfile_path": null,
         "mjpeg_framerate_cap": 1.5,

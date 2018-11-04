@@ -44,6 +44,7 @@ def init_command_server():
                          set_running_callback=set_running,
                          port=config['server']['server_port'],
                          api_key=config['server']['api_key'],
+                         api_key_header_name=config['server']['api_key_header_name'],
                          certfile=config['server']['certfile_path'],
                          keyfile=config['server']['keyfile_path'],
                          mjpeg_rate_cap=config['server']['mjpeg_framerate_cap']).start()
