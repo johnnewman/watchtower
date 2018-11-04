@@ -3,5 +3,6 @@
     "api_token_header_key": "",
     "camera_address": "",
     "cert_location": "",
-    "port": 8080
+    "port": 8080,
+    "default_fps": 0.5
 }

@@ -101,13 +101,12 @@ def send_to_boundary(buf, boundary):
 
 
 def extract_fps():
-    fps = cgi.FieldStorage().getvalue('fps', default=1.0)
-    if isinstance(fps, str):
-        try:
-            fps = float(fps)
-        except Exception:
-            print_err('Exception turning FPS into float. Falling back to config file default.')
-            fps = float(config_json['fps'])
+    fps = cgi.FieldStorage().getvalue('fps', default=float(config_json['default_fps']))
+    try:
+        fps = float(fps)
+    except Exception:
+        print_err('Exception turning FPS into float. Falling back to config file default.')
+        fps = float(config_json['default_fps'])
     return fps
 
 
