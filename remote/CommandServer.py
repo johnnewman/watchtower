@@ -99,7 +99,7 @@ class CommandServer(Thread):
 
                 message = comm_socket.recv(1024).rstrip()
                 self.__logger.info(message)
-                stream_result = re.match('^GET {}\?(fps=(?P<fps>\d+))?'.format(STREAM_ENDPOINT), message)
+                stream_result = re.match('^GET {}(\?fps=(?P<fps>\d+\.?\d+))?'.format(STREAM_ENDPOINT), message)
 
                 if message == STATUS_COMMAND:
                     self.__logger.info('Received \"%s\".' % STATUS_COMMAND)
