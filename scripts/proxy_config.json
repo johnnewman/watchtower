@@ -1,8 +1,12 @@
 {
-    "api_token": "",
-    "api_token_header_key": "",
-    "camera_address": "",
-    "cert_location": "",
-    "port": 8080,
-    "default_fps": 0.5
+    "api_key": "",
+    "api_key_header_name": "HTTP_X_API_KEY",
+    "camera": {
+      "api_key_header_name": "x-api-key",
+      "api_key": ""
+      "network_address": "",
+      "port": 8080,
+      "cert_location": "",
+      "default_fps": 0.5
+    }
 }

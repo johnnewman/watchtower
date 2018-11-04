@@ -49,7 +49,7 @@ def parse_api_key():
     :return: The header value or None if nothing was found.
     """
     for header_name, header_value in os.environ.iteritems():
-        if header_name == config_json['api_key_header_key']:
+        if header_name == config_json['api_key_header_name']:
             return header_value
     return None
 
@@ -101,12 +101,12 @@ def send_to_boundary(buf, boundary):
 
 
 def extract_fps():
-    fps = cgi.FieldStorage().getvalue('fps', default=float(config_json['default_fps']))
+    fps = cgi.FieldStorage().getvalue('fps', default=float(config_json['camera']['default_fps']))
     try:
         fps = float(fps)
     except Exception:
         print_err('Exception turning FPS into float. Falling back to config file default.')
-        fps = float(config_json['default_fps'])
+        fps = float(config_json['camera']['default_fps'])
     return fps
 
 
@@ -119,10 +119,13 @@ def stream_camera():
     conn = None
     try:
         conn = ssl.wrap_socket(socket.socket(socket.AF_INET),
-                               ca_certs=config_json['cert_location'],
+                               ca_certs=config_json['camera']['cert_location'],
                                cert_reqs=ssl.CERT_REQUIRED)
-        conn.connect((config_json['camera_address'], config_json['port']))
-        conn.send('GET /stream?fps={}'.format(str(extract_fps())))
+        conn.connect((config_json['camera']['network_address'], config_json['camera']['port']))
+        conn.send('GET /stream?fps={} HTTP/1.1\r\n'.format(str(extract_fps())) +
+                  '{}: {}\r\n\r\n'.format(config_json['camera']['api_key_header_name'],
+                                          config_json['camera']['api_key']))
+
     except Exception as e:
         print_err('Exception connecting to socket.', repr(e), e.message)
         stop_with_error('Failed to load stream.')
