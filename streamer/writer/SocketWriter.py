@@ -12,13 +12,17 @@ class SocketWriter(ByteWriter.ByteWriter):
         self.__socket = comm_socket
 
     def append_bytes(self, byte_string, close=False):
-        total_sent = 0
-        while total_sent < len(byte_string) and len(byte_string) > 0:
-            sent = self.__socket.send(byte_string[total_sent:])
-            if sent == 0:
-                raise RuntimeError('Socket connection is broken.')
-            total_sent += sent
-        if close:
+        try:
+            total_sent = 0
+            while total_sent < len(byte_string) and len(byte_string) > 0:
+                sent = self.__socket.send(byte_string[total_sent:])
+                if sent == 0:
+                    raise RuntimeError('Socket connection is broken.')
+                total_sent += sent
+            if close:
+                self.__socket.shutdown(socket.SHUT_RDWR)
+                self.__socket.close()
+        except Exception as e:
             self.__socket.shutdown(socket.SHUT_RDWR)
             self.__socket.close()
 
