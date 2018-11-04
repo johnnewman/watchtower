@@ -58,16 +58,14 @@ class CommandServer(Thread):
     def handle_stream(self, comm_socket, re_result):
         self.__logger.info('Received \"%s\".' % STREAM_ENDPOINT)
         fps = re_result.group('fps')
-        try:
-            if not isinstance(fps, float):
-                fps = float(fps)
-        except Exception:
-            self.__logger.warning('Bad FPS supplied. Using 1.')
+        if fps is None:
+            self.__logger.info('No FPS supplied. Using 1.0.')
             fps = 1.0
-
-        if fps == 0:
-            self.__logger.warning('0 FPS supplied. Using 1.')
-            fps = 1.0
+        else:
+            fps = float(fps)
+            if fps == 0:
+                self.__logger.warning('0 FPS supplied. Using 1.0.')
+                fps = 1.0
         self.__logger.info('Using FPS: %s' % str(fps))
         MJPEGStreamSaver(self.__get_camera_callback(),
                          byte_writer=MJPEGSocketWriter(comm_socket),
