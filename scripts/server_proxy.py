@@ -69,34 +69,20 @@ def strip_status_code(buf):
     return False, buf
 
 
-def find_boundary(buf):
+def send_next_chunk(buf):
     """
-    Performs a search of the supplied buffer looking for the boundary key. This
-    safely searches for the entire line, including trailing newlines, to ensure
-    that the boundary string was loaded into the buffer in full.
+    Finds the next Content-Length key and sends the next content chunk to the
+    client, assuming buffer fully contains the length.
     :param buf: The buffer to search.
-    :return: The boundary string or None if it wasn't found.
-    """
-    result = re.search('Content-Type.*boundary=(?P<boundary>\w+)\r\n', buf)
-    if result:
-        return result.group('boundary')
-    return None
-
-
-def send_to_boundary(buf, boundary):
-    """
-    Looks for the next boundary in the supplied buffer. If one is found, the
-    chunk of the buffer up to the found boundary is sent to the client.
-    :param buf: The buffer to search.
-    :param boundary: The boundary string.
     :return: The buffer with any leading read portion removed.
     """
-    boundary = '--{}\r\n'.format(boundary)
-    index = buf.find(boundary, min(len(boundary), len(buf)))
-    if index > -1:
-        print_std(buf[:index])
-        sys.stdout.flush()
-        return buf[index:]
+    result = re.search('\r\nContent-Length: (?P<length>\d+)\r\n\r\n', buf)
+    if result:
+        end_index = result.end() + int(result.group('length'))
+        if len(buf) >= end_index:
+            print_std(buf[:end_index])
+            sys.stdout.flush()
+            return buf[end_index:]
     return buf
 
 
@@ -118,11 +104,12 @@ def stream_camera():
     """
     conn = None
     try:
+        fps = extract_fps()
         conn = ssl.wrap_socket(socket.socket(socket.AF_INET),
                                ca_certs=config_json['camera']['cert_location'],
                                cert_reqs=ssl.CERT_REQUIRED)
         conn.connect((config_json['camera']['network_address'], config_json['camera']['port']))
-        conn.send('GET /stream?fps={} HTTP/1.1\r\n'.format(str(extract_fps())) +
+        conn.send('GET /stream?fps={} HTTP/1.1\r\n'.format(str(fps)) +
                   '{}: {}\r\n\r\n'.format(config_json['camera']['api_key_header_name'],
                                           config_json['camera']['api_key']))
 
@@ -132,21 +119,23 @@ def stream_camera():
 
     try:
         buf = ''
-        boundary = None
         stripped_code = False
+        no_data_time = None
         while True:
-            buf = buf + conn.recv(READ_CHUNK_SIZE)
-            if len(buf) > 0:
+            received_data = conn.recv(READ_CHUNK_SIZE)
+            if len(received_data) == 0:
+                if no_data_time is None:
+                    no_data_time = time.time()
+                if time.time() - no_data_time > 1.0/fps + 1:
+                    break
+                time.sleep(NO_DATA_SLEEP_TIME)
+            else:
+                buf += received_data
                 if not stripped_code:
                     stripped_code, buf = strip_status_code(buf)
-
-                if boundary is None:
-                    boundary = find_boundary(buf)
-
-                if stripped_code and boundary is not None:
-                    buf = send_to_boundary(buf, boundary)
-            else:
-                time.sleep(NO_DATA_SLEEP_TIME)
+                else:
+                    no_data_time = None
+                    buf = send_next_chunk(buf)
     except Exception as e:
         print_err('Exception reading from socket.', repr(e), e.message)
 
