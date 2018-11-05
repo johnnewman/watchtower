@@ -1,2 +1,2 @@
-from DropboxWriter import DropboxWriter
-from DiskWriter import DiskWriter
+from dropbox_writer import DropboxWriter
+from disk_writer import DiskWriter

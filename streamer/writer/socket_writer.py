@@ -1,11 +1,11 @@
 import socket
-from streamer.writer import ByteWriter
+from streamer.writer import byte_writer
 
 
 BOUNDARY = 'FRAME'
 
 
-class SocketWriter(ByteWriter.ByteWriter):
+class SocketWriter(byte_writer.ByteWriter):
 
     def __init__(self, comm_socket):
         super(SocketWriter, self).__init__(None)

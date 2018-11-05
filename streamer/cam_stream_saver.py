@@ -1,4 +1,4 @@
-from StreamSaver import StreamSaver
+from stream_saver import StreamSaver
 
 
 class CamStreamSaver(StreamSaver):

@@ -1,12 +1,12 @@
 import dropbox
 import logging
 import os
-from streamer.writer import ByteWriter
+from streamer.writer import byte_writer
 
 logger = None
 
 
-class DropboxWriter(ByteWriter.ByteWriter):
+class DropboxWriter(byte_writer.ByteWriter):
     """
     A class that creates an upload session on Dropbox and writes all bytes to
     that session.  When ``file_chunk_size`` is reached, the session is closed

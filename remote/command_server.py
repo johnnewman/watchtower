@@ -5,7 +5,7 @@ import socket
 import ssl
 from threading import Thread
 import time
-from streamer.writer.SocketWriter import SocketWriter, MJPEGSocketWriter
+from streamer.writer.socket_writer import SocketWriter, MJPEGSocketWriter
 from streamer import MJPEGStreamSaver
 
 TIMEOUT = 10

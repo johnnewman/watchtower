@@ -1,1 +1,1 @@
-from MotionDetector import MotionDetector
+from motion_detector import MotionDetector

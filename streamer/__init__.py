@@ -1,3 +1,3 @@
-from StreamSaver import StreamSaver
-from CamStreamSaver import CamStreamSaver
-from MJPEGStreamSaver import MJPEGStreamSaver
+from stream_saver import StreamSaver
+from cam_stream_saver import CamStreamSaver
+from mjpeg_stream_saver import MJPEGStreamSaver

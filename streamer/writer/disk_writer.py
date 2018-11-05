@@ -1,8 +1,8 @@
 import os
-from streamer.writer import ByteWriter
+from streamer.writer import byte_writer
 
 
-class DiskWriter(ByteWriter.ByteWriter):
+class DiskWriter(byte_writer.ByteWriter):
     """
     A simple class that writes all supplied bytes to a file.  Will close the
     file when finished.
