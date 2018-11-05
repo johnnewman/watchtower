@@ -99,5 +99,8 @@ class StreamSaver(Thread):
             self.logger.debug('Processed %d total bytes.' % total_bytes)
 
         except Exception as e:
-            self.__byte_writer.append_bytes('', close=True)  # Try to close if we have an exception
             self.logger.exception('An exception occurred: %s' % e.message)
+            try:
+                self.__byte_writer.append_bytes('', close=True)  # Try to close if we have an exception
+            except Exception as e2:
+                self.logger.exception('Attempted to close the writer. Received an exception: %s' % e2.message)
