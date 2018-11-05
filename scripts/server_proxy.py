@@ -56,16 +56,19 @@ def parse_api_key():
 
 def strip_status_code(buf):
     """
-    Used to remove the HTTP status code returned from the MJPEG streamer. Since
-    this is a CGI script, the host server will not like this being sent to the
-    client.
+    Used to remove the HTTP status code returned from the HTTP MJPEG streamer.
+    Since this is a CGI script, the host server will handle the status code.
+    If the MJPEG streamer did not return a 200, this will throw an exception.
     :param buf: The buffer to search.
     :return: A tuple with a flag indicating if the string was removed and the
-             new buffer.
+    new buffer.
     """
-    status_code_str = 'HTTP/1.1 200 OK\r\n'
-    if buf.startswith(status_code_str):
-        return True, buf[len(status_code_str):]
+    result = re.match('^.+ (?P<status>\d+) .+\r\n', buf)
+    if result:
+        if int(result.group('status')) == 200:
+            return True, buf[result.end():]
+        else:
+            raise RuntimeError('Bad status code from MJPEG streamer. Aborting')
     return False, buf
 
 
@@ -87,6 +90,10 @@ def send_next_chunk(buf):
 
 
 def extract_fps():
+    """
+    Parses the FPS field. Uses the config file as a backup in case of errors.
+    :return: The FPS.
+    """
     fps = cgi.FieldStorage().getvalue('fps', default=float(config_json['camera']['default_fps']))
     try:
         fps = float(fps)
@@ -99,10 +106,11 @@ def extract_fps():
 def stream_camera():
     """
     Creates a socket connection to the camera address and port defined in the
-    config file. Reads the data from this server and proxy's it to the client
-    in chunks separated by the boundary.
+    config file. Uses the API header field defined in the config file. Reads
+    the data from this server and proxy's it to the client in chunks.
     """
     conn = None
+    fps = 1.0
     try:
         fps = extract_fps()
         conn = ssl.wrap_socket(socket.socket(socket.AF_INET),
@@ -120,24 +128,27 @@ def stream_camera():
     try:
         buf = ''
         stripped_code = False
-        no_data_time = None
-        while True:
+        last_rx_time = time.time()
+        byte_count = 0
+        while time.time() - last_rx_time < 1.0/fps + 1:
             received_data = conn.recv(READ_CHUNK_SIZE)
-            if len(received_data) == 0:
-                if no_data_time is None:
-                    no_data_time = time.time()
-                if time.time() - no_data_time > 1.0/fps + 1:
-                    break
-                time.sleep(NO_DATA_SLEEP_TIME)
-            else:
+            if len(received_data) > 0:
+                byte_count += len(received_data)
+                last_rx_time = time.time()
                 buf += received_data
                 if not stripped_code:
                     stripped_code, buf = strip_status_code(buf)
                 else:
-                    no_data_time = None
                     buf = send_next_chunk(buf)
+            else:
+                time.sleep(NO_DATA_SLEEP_TIME)
+
+        if byte_count == 0:
+            raise RuntimeError('No data was read from the stream.')
+
     except Exception as e:
         print_err('Exception reading from socket.', repr(e), e.message)
+        stop_with_error('Failed while reading from stream.')
 
 
 def main():
