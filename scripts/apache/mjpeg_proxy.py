@@ -82,7 +82,7 @@ def stream_camera():
 
     except Exception as e:
         cgic.err('Exception connecting to socket.', repr(e), e.message)
-        cgic.stop_with_error('Failed to load stream.')
+        cgic.send_error_message('Failed to load stream.')
 
     try:
         buf = ''
@@ -107,7 +107,7 @@ def stream_camera():
 
     except Exception as e:
         cgic.err('Exception reading from socket.', repr(e), e.message)
-        cgic.stop_with_error('Failed while reading from stream.')
+        cgic.send_error_message('Failed while reading from stream.')
 
 
 if cgic.verify_api_key():

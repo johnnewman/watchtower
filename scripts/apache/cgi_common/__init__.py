@@ -26,20 +26,27 @@ def err(*args):
     print('[{}] [{}]'.format(str(datetime.datetime.now()), __name__), *args, sep=' ', end='\n', file=sys.stderr)
 
 
-def stop_with_error(error_string, code=500, code_title='Internal Server Error'):
+def send_error_message(error_string, code=500, code_title='Internal Server Error'):
     """
     Sends the error code to the client. Wraps the ``error_string`` in a JSON
-    object. Stops executing the CGI script.
+    object.
     """
     send_response(dict(error_message=error_string), code, code_title)
-    sys.exit()
 
 
 def send_response(json_dict, code=200, code_title='OK'):
+    """
+    Sends the code, code title, and json dictionary to the client. Stops
+    executing the CGI script.
+    :param json_dict: The optional dictionary to send to the client.
+    :param code: The HTTP status code.
+    :param code_title: The HTTP status code title.
+    """
     std('Status: {} {}\r\n'.format(str(code), code_title))
     if json_dict is not None:
         std('Content-Type: application/json\r\n\r\n')
         std(json.dumps(json_dict))
+    sys.exit()
 
 
 def parse_api_key():
