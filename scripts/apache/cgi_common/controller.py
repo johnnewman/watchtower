@@ -14,10 +14,10 @@ class CameraController(object):
             self.camera = Camera(config_json['camera'])
 
     def stop(self):
-        self.camera.start()
+        self.camera.stop()
 
     def start(self):
-        self.camera.stop()
+        self.camera.start()
 
 
 class Camera(object):
@@ -31,13 +31,13 @@ class Camera(object):
         self.default_mjpeg_fps = cam_json['default_fps']
 
     def stop(self):
-        self.__send_get_to_endpoint('/stop')
+        self.__send_get_to_endpoint('stop')
 
     def start(self):
-        self.__send_get_to_endpoint('/start')
+        self.__send_get_to_endpoint('start')
 
     def get_status(self):
-        self.__send_get_to_endpoint('/status')
+        self.__send_get_to_endpoint('status')
 
     def __send_get_to_endpoint(self, endpoint):
         url = 'https://{}:{}/{}'.format(self.network_address, self.port, endpoint)
