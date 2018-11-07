@@ -51,6 +51,8 @@ class Camera(object):
                     self.send_error_response()
             else:
                 self.send_error_response()
+        except requests.exceptions.ConnectionError:
+            self.send_error_response()
         except requests.exceptions.ReadTimeout:
             self.send_error_response()
 
