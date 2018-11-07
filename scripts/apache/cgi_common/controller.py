@@ -11,7 +11,7 @@ class CameraController(object):
         super(CameraController, self).__init__()
         with open(config_location, 'r') as config_file:
             config_json = json.load(config_file)
-            self.camera = config_json['camera']
+            self.camera = Camera(config_json['camera'])
 
     def stop(self):
         self.camera.start()
@@ -23,12 +23,12 @@ class CameraController(object):
 class Camera(object):
     def __init__(self, cam_json):
         super(Camera, self).__init__()
-        self.api_key = cam_json['camera']['api_key']
-        self.api_key_header_name = cam_json['camera']['api_key_header_name']
-        self.network_address = cam_json['camera']['network_address']
-        self.port = cam_json['camera']['port']
-        self.cert_location = cam_json['camera']['cert_location']
-        self.default_mjpeg_fps = cam_json['camera']['default_fps']
+        self.api_key = cam_json['api_key']
+        self.api_key_header_name = cam_json['api_key_header_name']
+        self.network_address = cam_json['network_address']
+        self.port = cam_json['port']
+        self.cert_location = cam_json['cert_location']
+        self.default_mjpeg_fps = cam_json['default_fps']
 
     def stop(self):
         self.__send_get_to_endpoint('/stop')
