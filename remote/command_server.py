@@ -111,7 +111,7 @@ class CommandServer(Thread):
                          rate=1.0/fps,
                          timeout=30).start()
 
-    def handle_status_endpoint(self, comm_socket):
+    def send_status(self, comm_socket):
         writer = SocketWriter(comm_socket)
         writer.append_bytes('HTTP/1.1 200 OK\r\n\r\n')
         writer.append_bytes(json.dumps(dict(running=self.__get_running_callback())), close=True)
@@ -147,15 +147,16 @@ class CommandServer(Thread):
 
                 self.__logger.info('Hit endpoint: \'%s\'', endpoint)
                 if endpoint == STATUS_ENDPOINT:
-                    self.handle_status_endpoint(comm_socket)
+                    self.send_status(comm_socket)
                 elif endpoint == STREAM_ENDPOINT:
                     self.handle_stream(comm_socket, request)
                 elif endpoint == START_ENDPOINT:
                     self.__set_running_callback(True)
-                    self.write_success(comm_socket)
+                    self.send_status(comm_socket)
                 elif endpoint == STOP_ENDPOINT:
                     self.__set_running_callback(False)
-                    self.write_success(comm_socket)
+                    self.send_status(comm_socket)
+
                 else:  # Should not be possible after the endpoint regex.
                     self.__logger.warning('Unsupported message.')
                     comm_socket.shutdown(socket.SHUT_RDWR)
@@ -164,8 +165,3 @@ class CommandServer(Thread):
             except Exception as e:
                 self.__logger.exception('An exception occurred listening for commands: %s' % e.message)
                 time.sleep(TIMEOUT)
-
-    @staticmethod
-    def write_success(comm_socket):
-        writer = SocketWriter(comm_socket)
-        writer.append_bytes('HTTP/1.1 200 OK\r\n\r\n', close=True)
