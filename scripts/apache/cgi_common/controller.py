@@ -19,6 +19,9 @@ class CameraController(object):
     def start(self):
         self.camera.start()
 
+    def status(self):
+        self.camera.status()
+
 
 class Camera(object):
     def __init__(self, cam_json):
@@ -36,7 +39,7 @@ class Camera(object):
     def start(self):
         self.__send_get_to_endpoint('start')
 
-    def get_status(self):
+    def status(self):
         self.__send_get_to_endpoint('status')
 
     def __send_get_to_endpoint(self, endpoint):
@@ -58,6 +61,6 @@ class Camera(object):
 
     @staticmethod
     def send_error_response():
-        cgi_common.send_response(dict(error_message='Error reading response from camera.'),
-                                 503,
-                                 'Service Unavailable')
+        cgi_common.send_error_message('Error reading response from camera.',
+                                      503,
+                                      'Service Unavailable')
