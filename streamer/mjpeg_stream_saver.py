@@ -25,8 +25,6 @@ class MJPEGStreamSaver(StreamSaver):
             self.stop()
 
         self.stream.seek(0)  # Always reset to 0
-        self.__camera.capture(self.stream,
-                              format='jpeg',
-                              use_video_port=True,
-                              resize=tuple(int(i/1.5) for i in self.__camera.resolution),)
+        self.__camera.safe_capture(self.stream,
+                                   downscale_factor=0.666)
         return super(MJPEGStreamSaver, self).read(0)

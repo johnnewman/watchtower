@@ -44,7 +44,7 @@ class MotionDetector:
         :return: Returns a ``PiRGBArray`` of image data.
         """
         bgr_frame = PiRGBArray(self.__camera, size=self.__camera.resolution)
-        self.__camera.capture(bgr_frame, format='bgr', use_video_port=True)
+        self.__camera.safe_capture(bgr_frame, format='bgr')
         return bgr_frame
 
     def reset_base_frame_date(self):

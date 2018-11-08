@@ -1,4 +1,5 @@
 import argparse
+import cam
 import datetime as dt
 import io
 import json
@@ -51,8 +52,8 @@ def init_command_server():
 
 
 def init_camera():
-    camera = picamera.PiCamera(resolution=tuple(config['video_size']),
-                               framerate=config['framerate'])
+    camera = cam.SafeCamera(resolution=tuple(config['video_size']),
+                            framerate=config['framerate'])
     camera.rotation = config['rotation']
     camera.annotate_background = picamera.Color('black')
     camera.annotate_text_size = 12
