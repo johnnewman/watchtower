@@ -7,9 +7,9 @@ class SafeCamera (picamera.PiCamera):
         super(SafeCamera, self).__init__(resolution=resolution, framerate=framerate)
         self.__lock = Lock()
 
-    def safe_capture(self, buf, format='jpeg', use_video_port=True, downscale_factor=1):
+    def safe_capture(self, output, format='jpeg', use_video_port=True, downscale_factor=1):
         self.__lock.acquire()
-        self.capture(buf,
+        self.capture(output,
                      format=format,
                      use_video_port=use_video_port,
                      resize=tuple(int(i * downscale_factor) for i in self.resolution))
