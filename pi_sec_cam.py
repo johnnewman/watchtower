@@ -10,7 +10,6 @@ import picamera
 import remote
 import streamer
 import streamer.writer as writer
-from threading import Lock
 import time
 
 WAIT_TIME = 0.1
