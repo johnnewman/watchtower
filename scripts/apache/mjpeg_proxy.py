@@ -8,7 +8,6 @@ import ssl
 import sys
 import time
 
-
 READ_CHUNK_SIZE = 4096
 READ_TIMEOUT = 1
 NO_DATA_SLEEP_TIME = 0.1
