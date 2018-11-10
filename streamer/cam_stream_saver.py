@@ -36,10 +36,10 @@ class CamStreamSaver(StreamSaver):
         position (useful if the stream is still being appended to) and compute
         the distance to the last frame in the stream.
 
-        :param position: Does not matter because it is recalculated using the
+        :param position: Not used because it is recalculated using the
         ``frames`` property of the stream.
-        :param length: Is not used because the length is computed using the
-        last frame in the stream.
+        :param length: Not used because the length is computed using the last
+        frame in the stream.
         :return: a tuple of the bytes read and the position where reading
         stopped.
         """
