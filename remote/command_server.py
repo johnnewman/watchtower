@@ -1,14 +1,14 @@
-import logging
 import json
+import logging
 import re
 import socket
 import ssl
-from threading import Thread
 import time
+from threading import Thread
 from streamer.writer.socket_writer import SocketWriter, MJPEGSocketWriter
 from streamer import MJPEGStreamSaver
 
-TIMEOUT = 10
+TIMEOUT = 3
 
 STATUS_ENDPOINT = 'status'
 START_ENDPOINT = 'start'
@@ -18,46 +18,61 @@ STREAM_ENDPOINT = 'stream'
 
 class CommandServer(Thread):
     """
-    A thread class that listens for commands over a socket. It uses callback
-    functions as getters and setters for the responding object's running
-    status.
+    A thread class that listens for HTTP messages over a socket. This supports
+    SSL and also client validation using headers. It uses callback functions
+    to update the responding object's running status.
     """
 
     def __init__(self,
-                 get_camera_callback,
+                 port,
+                 certfile,
+                 keyfile,
+                 api_key,
+                 api_key_header_name,
+                 camera,
                  get_running_callback,
                  set_running_callback,
-                 port,
-                 api_key=None,
-                 api_key_header_name=None,
-                 certfile=None,
-                 keyfile=None,
                  mjpeg_rate_cap=2.5):
         """
-        Initializes the command receiver but does not open any ports until
-        ``run()`` is called.
+        Initialized the server but does not open any ports until run() is
+        called.
 
-        :param get_running_callback: Should be thread-safe
-        :param set_running_callback: Should be thread-safe
         :param port: The port to use to listen for commands.
+        :param certfile: The path to the certfile for SSL.
+        :param keyfile: The path to the keyfile for SSL.
+        :param api_key: string to ensure connections from only a trusted client
+        :param api_key_header_name: the name of the HTTP header field.
+        :param camera: The camera instance to be used for MJPEG streams.
+        :param get_running_callback: Should be thread-safe.
+        :param set_running_callback: Should be thread-safe.
+        :param mjpeg_rate_cap: The number of frames to send per second.
         """
         super(CommandServer, self).__init__()
-        self.__get_camera_callback = get_camera_callback
-        self.__get_running_callback = get_running_callback
-        self.__set_running_callback = set_running_callback
         self.__port = port
-        self.__api_key = api_key
-        self.__api_key_header_name = api_key_header_name
-        self.__mjpeg_rate_cap = mjpeg_rate_cap
-        self.__logger = logging.getLogger(__name__)
         if certfile is not None and keyfile is not None:
             print('Using SSL.')
             self.__context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             self.__context.load_cert_chain(certfile=certfile, keyfile=keyfile)
         else:
             self.__context = None
+        self.__api_key = api_key
+        self.__api_key_header_name = api_key_header_name
+        self.__camera = camera
+        self.__get_running_callback = get_running_callback
+        self.__set_running_callback = set_running_callback
+        self.__mjpeg_rate_cap = mjpeg_rate_cap
+        self.__logger = logging.getLogger(__name__)
 
     def verify_api_key(self, comm_socket, request):
+        """
+        Checks for the API key header in the supplied request data. This will
+        be checked against the API key supplied to ``__init__``. Upon a
+        failure, writes a 403 to the client and closes the connection.
+
+        :param comm_socket: The socket to send 403's to if using a bad API key.
+        :param request: The request string from the client.
+        :return: A boolean indicating if the API key passed validation.
+        """
         if self.__api_key is None:
             return True
 
@@ -74,6 +89,12 @@ class CommandServer(Thread):
             return True
 
     def get_endpoint(self, comm_socket, request):
+        """
+        Searches for a GET request to any of the supported endpoints.
+        :param comm_socket:The socket to write 404s to if using a bad endpoint.
+        :param request: The request string from the client.
+        :return: The endpoint string requested or None.
+        """
         supported_endpoints = [STATUS_ENDPOINT, START_ENDPOINT, STOP_ENDPOINT, STREAM_ENDPOINT]
         re_result = re.match('^GET /(?P<endpoint>({}|{}|{}|{}))(\?|\s)'.format(*supported_endpoints), request)
 
@@ -92,6 +113,12 @@ class CommandServer(Thread):
             return re_result.group('endpoint')
 
     def handle_stream(self, comm_socket, request):
+        """
+        Parses the FPS out of the request string and creates a new MJPEG
+        streamer using the supplied socket.
+        :param comm_socket: The socket to send to the MJPEG streamer.
+        :param request: The request string from the client.
+        """
         re_result = re.match('^GET /{}(\?fps=(?P<fps>\d+\.?\d*))?'.format(STREAM_ENDPOINT), request)
         if re_result is None:
             self.__logger.info('No FPS supplied. Using 1.0.')
@@ -105,13 +132,17 @@ class CommandServer(Thread):
 
         fps = min(fps, self.__mjpeg_rate_cap)
         self.__logger.info('Using FPS: %s' % str(fps))
-        MJPEGStreamSaver(self.__get_camera_callback(),
+        MJPEGStreamSaver(self.__camera,
                          byte_writer=MJPEGSocketWriter(comm_socket),
                          name='MJPEG',
                          rate=1.0/fps,
                          timeout=30).start()
 
     def send_status(self, comm_socket):
+        """
+        Writes the current running status as JSON to the socket and closes it.
+        :param comm_socket: To socket to send the status.
+        """
         writer = SocketWriter(comm_socket)
         writer.append_bytes('HTTP/1.1 200 OK\r\n\r\n')
         writer.append_bytes(json.dumps(dict(running=self.__get_running_callback())), close=True)
