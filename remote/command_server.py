@@ -127,8 +127,7 @@ class CommandServer(Thread):
         MJPEGStreamSaver(self.__camera,
                          byte_writer=MJPEGSocketWriter(comm_socket),
                          name='MJPEG',
-                         rate=1.0/fps,
-                         timeout=30).start()
+                         rate=1.0/fps).start()
 
     def send_status(self, comm_socket):
         """
