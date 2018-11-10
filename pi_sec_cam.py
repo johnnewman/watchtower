@@ -139,7 +139,7 @@ def main():
         delta = config['motion']['min_pixel_delta_trigger']
         motion_detector = motion.MotionDetector(camera, delta, area)
 
-        stream = picamera.PiCameraCircularIO(camera, seconds=config['motion']['rec_sec_before'])
+        stream = picamera.PiCameraCircularIO(camera, seconds=rec_sec_before_trigger)
         camera.start_recording(stream, format='h264')
         logger.info('Initialized.')
 
@@ -203,6 +203,8 @@ if __name__ == '__main__':
     if dropbox_chunk_size is not None:
         dropbox_chunk_size *= 1024 * 1024
     server_enabled = config['server']['enabled']
+
+    rec_sec_before_trigger = config['motion']['rec_sec_before']
 
     if server_enabled:
         init_command_server()
