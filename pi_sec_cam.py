@@ -181,12 +181,10 @@ if __name__ == '__main__':
     dropbox_chunk_size = config['dropbox']['file_chunk_megs']
     if dropbox_chunk_size is not None:
         dropbox_chunk_size *= 1024 * 1024
-    server_enabled = config['server']['enabled']
-
     rec_sec_before_trigger = config['motion']['rec_sec_before']
 
-    if server_enabled:
-        init_command_server()
     camera = init_camera()
     start_time = time.time()
+    if config['server']['enabled']:
+        init_command_server()
     main()
