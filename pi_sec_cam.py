@@ -187,7 +187,6 @@ if __name__ == '__main__':
 
     if server_enabled:
         init_command_server()
-    status_lock = Lock()
     camera = init_camera()
     start_time = time.time()
     main()
