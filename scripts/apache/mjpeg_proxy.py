@@ -10,6 +10,7 @@ import time
 
 
 READ_CHUNK_SIZE = 4096
+READ_TIMEOUT = 1
 NO_DATA_SLEEP_TIME = 0.1
 
 
@@ -89,7 +90,7 @@ def stream_camera():
         stripped_code = False
         last_rx_time = time.time()
         byte_count = 0
-        while time.time() - last_rx_time < 1.0/fps + 1:
+        while time.time() - last_rx_time < 1.0/fps + READ_TIMEOUT:
             received_data = conn.recv(READ_CHUNK_SIZE)
             if len(received_data) > 0:
                 byte_count += len(received_data)
