@@ -9,7 +9,6 @@ from streamer.writer.socket_writer import SocketWriter, MJPEGSocketWriter
 from streamer import MJPEGStreamSaver
 
 TIMEOUT = 3
-
 STATUS_ENDPOINT = 'status'
 START_ENDPOINT = 'start'
 STOP_ENDPOINT = 'stop'
@@ -19,8 +18,7 @@ STREAM_ENDPOINT = 'stream'
 class CommandServer(Thread):
     """
     A thread class that listens for HTTP messages over a socket. This supports
-    SSL and also client validation using headers. It uses callback functions
-    to update the responding object's running status.
+    SSL and client validation using headers.
     """
 
     def __init__(self,
@@ -30,8 +28,6 @@ class CommandServer(Thread):
                  api_key,
                  api_key_header_name,
                  camera,
-                 get_running_callback,
-                 set_running_callback,
                  mjpeg_rate_cap=2.5):
         """
         Initialized the server but does not open any ports until run() is
@@ -42,9 +38,7 @@ class CommandServer(Thread):
         :param keyfile: The path to the keyfile for SSL.
         :param api_key: string to ensure connections from only a trusted client
         :param api_key_header_name: the name of the HTTP header field.
-        :param camera: The camera instance to be used for MJPEG streams.
-        :param get_running_callback: Should be thread-safe.
-        :param set_running_callback: Should be thread-safe.
+        :param camera: The camera instance for MJPEG streams and monitoring.
         :param mjpeg_rate_cap: The number of frames to send per second.
         """
         super(CommandServer, self).__init__()
@@ -58,8 +52,6 @@ class CommandServer(Thread):
         self.__api_key = api_key
         self.__api_key_header_name = api_key_header_name
         self.__camera = camera
-        self.__get_running_callback = get_running_callback
-        self.__set_running_callback = set_running_callback
         self.__mjpeg_rate_cap = mjpeg_rate_cap
         self.__logger = logging.getLogger(__name__)
 
@@ -145,7 +137,7 @@ class CommandServer(Thread):
         """
         writer = SocketWriter(comm_socket)
         writer.append_bytes('HTTP/1.1 200 OK\r\n\r\n')
-        writer.append_bytes(json.dumps(dict(running=self.__get_running_callback())), close=True)
+        writer.append_bytes(json.dumps(dict(running=self.__camera.should_monitor)), close=True)
 
     def run(self):
         """
@@ -182,10 +174,10 @@ class CommandServer(Thread):
                 elif endpoint == STREAM_ENDPOINT:
                     self.handle_stream(comm_socket, request)
                 elif endpoint == START_ENDPOINT:
-                    self.__set_running_callback(True)
+                    self.__camera.should_monitor = True
                     self.send_status(comm_socket)
                 elif endpoint == STOP_ENDPOINT:
-                    self.__set_running_callback(False)
+                    self.__camera.should_monitor = False
                     self.send_status(comm_socket)
 
                 else:  # Should not be possible after the endpoint regex.
