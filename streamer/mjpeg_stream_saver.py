@@ -30,4 +30,4 @@ class MJPEGStreamSaver(StreamSaver):
         self.stream.seek(0)  # Always reset to 0
         self.__camera.safe_capture(self.stream,
                                    downscale_factor=MJPEG_DOWNSCALE_FACTOR)
-        return super(MJPEGStreamSaver, self).read(0, length=sys.float_info.max)
+        return super(MJPEGStreamSaver, self).read(0, length=sys.maxint)
