@@ -71,15 +71,15 @@ def verify_api_key():
     api_key = parse_api_key()
     if api_key is None:
         err('Accessed without an API key.')
-        send_response('Unauthorized', 403, 'Forbidden')
+        send_error_message('Forbidden', 403, 'Forbidden')
 
     elif cgi_config.api_key is None or len(cgi_config.api_key) == 0:
         err('No API key defined in the config file!')
-        send_response('Unauthorized', 403, 'Forbidden')
+        send_error_message('Internal Server Error', 500, 'Internal Server Error')
 
     elif not cgi_config.api_key == api_key:
         err('Accessed with a bad API key.')
-        send_response('Unauthorized', 403, 'Forbidden')
+        send_error_message('Forbidden', 403, 'Forbidden')
 
     else:
         return True
