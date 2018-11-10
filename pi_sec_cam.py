@@ -40,14 +40,12 @@ def init_logging():
 
 
 def init_command_server():
-    remote.CommandServer(get_camera_callback=get_camera,
-                         get_running_callback=get_running,
-                         set_running_callback=set_running,
-                         port=config['server']['server_port'],
-                         api_key=config['server']['api_key'],
-                         api_key_header_name=config['server']['api_key_header_name'],
+    remote.CommandServer(port=config['server']['server_port'],
                          certfile=config['server']['certfile_path'],
                          keyfile=config['server']['keyfile_path'],
+                         api_key=config['server']['api_key'],
+                         api_key_header_name=config['server']['api_key_header_name'],
+                         camera=camera,
                          mjpeg_rate_cap=config['server']['mjpeg_framerate_cap']).start()
 
 
@@ -61,8 +59,7 @@ def init_camera():
 
 
 def wait(camera):
-    """Single point where we record camera data. This also updates the
-    annotation on the feed."""
+    """Briefly waits on the camera and updates the annotation on the feed."""
 
     camera.annotate_text = cam_name + dt.datetime.now().strftime(config['formats']['overlay_date_format'])
     camera.wait_recording(WAIT_TIME)
@@ -106,24 +103,6 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
     return streamers
 
 
-def set_running(r):
-    """
-    Thread-safe setter to turn motion detection on and off. Even when off,
-    the camera still records to an in-memory buffer.
-    """
-    global running
-    status_lock.acquire()
-    running = r
-    status_lock.release()
-
-
-def get_running():
-    status_lock.acquire()
-    status = running
-    status_lock.release()
-    return status
-
-
 def get_camera():
     return camera
 
@@ -149,7 +128,7 @@ def main():
 
         try:
             while True:
-                if not get_running():
+                if not camera.should_monitor:
                     wait(camera)
                     continue
 
@@ -174,7 +153,7 @@ def main():
 
                     # Wait for motion to stop
                     last_motion_trigger = time.time()
-                    while get_running() and time.time() - last_motion_trigger <= rec_sec_after_trigger and \
+                    while camera.should_monitor and time.time() - last_motion_trigger <= rec_sec_after_trigger and \
                             time.time() - event_time <= max_event_time:
                         more_motion, motion_frame_bytes = motion_detector.detect()
                         if more_motion:
@@ -211,5 +190,4 @@ if __name__ == '__main__':
     status_lock = Lock()
     camera = init_camera()
     start_time = time.time()
-    running = True
     main()
