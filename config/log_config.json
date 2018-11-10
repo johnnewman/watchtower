@@ -8,7 +8,7 @@
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "default",
-            "level": 10
+            "level": 20
         },
         "file": {
             "backupCount": 7,
@@ -16,7 +16,7 @@
             "filename": "logs/pyseccam.log",
             "formatter": "default",
             "interval": 1,
-            "level": 10,
+            "level": 20,
             "when": "d"
         }
     },
@@ -25,7 +25,7 @@
             "console",
             "file"
         ],
-        "level": 10
+        "level": 20
     },
     "version": 1
 }
