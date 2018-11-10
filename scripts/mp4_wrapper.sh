@@ -8,7 +8,7 @@
 # Searches the input directory for .h264 files and combines the ones with
 # shared directories into one file in the output directory. All the blended
 # .h264 files in the output directory are wrapped in an mp4 format. The output
-# directory mirrors the structure of the input directory except spaces dir
+# directory mirrors the structure of the input directory except spaces in dir
 # names are removed.
 
 fps=20
