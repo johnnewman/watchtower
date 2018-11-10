@@ -2,6 +2,11 @@ import json
 
 
 class CGIConfig(object):
+    """
+    Simple class that houses the API key and API key header that clients use to
+    connect to the CGI scripts.
+    """
+
     def __init__(self, config_location):
         super(CGIConfig, self).__init__()
         with open(config_location, 'r') as config_file:

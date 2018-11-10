@@ -6,6 +6,13 @@ import json
 import os
 import sys
 
+"""
+This package is intended to be shared amongst CGI scripts that communicate with
+pi_sec_cam instances. It contains some convenience functions for sending
+messages to stdout and stderr. Further, it can parse and verify the API key
+from the client.
+"""
+
 CONFIG_LOCATION = '/etc/piseccam/proxy_config.json'
 
 cgi_config = config.CGIConfig(CONFIG_LOCATION)
