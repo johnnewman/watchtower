@@ -64,7 +64,7 @@ class MotionDetector:
         Updates the base frame if ``BASE_FRAME_RESET_INTERVAL`` has passed.
 
         Compares two grayscale images: the base frame against the current
-        camera frame. If big enough areas have changed, each of these is
+        camera frame. If big enough areas have changed, each of these areas are
         outlined.
 
         :return: a tuple containing a flag that indicates motion and the
