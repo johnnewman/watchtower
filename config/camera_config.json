@@ -30,5 +30,12 @@
         "keyfile_path": null,
         "mjpeg_framerate_cap": 1.5,
         "server_port": 8080
-    }
+    },
+    "servos": [
+        {
+            "board_pin": 7,
+            "angle_off": 90,
+            "angle_on": 75
+        }
+    ]
 }

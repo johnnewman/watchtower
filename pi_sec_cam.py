@@ -49,8 +49,15 @@ def init_command_server():
 
 
 def init_camera():
+    servos = []
+    if 'servos' in config and config['servos'] is not None:
+        for servo in config['servos']:
+            servos.append(cam.Servo(pin=servo['board_pin'],
+                                    angle_off=servo['angle_off'],
+                                    angle_on=servo['angle_on']))
     camera = cam.SafeCamera(resolution=tuple(config['video_size']),
-                            framerate=config['framerate'])
+                            framerate=config['framerate'],
+                            servos=servos)
     camera.rotation = config['rotation']
     camera.annotate_background = picamera.Color('black')
     camera.annotate_text_size = 12

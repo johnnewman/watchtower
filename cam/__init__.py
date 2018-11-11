@@ -1,17 +1,27 @@
 import picamera
+from collections import namedtuple
 from threading import Lock
+
+Servo = namedtuple('Servo', 'pin angle_on angle_off')
 
 
 class SafeCamera (picamera.PiCamera):
     """
     A camera class that provides a safe mechanism for multiple threads to
     capture an image using ``safe_capture`` or get/set the monitoring status.
+    It also contains an array of servos that can be turned on and off with the
+    monitoring status.
     """
 
-    def __init__(self, resolution, framerate):
+    def __init__(self, resolution, framerate, servos):
         super(SafeCamera, self).__init__(resolution=resolution, framerate=framerate)
         self.__should_monitor = True
         self.__lock = Lock()
+        self.__servos = servos
+
+    @property
+    def servos(self):
+        return self.__servos
 
     @property
     def should_monitor(self):
