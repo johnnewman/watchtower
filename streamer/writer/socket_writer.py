@@ -56,3 +56,19 @@ class MJPEGSocketWriter(SocketWriter):
             byte_string + \
             '\r\n\r\n'
         super(MJPEGSocketWriter, self).append_bytes(byte_string, close)
+
+
+class ServoSocketWriter(SocketWriter):
+    """
+    A class that communicates with the PiServoServer. Simply used to set a
+    servo's angle.
+    """
+
+    def __init__(self, servo_pin):
+        self.__servo_pin = servo_pin
+        comm_socket = socket.socket(socket.AF_INET)
+        comm_socket.connect(("127.0.0.1", 9338))
+        super(ServoSocketWriter, self).__init__(comm_socket)
+
+    def send_angle(self, angle):
+        self.append_bytes('%d %d' % (self.__servo_pin, angle), close=True)
