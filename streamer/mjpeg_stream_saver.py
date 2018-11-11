@@ -1,6 +1,7 @@
 import io
 import sys
 from stream_saver import StreamSaver
+from writer import socket_writer
 
 MJPEG_DOWNSCALE_FACTOR = 0.666
 
@@ -31,3 +32,12 @@ class MJPEGStreamSaver(StreamSaver):
         self.__camera.safe_capture(self.stream,
                                    downscale_factor=MJPEG_DOWNSCALE_FACTOR)
         return super(MJPEGStreamSaver, self).read(0, length=sys.maxint)
+
+    def ended(self):
+        """
+        Overridden to flip the servo back off if the camera is not running.
+        """
+        super(MJPEGStreamSaver, self).ended()
+        if not self.__camera.should_monitor:
+            for servo in self.__camera.servos:
+                socket_writer.ServoSocketWriter(servo.pin).send_angle(servo.angle_off)
