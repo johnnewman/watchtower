@@ -4,9 +4,9 @@ import re
 import socket
 import ssl
 import time
-from threading import Thread
-from streamer.writer.socket_writer import SocketWriter, MJPEGSocketWriter
+from streamer.writer.socket_writer import SocketWriter, MJPEGSocketWriter, ServoSocketWriter
 from streamer import MJPEGStreamSaver
+from threading import Thread
 
 TIMEOUT = 3
 STATUS_ENDPOINT = 'status'
@@ -124,6 +124,9 @@ class CommandServer(Thread):
 
         fps = min(fps, self.__mjpeg_rate_cap)
         self.__logger.info('Using FPS: %s' % str(fps))
+
+        if not self.__camera.should_monitor:
+            self.expose_camera()
         MJPEGStreamSaver(self.__camera,
                          byte_writer=MJPEGSocketWriter(comm_socket),
                          name='MJPEG',
@@ -137,6 +140,14 @@ class CommandServer(Thread):
         writer = SocketWriter(comm_socket)
         writer.append_bytes('HTTP/1.1 200 OK\r\n\r\n')
         writer.append_bytes(json.dumps(dict(running=self.__camera.should_monitor)), close=True)
+
+    def expose_camera(self):
+        for servo in self.__camera.servos:
+            ServoSocketWriter(servo.pin).send_angle(servo.angle_on)
+
+    def hide_camera(self):
+        for servo in self.__camera.servos:
+            ServoSocketWriter(servo.pin).send_angle(servo.angle_off)
 
     def run(self):
         """
@@ -173,9 +184,11 @@ class CommandServer(Thread):
                 elif endpoint == STREAM_ENDPOINT:
                     self.handle_stream(comm_socket, request)
                 elif endpoint == START_ENDPOINT:
+                    self.expose_camera()
                     self.__camera.should_monitor = True
                     self.send_status(comm_socket)
                 elif endpoint == STOP_ENDPOINT:
+                    self.hide_camera()
                     self.__camera.should_monitor = False
                     self.send_status(comm_socket)
 
