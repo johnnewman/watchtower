@@ -57,3 +57,9 @@ class CamStreamSaver(StreamSaver):
             length = last_frame.position - self.__last_streamed_frame.position
             self.__last_streamed_frame = last_frame
             return super(CamStreamSaver, self).read(position, length)
+
+    def ended(self):
+        """
+        Overridden to avoid the superclass implementation, which closes the
+        stream. The live camera stream should never be closed.
+        """

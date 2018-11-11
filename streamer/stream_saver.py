@@ -104,3 +104,11 @@ class StreamSaver(Thread):
                 self.__byte_writer.append_bytes('', close=True)  # Try to close if we have an exception
             except Exception as e2:
                 self.logger.exception('Attempted to close the writer. Received an exception: %s' % e2.message)
+        finally:
+            self.ended()
+
+    def ended(self):
+        """
+        Useful for subclasses for cleaning up after streaming ends.
+        """
+        self.stream.close()
