@@ -33,17 +33,28 @@ class DropboxWriter(byte_writer.ByteWriter):
         if logger is None:
             logger = logging.getLogger(__name__)
 
+        if self.__file_chunk_size is not None:
+            current_offset = self.__cursor.offset if self.__cursor is not None else 0
+            total_available_space = self.__file_chunk_size - current_offset
+            if len(byte_string) > total_available_space:
+                # Break the byte_string into max sized smaller chunks.
+                logger.debug('Attempting to upload beyond max size. Splitting.')
+                substring = byte_string[:total_available_space]
+                while len(substring) == total_available_space:
+                    self.append_bytes(substring, True)  # Save each individual substring.
+                    byte_string = byte_string[total_available_space:]  # Remove the substring.
+                    # Update the space now that at least the first chunk is uploaded.
+                    total_available_space = self.__file_chunk_size
+                    substring = byte_string[:total_available_space]  # Fetch the next substring.
+                byte_string = substring  # This will now be the last chunk, under the size limit.
+
         if self.__cursor is None:
             session_start_result = self.__dbx.files_upload_session_start(byte_string)
             self.__cursor = dropbox.files.UploadSessionCursor(session_start_result.session_id, offset=len(byte_string))
             path, extension = os.path.splitext(self.full_path)
             full_path = path + str(self.__file_count) + extension
             self.__commit = dropbox.files.CommitInfo(full_path, mode=dropbox.files.WriteMode.add)
-            return
-
-        if self.__file_chunk_size is not None and self.__cursor.offset + len(byte_string) >= self.__file_chunk_size:
-            close = True
-            logger.debug('Reached max file chunk size.')
+            byte_string = ''
 
         if close:
             self.__dbx.files_upload_session_finish(byte_string, self.__cursor, self.__commit)
