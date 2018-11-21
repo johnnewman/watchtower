@@ -5,7 +5,7 @@ import socket
 import ssl
 import time
 from streamer.writer.socket_writer import SocketWriter, MJPEGSocketWriter, ServoSocketWriter
-from streamer import MJPEGStreamSaver
+from streamer import MJPEGStreamer
 from threading import Thread
 
 TIMEOUT = 3
@@ -127,10 +127,10 @@ class CommandServer(Thread):
 
         if not self.__camera.should_monitor:
             self.expose_camera()
-        MJPEGStreamSaver(self.__camera,
-                         byte_writer=MJPEGSocketWriter(comm_socket),
-                         name='MJPEG',
-                         rate=1.0/fps).start()
+        MJPEGStreamer(self.__camera,
+                      byte_writer=MJPEGSocketWriter(comm_socket),
+                      name='MJPEG',
+                      rate=1.0/fps).start()
 
     def send_status(self, comm_socket):
         """
