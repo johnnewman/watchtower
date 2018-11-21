@@ -3,7 +3,7 @@
     "api_key_header_name": "HTTP_X_API_KEY",
     "camera": {
       "api_key_header_name": "x-api-key",
-      "api_key": ""
+      "api_key": "",
       "network_address": "",
       "port": 8080,
       "cert_location": "",
