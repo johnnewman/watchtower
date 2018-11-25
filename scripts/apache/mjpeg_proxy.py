@@ -8,6 +8,15 @@ import ssl
 import sys
 import time
 
+"""
+This is a CGI script that reads an MJPEG stream from an IP camera and sends its
+data to stdout. This supports multiple cameras by using the camera
+configuration in the cgi_common package. It looks for a "camera" parameter and
+an "fps" parameter in the request and matches these to the appropriate camera.
+
+A valid api key must be supplied, matching what is stored in cgi_common. 
+"""
+
 READ_CHUNK_SIZE = 4096
 READ_TIMEOUT = 1
 NO_DATA_SLEEP_TIME = 0.1
@@ -48,31 +57,45 @@ def send_next_chunk(buf):
     return buf
 
 
-def extract_fps():
+def find_camera():
+    """
+    Parses the camera from the URL parameters.
+    :return: The camera or None if no camera was found.
+    """
+    camera_name = cgi.FieldStorage().getvalue('camera')
+    if camera_name is not None:
+        if camera_name in cgic.controller.cameras:
+            return cgic.controller.cameras[camera_name]
+    cgic.err('Camera not found!')
+    return None
+
+
+def extract_fps(camera):
     """
     Parses the FPS field. Uses the config file as a backup in case of errors.
+    :param camera The camera to supply a default FPS.
     :return: The FPS.
     """
-    fps = cgi.FieldStorage().getvalue('fps', default=float(cgic.controller.camera.default_mjpeg_fps))
+    fps = cgi.FieldStorage().getvalue('fps', default=float(camera.default_mjpeg_fps))
     try:
         fps = float(fps)
     except Exception:
         cgic.err('Exception turning FPS into float. Falling back to default.')
-        fps = float(cgic.controller.camera.default_mjpeg_fps)
+        fps = float(camera.default_mjpeg_fps)
     return fps
 
 
-def stream_camera():
+def stream(camera):
     """
     Creates a socket connection to the camera address and port defined in the
     config file. Uses the API header field defined in the config file. Reads
     the data from this server and proxy's it to the client in chunks.
+    :param camera: The camera to stream.
     """
     conn = None
     fps = 1.0
     try:
-        fps = extract_fps()
-        camera = cgic.controller.camera
+        fps = extract_fps(camera)
         conn = ssl.wrap_socket(socket.socket(socket.AF_INET),
                                ca_certs=camera.cert_location,
                                cert_reqs=ssl.CERT_REQUIRED)
@@ -111,5 +134,8 @@ def stream_camera():
 
 
 if cgic.verify_api_key():
-    stream_camera()
-
+    cam = find_camera()
+    if cam is not None:
+        stream(cam)
+    else:
+        cgic.send_error_message('Failed to find camera.')
