@@ -33,12 +33,20 @@ def err(*args):
     print('[{}] [{}]'.format(str(datetime.datetime.now()), __name__), *args, sep=' ', end='\n', file=sys.stderr)
 
 
+def create_error_dict(error_string):
+    """
+    Single location where error dictionaries should be generated. This allows
+    clients to expect the same format.
+    """
+    return dict(error_message=error_string)
+
+
 def send_error_message(error_string, code=500, code_title='Internal Server Error'):
     """
     Sends the error code to the client. Wraps the ``error_string`` in a JSON
     object.
     """
-    send_response(dict(error_message=error_string), code, code_title)
+    send_response(create_error_dict(error_string), code, code_title)
 
 
 def send_response(json_dict, code=200, code_title='OK'):
