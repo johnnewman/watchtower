@@ -49,18 +49,18 @@ def send_error_message(error_string, code=500, code_title='Internal Server Error
     send_response(create_error_dict(error_string), code, code_title)
 
 
-def send_response(json_dict, code=200, code_title='OK'):
+def send_response(json_object, code=200, code_title='OK'):
     """
     Sends the code, code title, and json dictionary to the client. Stops
     executing the CGI script.
-    :param json_dict: The optional dictionary to send to the client.
+    :param json_object: The optional dictionary/array to send to the client.
     :param code: The HTTP status code.
     :param code_title: The HTTP status code title.
     """
     std('Status: {} {}\r\n'.format(str(code), code_title))
-    if json_dict is not None:
+    if json_object is not None:
         std('Content-Type: application/json\r\n\r\n')
-        std(json.dumps(json_dict))
+        std(json.dumps(json_object))
     sys.exit()
 
 
