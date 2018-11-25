@@ -8,6 +8,15 @@ import ssl
 import sys
 import time
 
+"""
+This is a CGI script that reads an MJPEG stream from an IP camera and sends its
+data to stdout. This supports multiple cameras by using the camera
+configuration in the cgi_common package. It looks for a "camera" parameter and
+an "fps" parameter in the request and matches these to the appropriate camera.
+
+A valid api key must be supplied, matching what is stored in cgi_common. 
+"""
+
 READ_CHUNK_SIZE = 4096
 READ_TIMEOUT = 1
 NO_DATA_SLEEP_TIME = 0.1
