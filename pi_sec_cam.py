@@ -103,6 +103,7 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
     else:
         streamers.append(create_stream(debug_name+'loc', writer.DiskWriter(path)))
         if dropbox_token is not None:
+            stream = io.BytesIO(stream.getvalue())  # Create a new stream for Dropbox.
             streamers.append(create_stream(debug_name+'.dbx', create_dropbox_writer('/'+path)))
 
     map(lambda x: x.start(), streamers)
