@@ -57,7 +57,7 @@ class MotionDetector:
 
         if logger is None:
             logger = logging.getLogger(__name__)
-        logger.info('Updating base frame.')
+        logger.debug('Updating base frame.')
 
     def detect(self):
         """
