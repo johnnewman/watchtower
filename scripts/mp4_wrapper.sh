@@ -14,7 +14,7 @@
 fps=20
 
 # Append all the .h264 files into one
-find "$1" -name "*.h264" | sort | while read file; do
+find "$1" -name "*.h264" | sort -V | while read file; do
     short_path=${file//"$1"/}
     short_dir=`dirname "$short_path"`
     short_dir=${short_dir//[[:blank:]]/} # MP4Box does not like spaces
