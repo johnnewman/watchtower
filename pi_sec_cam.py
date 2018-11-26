@@ -129,15 +129,21 @@ def main():
         camera.start_recording(stream, format='h264')
         logger.info('Initialized.')
 
-        # Allow the camera a few seconds to initialize
-        for i in range(int(INITIALIZATION_TIME / WAIT_TIME)):
-            wait(camera)
-
         try:
+            was_not_running = True
             while True:
                 if not camera.should_monitor:
+                    was_not_running = True
                     wait(camera)
                     continue
+
+                if was_not_running:
+                    # Allow the camera a few seconds to initialize.
+                    for i in range(int(INITIALIZATION_TIME / WAIT_TIME)):
+                        wait(camera)
+                    # Reset the base frame after coming online.
+                    motion_detector.reset_base_frame()
+                    was_not_running = False
 
                 wait(camera)
                 motion_detected, motion_frame_bytes = motion_detector.detect()
