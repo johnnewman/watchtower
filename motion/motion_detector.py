@@ -50,7 +50,7 @@ class MotionDetector:
     def reset_base_frame_date(self):
         self.__base_frame_date = dt.datetime.now()
 
-    def __reset_base_frame(self):
+    def reset_base_frame(self):
         global logger
         self.__base_frame = self.post_process_image(self.capture_image().array)
         self.reset_base_frame_date()
@@ -73,7 +73,7 @@ class MotionDetector:
         past_time_interval = (dt.datetime.now() - self.__base_frame_date).seconds > BASE_FRAME_RESET_INTERVAL
         need_new_base = past_time_interval or self.__base_frame is None
         if need_new_base:
-            self.__reset_base_frame()
+            self.reset_base_frame()
             return False, None
 
         bgr_frame = self.capture_image()
