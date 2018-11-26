@@ -138,4 +138,4 @@ if cgic.verify_api_key():
     if cam is not None:
         stream(cam)
     else:
-        cgic.send_error_message('Failed to find camera.')
+        cgic.send_error_message('Failed to find camera.', code=404, code_title='Not Found')
