@@ -7,7 +7,6 @@ import logging.config
 import motion
 import os
 import picamera
-import remote
 import streamer
 import streamer.writer as writer
 import time
@@ -39,7 +38,8 @@ def init_logging():
 
 
 def init_command_server():
-    remote.CommandServer(port=config['server']['server_port'],
+    import remote.command_server as server
+    server.CommandServer(port=config['server']['server_port'],
                          certfile=config['server']['certfile_path'],
                          keyfile=config['server']['keyfile_path'],
                          api_key=config['server']['api_key'],
