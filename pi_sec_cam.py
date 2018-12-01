@@ -110,10 +110,6 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
     return streamers
 
 
-def get_camera():
-    return camera
-
-
 def main():
     with camera:
         day_dir_format = config['formats']['day_directory_format']
