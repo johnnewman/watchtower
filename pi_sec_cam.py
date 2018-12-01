@@ -66,8 +66,9 @@ def init_camera():
 
 def wait(camera):
     """Briefly waits on the camera and updates the annotation on the feed."""
-
-    camera.annotate_text = cam_name + ' ' + dt.datetime.now().strftime(config['formats']['overlay_date_format'])
+    
+    date_string = dt.datetime.now().strftime(config['formats']['overlay_date_format'])
+    camera.annotate_text = '{} {}'.format(cam_name, date_string)
     camera.wait_recording(WAIT_TIME)
 
 
