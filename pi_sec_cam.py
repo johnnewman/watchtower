@@ -48,6 +48,19 @@ def init_command_server():
                          mjpeg_rate_cap=config['server']['mjpeg_framerate_cap']).start()
 
 
+def init_infrared_controller():
+    import remote.ir_serial as ir
+    infrared_config = config['infrared_controller']
+    controller = ir.InfraredComm(on_command=infrared_config['on_command'],
+                                 off_command=infrared_config['off_command'],
+                                 port=infrared_config['serial_port'],
+                                 baudrate=infrared_config['baudrate'],
+                                 timeout=infrared_config['serial_timeout'],
+                                 sleep_time=1.0/infrared_config['updates_per_sec'])
+    controller.start()
+    return controller
+
+
 def init_camera():
     servos = []
     if 'servos' in config and config['servos'] is not None:
@@ -130,11 +143,15 @@ def main():
             was_not_running = True
             while True:
                 if not camera.should_monitor:
+                    if ir_controller is not None:
+                        ir_controller.turn_off()
                     was_not_running = True
                     wait(camera)
                     continue
 
                 if was_not_running:
+                    if ir_controller is not None:
+                        ir_controller.turn_on()
                     # Allow the camera a few seconds to initialize.
                     for i in range(int(INITIALIZATION_TIME / WAIT_TIME)):
                         wait(camera)
@@ -195,6 +212,12 @@ if __name__ == '__main__':
 
     camera = init_camera()
     start_time = time.time()
+
     if config['server']['enabled']:
         init_command_server()
+
+    ir_controller = None
+    if config['infrared_controller']['enabled']:
+        ir_controller = init_infrared_controller()
+
     main()
