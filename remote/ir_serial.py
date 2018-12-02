@@ -78,6 +78,8 @@ class InfraredComm(Thread):
                 self.__write_command(self.__command_queue.get_nowait())
             except Queue.Empty:
                 pass
+            except RuntimeError as ex:
+                self.__logger.exception('Runtime exception: %s' % ex.message)
 
             # Now read the light level
             if self.__controller.in_waiting() > 0:
@@ -85,5 +87,7 @@ class InfraredComm(Thread):
                 try:
                     self.room_brightness = int(light_str)
                 except TypeError:
-                    self.__logger.warning('Failed to cast light string into an int.')
+                    pass
+                except ValueError:
+                    pass
             time.sleep(self.__sleep_time)
