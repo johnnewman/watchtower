@@ -82,7 +82,7 @@ class InfraredComm(Thread):
                 self.__logger.exception('Runtime exception: %s' % ex.message)
 
             # Now read the light level
-            if self.__controller.in_waiting() > 0:
+            if self.__controller.in_waiting > 0:
                 light_str = self.__controller.readline()
                 try:
                     self.room_brightness = int(light_str)
