@@ -7,7 +7,7 @@ import Queue
 
 class InfraredComm(Thread):
     """
-    A thread class that can communicate with a micro controller to enable and
+    A thread class that can communicate with a microcontroller to enable and
     disable infrared.
     """
 

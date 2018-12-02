@@ -3,7 +3,7 @@
   Reads the light in the room using LIGHT_SENSOR_ANALOG_PIN and
   adjusts IR LEDs to the appropriate brightness using LED_PWM_PIN.
 
-  Communicates serially with a micro controller with RX_PIN and
+  Communicates serially with a microcontroller with RX_PIN and
   TX_PIN, supplying the room light value on a scale of 0-100. This
   can receive on/off commands to enable or disable the LEDs.
 
