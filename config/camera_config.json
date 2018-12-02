@@ -37,5 +37,14 @@
             "angle_off": 90,
             "angle_on": 75
         }
-    ]
+    ],
+    "infrared_controller": {
+        "enabled": true,
+        "baudrate": 9600,
+        "on_command": "on",
+        "off_command": "off",
+        "serial_port": "/dev/serial0",
+        "serial_timeout": 1,
+        "updates_per_sec": 5
+    }
 }

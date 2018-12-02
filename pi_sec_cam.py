@@ -7,7 +7,6 @@ import logging.config
 import motion
 import os
 import picamera
-import remote
 import streamer
 import streamer.writer as writer
 import time
@@ -39,13 +38,27 @@ def init_logging():
 
 
 def init_command_server():
-    remote.CommandServer(port=config['server']['server_port'],
+    import remote.command_server as server
+    server.CommandServer(port=config['server']['server_port'],
                          certfile=config['server']['certfile_path'],
                          keyfile=config['server']['keyfile_path'],
                          api_key=config['server']['api_key'],
                          api_key_header_name=config['server']['api_key_header_name'],
                          camera=camera,
                          mjpeg_rate_cap=config['server']['mjpeg_framerate_cap']).start()
+
+
+def init_infrared_controller():
+    import remote.ir_serial as ir
+    infrared_config = config['infrared_controller']
+    controller = ir.InfraredComm(on_command=infrared_config['on_command'],
+                                 off_command=infrared_config['off_command'],
+                                 port=infrared_config['serial_port'],
+                                 baudrate=infrared_config['baudrate'],
+                                 timeout=infrared_config['serial_timeout'],
+                                 sleep_time=1.0/infrared_config['updates_per_sec'])
+    controller.start()
+    return controller
 
 
 def init_camera():
@@ -67,7 +80,10 @@ def init_camera():
 def wait(camera):
     """Briefly waits on the camera and updates the annotation on the feed."""
 
-    camera.annotate_text = cam_name + ' ' + dt.datetime.now().strftime(config['formats']['overlay_date_format'])
+    date_string = dt.datetime.now().strftime(config['formats']['overlay_date_format'])
+    camera.annotate_text = '{} {}'.format(cam_name, date_string)
+    if ir_controller is not None:
+        camera.annotate_text = camera.annotate_text + ' ' + str(ir_controller.room_brightness)
     camera.wait_recording(WAIT_TIME)
 
 
@@ -110,10 +126,6 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
     return streamers
 
 
-def get_camera():
-    return camera
-
-
 def main():
     with camera:
         day_dir_format = config['formats']['day_directory_format']
@@ -133,11 +145,15 @@ def main():
             was_not_running = True
             while True:
                 if not camera.should_monitor:
+                    if ir_controller is not None:
+                        ir_controller.turn_off()
                     was_not_running = True
                     wait(camera)
                     continue
 
                 if was_not_running:
+                    if ir_controller is not None:
+                        ir_controller.turn_on()
                     # Allow the camera a few seconds to initialize.
                     for i in range(int(INITIALIZATION_TIME / WAIT_TIME)):
                         wait(camera)
@@ -198,6 +214,12 @@ if __name__ == '__main__':
 
     camera = init_camera()
     start_time = time.time()
+
     if config['server']['enabled']:
         init_command_server()
+
+    ir_controller = None
+    if config['infrared_controller']['enabled']:
+        ir_controller = init_infrared_controller()
+
     main()
