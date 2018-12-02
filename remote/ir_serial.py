@@ -66,7 +66,7 @@ class InfraredComm(Thread):
     def __write_command(self, command):
         total_sent = 0
         while total_sent < len(command) and len(command) > 0:
-            sent = self.__controller.write(command + '\n')
+            sent = self.__controller.write((command + '\n').encode('utf-8'))
             if sent == 0:
                 raise RuntimeError('Failed to write to serial port.')
             total_sent += sent
