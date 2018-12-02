@@ -75,7 +75,7 @@ class InfraredComm(Thread):
         while True:
             # Attempt to write any new commands
             try:
-                self.__write_command(self.__command_queue.get())
+                self.__write_command(self.__command_queue.get_nowait())
             except Queue.Empty:
                 pass
 
