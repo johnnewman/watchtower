@@ -79,9 +79,11 @@ def init_camera():
 
 def wait(camera):
     """Briefly waits on the camera and updates the annotation on the feed."""
-    
+
     date_string = dt.datetime.now().strftime(config['formats']['overlay_date_format'])
     camera.annotate_text = '{} {}'.format(cam_name, date_string)
+    if ir_controller is not None:
+        camera.annotate_text = camera.annotate_text + ' ' + str(ir_controller.room_brightness)
     camera.wait_recording(WAIT_TIME)
 
 
