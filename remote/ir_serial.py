@@ -8,7 +8,10 @@ import Queue
 class InfraredComm(Thread):
     """
     A thread class that can communicate with a microcontroller to enable and
-    disable infrared.
+    disable infrared.  Serial commands are transmitted using utf-8 encoding.
+
+    The brightness is read using an integer. Accessing and mutating the
+    brightness is thread-safe.
     """
 
     def __init__(self,
@@ -18,6 +21,18 @@ class InfraredComm(Thread):
                  baudrate,
                  timeout=1,
                  sleep_time=0.1):
+        """
+        This sets up the serial connection but does not start data
+        transmission.
+
+        :param on_command: A string to send to the controller to turn on.
+        :param off_command: A string to send to the controller to turn off.
+        :param port: The port of the serial connection, like /dev/serial0.
+        :param baudrate: The baudrate of the serial connection.
+        :param timeout: The timeout for serial transmissions.
+        :param sleep_time: The run loop sleep time. This should be equal to or
+        less than the transmission interval of the microcontroller.
+        """
         super(InfraredComm, self).__init__()
         self.__controller = serial.Serial(port=port,
                                           baudrate=baudrate,
@@ -35,6 +50,10 @@ class InfraredComm(Thread):
 
     @property
     def room_brightness(self):
+        """
+        :return: The brightness value read from the serial connection. This is
+        an integer value.
+        """
         self.__lock.acquire()
         brightness = self.__room_brightness
         self.__lock.release()
@@ -47,12 +66,23 @@ class InfraredComm(Thread):
         self.__lock.release()
 
     def turn_on(self):
+        """
+        Sends the on command to the serial connection.
+        """
         self.__enqueue_command(self.__on_command)
 
     def turn_off(self):
+        """
+        Sends the off command to the serial connection.
+        """
         self.__enqueue_command(self.__off_command)
 
     def __enqueue_command(self, command):
+        """
+        Attempts to add the command string to the queue. If the queue is full,
+        new commands take priority and the oldest command is removed.
+        :param command: The command string to enqueue.
+        """
         try:
             self.__command_queue.put(command)
         except Queue.Full:
@@ -64,6 +94,10 @@ class InfraredComm(Thread):
             self.__enqueue_command(command)  # Recursively try again.
 
     def __write_command(self, command):
+        """
+        Transmits the command string over the serial connection.
+        :param command: The command string to transmit.
+        """
         total_sent = 0
         while total_sent < len(command) and len(command) > 0:
             sent = self.__controller.write((command + '\n').encode('utf-8'))
@@ -72,6 +106,11 @@ class InfraredComm(Thread):
             total_sent += sent
 
     def run(self):
+        """
+        Infinitely loops, checking for new commands to transmit over the serial
+        connection. Also reads the brightness each loop if there is serial data
+        available.
+        """
         while True:
             # Attempt to write any new commands
             try:
