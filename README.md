@@ -4,7 +4,7 @@
 
 This is a Raspberry Pi program that will detect motion on a Pi Camera feed and save the h264 video to disk and Dropbox. By default, motion events are stored to disk in the format: `<camera name>/%Y-%m-%d/%H.%M.%S/video.h264`. This project is designed for the Noir night vision camera, supporting infrared lighting. It also hosts a web server to interface with the camera and stream an MJPEG feed.
 
-This project contains Apache CGI scripts to create a single endpoint that can proxy with multiple PySecCam instances. It also contains an Arduino program that it can communicate with to control IR LEDs and read analog room brightness.
+This project contains Apache CGI scripts to create a single endpoint that can proxy with multiple PySecurityCam instances. It also contains an Arduino program that it can communicate with to control IR LEDs and read analog room brightness.
 
 This is designed to control servos in the event that the camera will be covered or in a different position for the on vs off state.
 
@@ -33,7 +33,7 @@ In the `motion` object of `config/camera_config.json`:
 
 Video files are sent to Dropbox in small chunks as soon as motion is detected. Splitting the recording into small files keeps network failures from adversely affecting the overall quantity of saved footage.
 
-Because the bytes of the h264 stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a bash script located at `ancillary/mp4_wrapper.sh` will combine the videos for each motion event into one file and will convert the h264 format into mp4 using _link to MP4Box_. 
+Because the bytes of the h264 stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a bash script located at `ancillary/mp4_wrapper.sh` will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/). 
 
 #### Config
 
@@ -102,7 +102,7 @@ The keys are as follows:
 
  ### 6. Servos
  
- In the event that the camera should rotate or be covered when not in use, any number of servos can be controlled with this program. This takes advantage of _link to ServoServer_ to command each servo connected to the Pi.  
+ In the event that the camera should rotate or be covered when not in use, any number of servos can be controlled with this program. This makes use of [PiServoServer](https://github.com/johnnewman/PiServoServer) to command each servo connected to the Pi.  
  
  #### Config
  
