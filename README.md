@@ -17,6 +17,8 @@ The rest of this readme breaks down each component and describes its correspondi
  4. [Local Server](#4-local-server)
  5. [Apache Proxy](#5-apache-proxy)
  6. [Servos](#6-servos)
+ 
+<hr />
 
 ### 1. Motion Detection
 
