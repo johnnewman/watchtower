@@ -11,7 +11,7 @@ This is designed to control servos in the event that the camera will be covered 
 The rest of this readme breaks down each component and describes its corresponding configuration located in `config/camera_config.json`.
  1. [Motion Detection](#1-motion-detection)
  2. [Dropbox File Upload](#2-dropbox-file-upload)
- 3. [Infrared](#3-infrared)
+ 3. [Arduino/Infrared](#3-arduinoinfrared)
  4. [Local Server](#4-local-server)
  5. [Apache Proxy](#5-apache-proxy)
  6. [Servos](#6-servos)
@@ -41,7 +41,7 @@ In the `dropbox` object:
 - `file_chunk_megs` determines the maximum file size in megabytes that will be uploaded to Dropbox. Files are saved in series using the name `video#.h264` like `video0.h264`, `video0.h264`, etc..
 - `token` is the Dropbox API token for your account. If `null` is supplied, Dropbox will not be used.
 
-### 3. Infrared
+### 3. Arduino/Infrared
 
 The program can be optionally configured to work with a micro controller to turn on/off infrared lighting for night vision. An Arduino program located in `ancillary/arduino/ir_controller/` is configured to communicate serially with the PySecCam program. It's small enough to fit on an Adafruit Trinket/Atmel Attiny85.  It reads the analog room brightness and uses PWM to change the LED brightness.
 
