@@ -9,12 +9,12 @@ This project contains Apache CGI scripts to create a single endpoint that can pr
 This is designed to control servos in the event that the camera will be covered or in a different position for the on vs off state.
 
 The rest of this readme breaks down each component and describes its corresponding configuration located in `config/camera_config.json`.
-[1. Motion Detection](#1-motion-detection)
-[2. Dropbox File Upload](#2-dropbox-file-upload)
-[3. Arduino/Infrared](#3-arduinoinfrared)
-[4. Local Server](#4-local-server)
-[5. Apache Proxy](#5-apache-proxy)
-[6. Servos](#6-servos)
+ 1. [Motion Detection](#1-motion-detection)
+ 2. [Dropbox File Upload](#2-dropbox-file-upload)
+ 3. [Arduino/Infrared](#3-arduinoinfrared)
+ 4. [Local Server](#4-local-server)
+ 5. [Apache Proxy](#5-apache-proxy)
+ 6. [Servos](#6-servos)
 
 ### 1. Motion Detection
 
