@@ -2,13 +2,13 @@
 
 ### Overview
 
-This is a Raspberry Pi program that will detect motion on a Pi Camera feed and save the h264 video to disk and Dropbox. By default, motion events are stored to disk in the format: `<camera name>/%Y-%m-%d/%H.%M.%S/video.h264`. This project is designed for the Noir night vision camera, supporting infrared lighting. It also hosts a web server to interface with the camera and stream an MJPEG feed.
+This is a Raspberry Pi program that will detect motion on a Pi camera's h264 feed and save the video to disk and Dropbox. By default, motion events are stored to disk in the format: `cam_name/%Y-%m-%d/%H.%M.%S/video.h264`. This project is designed for the NoIR camera and contains an Arduino program that it can communicate with to control IR LEDs and read analog room brightness.
 
-This project contains Apache CGI scripts to create a single endpoint that can proxy with multiple PySecurityCam instances. It also contains an Arduino program that it can communicate with to control IR LEDs and read analog room brightness.
+This project hosts a simple web server to interface with the camera and stream an MJPEG feed. It contains Apache CGI scripts to create a single endpoint that can proxy with multiple PySecurityCam instances.
 
 This is designed to control servos in the event that the camera will be covered or in a different position for the on vs off state.
 
-The rest of this readme breaks down each component and describes its corresponding configuration located in `config/camera_config.json`.
+The rest of this readme breaks down each component and describes its corresponding configuration located in [config/camera_config.json](config/camera_config.json).
  1. [Motion Detection](#1-motion-detection)
  2. [Dropbox File Upload](#2-dropbox-file-upload)
  3. [Arduino/Infrared](#3-arduinoinfrared)
@@ -18,7 +18,7 @@ The rest of this readme breaks down each component and describes its correspondi
 
 ### 1. Motion Detection
 
-Motion is detected in `motion/motion_detector.py` by creating a blurred grayscale image of the current camera frame. Each pixel value is subtracted from a base frame to create deltas. If a big enough area (`min_trigger_area`) of pixels are over the delta threshold, they trigger a motion event and the area is outlined in the image. This image will be saved along with the video.
+Motion is detected in [motion/motion_detector.py](motion/motion_detector.py) by creating a blurred grayscale image of the current camera frame. Each pixel value is subtracted from a base frame to create deltas. If a big enough area (`min_trigger_area`) of pixels are over the delta threshold (`min_pixel_delta_trigger`), they trigger a motion event and the area is outlined in the image. This image will be saved along with the video.
 
 #### Config
 
@@ -33,7 +33,7 @@ In the `motion` object of `config/camera_config.json`:
 
 Video files are sent to Dropbox in small chunks as soon as motion is detected. Splitting the recording into small files keeps network failures from adversely affecting the overall quantity of saved footage.
 
-Because the bytes of the h264 stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a bash script located at `ancillary/mp4_wrapper.sh` will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/). 
+Because the bytes of the h264 stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a bash script located at [ancillary/mp4_wrapper.sh](ancillary/mp4_wrapper.sh) will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/). 
 
 #### Config
 
@@ -43,9 +43,9 @@ In the `dropbox` object:
 
 ### 3. Arduino/Infrared
 
-The program can be optionally configured to work with a micro controller to turn on/off infrared lighting for night vision. An Arduino program located in `ancillary/arduino/ir_controller/` is configured to communicate serially with the PySecCam program. It's small enough to fit on an Adafruit Trinket/Atmel Attiny85.  It reads the analog room brightness and uses PWM to change the LED brightness.
+The program can be optionally configured to work with a micro controller to turn on/off infrared lighting for night vision. An Arduino program located in [ancillary/arduino/ir_controller/ir_controller.ino](ancillary/arduino/ir_controller/ir_controller.ino) is configured to communicate serially with the PySecCam program. It's small enough to fit on an Adafruit Trinket/Atmel Attiny85.  It reads the analog room brightness and uses PWM to change the LED brightness.
 
-The serial connection is operated by `remote/ir_serial.py`. This module is also configured to read the room brightness value from the serial connection, which will be displayed in the camera feed's annotation area.
+The serial connection is operated by [remote/ir_serial.py](remote/ir_serial.py). This module is also configured to read the room brightness value from the serial connection, which will be displayed in the camera feed's annotation area.
 
 #### Config
 
@@ -60,7 +60,7 @@ In the `infrared_controller` object:
 
 ### 4. Local Server
 
-The program contains a basic HTTP web server implementation at `remote/command_server.py`.  This can receive start and stop commands, send the camera status, and also stream the feed using the MJPEG protocol.  The server is easily configured to use SSL and perform client validation using a secret HTTP header field.  _The web server is not intended to face the internet._
+The program contains a basic HTTP web server implementation at [remote/command_server.py](remote/command_server.py).  This can receive start and stop commands, send the camera status, and also stream the feed using the MJPEG protocol.  The server is easily configured to use SSL and perform client validation using a secret HTTP header field.  _The web server is not intended to face the internet._
 
 #### API
 
@@ -82,18 +82,18 @@ In the `server` object:
 
 ### 5. Apache Proxy
 
-This project comes with server-side Python CGI scripts that work on Apache 2, located in `ancillary/apache/`. These scripts proxy commands to a series of PySecCam instances that rest behind your firewall. Each python file in that directory corresponds to an endpoint.
+This project comes with server-side Python CGI scripts that work on Apache 2, located in [ancillary/apache/](ancillary/apache). These scripts proxy commands to a series of PySecCam instances that rest behind your firewall. Each python file in that directory corresponds to an endpoint.
 
 The `cgi_common` package contains convenience modules and functions that are shared throughout the endpoints. This includes functionality to send JSON back to the client, log errors, verify API keys, hit endpoints on each camera, and coalesce the camera responses into one JSON response for the client.
 
 #### Config
 
-Configuration for the Apache proxy is located in `ancillary/apache/config/proxy_config.json`. By default, this file should be located on the web server in `/etc/piseccam/proxy_config.json`. This path can be configured in `cgi_common/__init__.py`.
+Configuration for the Apache proxy is located in [ancillary/apache/config/proxy_config.json](ancillary/apache/config/proxy_config.json). By default, this file should be located on the web server in `/etc/piseccam/proxy_config.json`. This path can be configured in [cgi_common/__init__.py](/ancillary/apache/cgi_common/__init__.py).
 
 The keys are as follows:
 - `api_key` the API key that will allow access to the proxy endpoints. Values that do not match this string will result in an API error.
 - `api_key_header_name` is the name of the HTTP header that contains the `api_key`.
-- `cameras` an object containing a series of key/value pairs where each key is a camera name. Many of these fields will match the `server` object of the Local Server section above. Each `camera` value contains:
+- `cameras` an object containing a series of key/value pairs where each key is a camera name. Many of these fields will match the `server` object of the [Local Server](#4-local-server) section above. Each `camera` value contains:
    - `api_key_header_name` the name used for the HTTP header containing the key. This corresponds to `api_key_header_name` of the camera's `server` config object.
    - `api_key` is the secret value in the HTTP header that is allowed to access the camera API. This corresponds to `api_key` of the camera's `server` config object.
    - `port` the port to connect to the camera's server. This corresponds to `server_port` of the camera's `server` config object.
