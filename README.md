@@ -4,7 +4,7 @@
 
 This is a Raspberry Pi program that will detect motion on a Pi camera's h264 feed and save the video to disk and Dropbox. By default, motion events are stored to disk in the format: `cam_name/%Y-%m-%d/%H.%M.%S/video.h264`.  The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py). 
 
-This project is designed for the NoIR camera and contains an Arduino program that it can communicate with to control IR LEDs and read analog room brightness.
+This project is designed for the NoIR camera and contains an Arduino program that it can communicate with to control IR LEDs and read analog room brightness. ![A Fritzing prototype is included.](/ancillary/arduino))
 
 This project hosts a simple web server to interface with the camera and stream an MJPEG feed. It contains Apache CGI scripts to create a single endpoint that can proxy with multiple PiSecurityCam instances.
 
@@ -47,7 +47,9 @@ In the `dropbox` object:
 
 ### 3. Arduino/Infrared
 
-The program can be optionally configured to work with a micro controller to turn on/off infrared lighting for night vision. An Arduino program located in [ancillary/arduino/ir_controller/ir_controller.ino](ancillary/arduino/ir_controller/ir_controller.ino) is configured to communicate serially with the PySecCam program. It's small enough to fit on an Adafruit Trinket/Atmel Attiny85.  It reads the analog room brightness and uses PWM to change the LED brightness.
+The program can be optionally configured to work with a micro controller to turn on/off infrared lighting for night vision. A schematic for the Arduino and IR LED circuit ![is included](/ancillary/arduino).
+
+An Arduino program located in [ancillary/arduino/ir_controller/ir_controller.ino](ancillary/arduino/ir_controller/ir_controller.ino) is configured to communicate serially with the PySecCam program. It's small enough to fit on an Adafruit Trinket/Atmel Attiny85.  It reads the analog room brightness and uses PWM to change the LED brightness.
 
 The serial connection is operated by [remote/ir_serial.py](remote/ir_serial.py). This module is also configured to read the room brightness value from the serial connection, which will be displayed in the camera feed's annotation area.
 
