@@ -18,10 +18,10 @@
 #include <SoftwareSerial.h>
 
 const int BAUD_RATE = 9600;
-const int RX_PIN = 1;
+const int RX_PIN = 3;
 const int TX_PIN = 2;
 
-const int LED_PWM_PIN = 0;  // For large number of LED's, use a transistor.
+const int LED_PWM_PIN = 1;  // For large number of LED's, use a transistor.
 const int LIGHT_SENSOR_IN_PIN = 4;
 const int LIGHT_SENSOR_ANALOG_PIN = 2;  // On the Trinket, Digital 4 is mapped to Analog 2.
 const int TIMEOUT = 1000/4;  // 4 loops per second.
@@ -46,8 +46,8 @@ void setup() {
   Comm.begin(BAUD_RATE);
 }
 
-
 void loop() {
+    delay(TIMEOUT);
     String command = receiveCommand();
     if (command != "") {
       // Explicitly check for both commands to ignore signal noise.
@@ -60,14 +60,12 @@ void loop() {
 
     if (!shouldRun) {
       digitalWrite(LED_PWM_PIN, LOW);
-      delay(TIMEOUT);
       return;
     }
 
     // In running state.
     
     updateLED(readLight());
-    delay(TIMEOUT);
 }
 
 /**
@@ -92,7 +90,6 @@ int readLight() {
   int light = analogRead(LIGHT_SENSOR_ANALOG_PIN);
   return constrain(light, MIN_LIGHT_THRESH, MAX_LIGHT_THRESH);
 }
-
 
 /**
   Updates the brightess of the LEDs using PWM. Also sends
