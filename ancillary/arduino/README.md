@@ -1,6 +1,4 @@
-### Protobard schematic
-
-![Schematic](ArduinoHat_bb.png)
+# Protoboard schematic
 
 This uses two Adafruit boards:
 - Perma-Proto HAT
@@ -9,3 +7,5 @@ This uses two Adafruit boards:
 - PermaProto Quarter-sized breadboard
    - https://www.adafruit.com/product/1608
    - ![Fritzing file](https://github.com/adafruit/Fritzing-Library/blob/master/parts/PermaprotoQuarterBoard.fzpz)
+
+![Schematic](ArduinoHat_bb.png)
