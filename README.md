@@ -1,14 +1,14 @@
-# PiSecurityCam
+# Pi Security Camera
 
 ### Overview
 
 This is a Raspberry Pi program that will detect motion on a Pi camera's feed and save the h264 video to disk and Dropbox.  The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py). 
 
-This project is designed for the NoIR camera and contains an Arduino program that it can communicate with to read analog room brightness and control infrared LEDs.
+This project is designed for the NoIR camera and contains an Arduino program that it can communicate with to read analog room brightness and control infrared LEDs for night vision.
 
 A 3D model of a case for the system is located in ![ancillary/case/](ancillary/case/). This houses the Raspberry Pi, camera, Arduino, servo, array of IR LEDs, photoresistor, and a status LED. Along with the case, a Fritzing prototype of the system is included in ![ancillary/arduino](ancillary/arduino).
 
-This project hosts a simple web server to interface with the camera and stream an MJPEG feed. It contains Apache CGI scripts to create a single endpoint that can proxy with multiple PiSecurityCam instances.
+This project hosts a simple web server to interface with the camera and stream an MJPEG feed. It contains Apache CGI scripts to create a single endpoint that can proxy with multiple Pi Security Camera instances.
 
 
 By default, motion events are stored to disk in the format: `cam_name/%Y-%m-%d/%H.%M.%S/video.h264`
