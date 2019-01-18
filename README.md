@@ -2,13 +2,16 @@
 
 ### Overview
 
-This is a Raspberry Pi program that will detect motion on a Pi camera's h264 feed and save the video to disk and Dropbox. By default, motion events are stored to disk in the format: `cam_name/%Y-%m-%d/%H.%M.%S/video.h264`.  The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py). 
+This is a Raspberry Pi program that will detect motion on a Pi camera's feed and save the h264 video to disk and Dropbox.  The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py). 
 
-This project is designed for the NoIR camera and contains an Arduino program that it can communicate with to control IR LEDs and read analog room brightness. ![A Fritzing prototype is included.](/ancillary/arduino)
+This project is designed for the NoIR camera and contains an Arduino program that it can communicate with to read analog room brightness and control infrared LEDs.
+
+A 3D model of a case for the system is located in ![ancillary/case/](ancillary/case/). This houses the Raspberry Pi, camera, Arduino, servo, array of IR LEDs, photoresistor, and a status LED. Along with the case, a Fritzing prototype of the system is included in ![ancillary/arduino](ancillary/arduino).
 
 This project hosts a simple web server to interface with the camera and stream an MJPEG feed. It contains Apache CGI scripts to create a single endpoint that can proxy with multiple PiSecurityCam instances.
 
-This is designed to control servos in the event that the camera will be covered or in a different position for the on vs off state.
+
+By default, motion events are stored to disk in the format: `cam_name/%Y-%m-%d/%H.%M.%S/video.h264`
 
 The rest of this readme breaks down each component and describes its corresponding configuration located in [config/camera_config.json](config/camera_config.json).
  1. [Motion Detection](#1-motion-detection)
@@ -22,7 +25,7 @@ The rest of this readme breaks down each component and describes its correspondi
 
 ### 1. Motion Detection
 
-Motion is detected in [motion/motion_detector.py](motion/motion_detector.py) by creating a blurred grayscale image of the current camera frame. Each pixel value is subtracted from a base frame to create deltas. If a big enough area (`min_trigger_area`) of pixels are over the delta threshold (`min_pixel_delta_trigger`), they trigger a motion event and the area is outlined in the image. This image will be saved along with the video.
+Motion is detected using background subtraction in [motion/motion_detector.py](motion/motion_detector.py). A blurred grayscale image of the current camera frame is generated and subtracted from a static image of the scene. If a large enough area (`min_trigger_area`) of pixels are over the delta threshold (`min_pixel_delta_trigger`), they trigger a motion event and the area is outlined in the image. This image will be saved along with the video.
 
 #### Config
 
@@ -42,14 +45,14 @@ Because the bytes of the h264 stream are broken into files, the files are not cl
 #### Config
 
 In the `dropbox` object:
-- `file_chunk_megs` determines the maximum file size in megabytes that will be uploaded to Dropbox. Files are saved in series using the name `video#.h264` like `video0.h264`, `video0.h264`, etc..
+- `file_chunk_megs` determines the maximum file size in megabytes that will be uploaded to Dropbox. Files are saved in series using the name `video#.h264` like `video0.h264`, `video1.h264`, etc..
 - `token` is the Dropbox API token for your account. If `null` is supplied, Dropbox will not be used.
 
 ### 3. Arduino/Infrared
 
-The program can be optionally configured to work with a micro controller to turn on/off infrared lighting for night vision. A schematic for the Arduino and IR LED circuit ![is included](/ancillary/arduino).
+The project can be optionally configured to work with a micro controller to turn on/off infrared lighting for night vision. A schematic for the Arduino and IR LED circuit ![is included](/ancillary/arduino).
 
-An Arduino program located in [ancillary/arduino/ir_controller/ir_controller.ino](ancillary/arduino/ir_controller/ir_controller.ino) is configured to communicate serially with the PySecCam program. It's small enough to fit on an Adafruit Trinket/Atmel Attiny85.  It reads the analog room brightness and uses PWM to change the LED brightness.
+An Arduino program located in [ancillary/arduino/ir_controller/ir_controller.ino](ancillary/arduino/ir_controller/ir_controller.ino) is configured to communicate serially with the PySecCam program. It's small enough to fit on an Adafruit Trinket/Atmel Attiny85, which is what the circuit diagram uses.  The Arduino reads the analog room brightness and uses PWM to change the LED brightness.
 
 The serial connection is operated by [remote/ir_serial.py](remote/ir_serial.py). This module is also configured to read the room brightness value from the serial connection, which will be displayed in the camera feed's annotation area.
 
@@ -66,7 +69,7 @@ In the `infrared_controller` object:
 
 ### 4. Local Server
 
-The program contains a basic HTTP web server implementation at [remote/command_server.py](remote/command_server.py).  This can receive start and stop commands, send the camera status, and also stream the feed using the MJPEG protocol.  The server is easily configured to use SSL and perform client validation using a secret HTTP header field.  _The web server is not intended to face the internet._
+The program contains a basic HTTP web server implementation at [remote/command_server.py](remote/command_server.py).  This can receive start and stop commands, send the camera status, and also stream the feed using the MJPEG protocol.  The server is configured to use SSL and perform client validation using a secret HTTP header field.  _The web server is not intended to face the internet._
 
 #### API
 
@@ -90,7 +93,7 @@ In the `server` object:
 
 This project comes with server-side Python CGI scripts that work on Apache 2, located in [ancillary/apache/](ancillary/apache). These scripts proxy commands to a series of PySecCam instances that rest behind your firewall. Each python file in that directory corresponds to an endpoint.
 
-The `cgi_common` package contains convenience modules and functions that are shared throughout the endpoints. This includes functionality to send JSON back to the client, log errors, verify API keys, hit endpoints on each camera, and coalesce the camera responses into one JSON response for the client.
+The `cgi_common` package located in ![ancillary/apache/cgi_common](ancillary/apache/cgi_common) contains convenience modules and functions that are shared throughout the endpoints. This includes functionality to send JSON back to the client, log errors, verify API keys, hit endpoints on each camera, and coalesce the camera responses into one JSON response for the client.
 
 #### Config
 
