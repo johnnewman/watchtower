@@ -10,7 +10,7 @@ A 3D model of a case for the system is located in ![ancillary/case/](ancillary/c
 
 <img src="ancillary/case/Case_XRay.png" width="300" />
 
-This project hosts a simple web server to interface with the camera and stream an MJPEG feed. It contains Apache CGI scripts to create a single endpoint that can proxy with multiple Pi Security Camera instances.
+This project hosts a simple web server to interface with the camera and stream an MJPEG feed. This API rarely needs to be hit directly. Instead, this project also contains Apache CGI scripts that create single endpoints that proxy with multiple Pi Security Camera instances.
 
 By default, motion events are stored to disk in the format: `cam_name/%Y-%m-%d/%H.%M.%S/video.h264`
 
