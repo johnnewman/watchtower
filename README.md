@@ -13,11 +13,11 @@ A 3D model of a case for the system is located in ![ancillary/case/](ancillary/c
 This project hosts a simple web server to interface with the camera and stream an MJPEG feed. This API rarely needs to be hit directly. Instead, this project also contains Apache CGI scripts that create single endpoints that proxy with multiple Pi Security Camera instances.
 
 Dependencies:
-- ![picamera](https://picamera.readthedocs.io/en/release-1.13/)
-- ![pyserial](https://pypi.org/project/pyserial/)
-- ![dropbox](https://github.com/dropbox/dropbox-sdk-python)
-- ![opencv](https://github.com/opencv/opencv)
-- ![numpy](http://www.numpy.org/)
+- picamera https://picamera.readthedocs.io/en/release-1.13/
+- pyserial https://pypi.org/project/pyserial/
+- dropbox https://github.com/dropbox/dropbox-sdk-python
+- opencv https://github.com/opencv/opencv
+- numpy http://www.numpy.org/
 
 The rest of this readme breaks down each component and describes its corresponding configuration located in [config/camera_config.json](config/camera_config.json).
  1. [Motion Detection](#1-motion-detection)
