@@ -2,9 +2,9 @@
 
 ### Overview
 
-This is a Raspberry Pi program that will detect motion on a Pi camera's feed and save the h264 video to disk and Dropbox.  The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py). 
+This is a Python Raspberry Pi project that will detect motion on a Pi camera's feed and save the h264 video to disk and Dropbox. The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py).
 
-This project is designed for the NoIR camera and contains an Arduino program that it can communicate with to read analog room brightness and control infrared LEDs for night vision.
+This project is designed for the Pi NoIR camera and contains an Arduino program that can communicate with the Pi, read analog room brightness, and control infrared LEDs for night vision.
 
 A 3D model of a case for the system is located in ![ancillary/case/](ancillary/case/). This houses the Raspberry Pi, camera, Arduino, servo, array of IR LEDs, photoresistor, and a status LED. Along with the case, a Fritzing prototype of the system is included in ![ancillary/arduino/](ancillary/arduino).
 
@@ -12,7 +12,12 @@ A 3D model of a case for the system is located in ![ancillary/case/](ancillary/c
 
 This project hosts a simple web server to interface with the camera and stream an MJPEG feed. This API rarely needs to be hit directly. Instead, this project also contains Apache CGI scripts that create single endpoints that proxy with multiple Pi Security Camera instances.
 
-By default, motion events are stored to disk in the format: `cam_name/%Y-%m-%d/%H.%M.%S/video.h264`
+Dependencies:
+- ![picamera](https://picamera.readthedocs.io/en/release-1.13/)
+- ![pyserial](https://pypi.org/project/pyserial/)
+- ![dropbox](https://github.com/dropbox/dropbox-sdk-python)
+- ![opencv](https://github.com/opencv/opencv)
+- ![numpy](http://www.numpy.org/)
 
 The rest of this readme breaks down each component and describes its corresponding configuration located in [config/camera_config.json](config/camera_config.json).
  1. [Motion Detection](#1-motion-detection)
