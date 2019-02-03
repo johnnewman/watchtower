@@ -26,12 +26,12 @@ The rest of this readme breaks down each component and describes its correspondi
 
 ### 1. Motion Detection
 
-Motion is detected using background subtraction in [motion/motion_detector.py](motion/motion_detector.py). A blurred grayscale image of the current camera frame is generated and subtracted from a static image of the scene. If a large enough area (`min_trigger_area`) of pixels are over the delta threshold (`min_pixel_delta_trigger`), they trigger a motion event and the area is outlined in the image. This image will be saved along with the video.
+Motion is detected using background subtraction in [motion/motion_detector.py](motion/motion_detector.py). The implementation is based heavily on this article: https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/. A blurred grayscale image of the current camera frame is generated and subtracted from a static image of the scene. If a large enough area (`min_trigger_area`) of pixels are over the delta threshold (`min_pixel_delta_trigger`), they trigger a motion event and the area is outlined in the image. This image will be saved along with the video.
 
 #### Config
 
 In the `motion` object of `config/camera_config.json`:
-- `max_event_time` is the maximum number of seconds for a single recording before a new base frame is selected. This is a failsafe to avoid infinitely recording.
+- `max_event_time` is the maximum number of seconds for a single recording before a new base frame is selected. This is a failsafe to avoid infinitely recording in the event that the scene is permanently altered.
 - `min_trigger_area` the minimum percentage (represented as a float between 0 and 1) of the image that must be detected as motion before a motion event is triggered.
 - `min_pixel_delta_trigger` the minimum delta value between the base frame and current frame that marks the pixel as a motion area. This is on a scale of 0-255.
 - `rec_sec_after` the number of seconds to record after motion stops.
@@ -108,7 +108,7 @@ The keys are as follows:
    - `api_key` is the secret value in the HTTP header that is allowed to access the camera API. This corresponds to `api_key` of the camera's `server` config object.
    - `port` the port to connect to the camera's server. This corresponds to `server_port` of the camera's `server` config object.
    - `cert_location` is the location of the certfile for accessing the camera's server. This is the same file that `certfile_path` points to in the camera's `server` config object.
-   - `default_fps` is the FPS to use, if none is supplied, when hitting the `/stream` endpoint on the camera.
+   - `default_fps` is the FPS to use if none is supplied, when hitting the `/stream` endpoint on the camera.
 
  ### 6. Servos
  
