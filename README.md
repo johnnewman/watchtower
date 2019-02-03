@@ -6,7 +6,7 @@ This is a Raspberry Pi program that will detect motion on a Pi camera's feed and
 
 This project is designed for the NoIR camera and contains an Arduino program that it can communicate with to read analog room brightness and control infrared LEDs for night vision.
 
-A 3D model of a case for the system is located in ![ancillary/case/](ancillary/case/). This houses the Raspberry Pi, camera, Arduino, servo, array of IR LEDs, photoresistor, and a status LED. Along with the case, a Fritzing prototype of the system is included in ![ancillary/arduino](ancillary/arduino).
+A 3D model of a case for the system is located in ![ancillary/case/](ancillary/case/). This houses the Raspberry Pi, camera, Arduino, servo, array of IR LEDs, photoresistor, and a status LED. Along with the case, a Fritzing prototype of the system is included in ![ancillary/arduino/](ancillary/arduino).
 
 <img src="ancillary/case/Case_XRay.png" width="300" />
 
@@ -94,7 +94,7 @@ In the `server` object:
 
 This project comes with server-side Python CGI scripts that work on Apache 2, located in [ancillary/apache/](ancillary/apache). These scripts proxy commands to a series of PySecCam instances that rest behind your firewall. Each python file in that directory corresponds to an endpoint.
 
-The `cgi_common` package located in ![ancillary/apache/cgi_common](ancillary/apache/cgi_common) contains convenience modules and functions that are shared throughout the endpoints. This includes functionality to send JSON back to the client, log errors, verify API keys, hit endpoints on each camera, and coalesce the camera responses into one JSON response for the client.
+The `cgi_common` package located in ![ancillary/apache/cgi_common/](ancillary/apache/cgi_common) contains convenience modules and functions that are shared throughout the endpoints. This includes functionality to send JSON back to the client, log errors, verify API keys, hit endpoints on each camera, and coalesce the camera responses into one JSON response for the client.
 
 #### Config
 
