@@ -2,7 +2,7 @@
 
 ### Overview
 
-This is a DIY Python Raspberry Pi project that will detect motion on a Pi camera's feed and save the video to disk and Dropbox in h264 format. The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py).
+This is a DIY Python Raspberry Pi project that will detect motion on a Pi camera's feed and save the video to disk and Dropbox in the h264 format. The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py).
 
 This project is designed for the Pi NoIR camera and contains an Arduino program that can communicate with the Pi, read analog room brightness, and control infrared LEDs for night vision.
 
