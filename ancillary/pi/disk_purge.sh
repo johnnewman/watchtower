@@ -6,8 +6,11 @@
 # 2018-10-22
 #
 # Use as a cron job. If the supplied motion event directory's partition
-# is over $min_usage percent full, the oldest motion event directory
+# usage is over $min_usage percent, the oldest motion event directory
 # over $days_to_save old will be deleted.
+#
+# Example crontab listing to execute every 5 minutes:
+# */5 * * * * /home/<username>/PiSecurityCam/ancillary/pi/disk_purge.sh "/home/<username>/PiSecurityCam/<cam name>" >> /home/<username>/PiSecurityCam/logs/disk_purge.log
 
 min_usage=80
 days_to_save=3
