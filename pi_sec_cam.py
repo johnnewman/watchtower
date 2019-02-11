@@ -152,8 +152,6 @@ def main():
                     continue
 
                 if was_not_running:
-                    if ir_controller is not None:
-                        ir_controller.turn_on()
                     # Allow the camera a few seconds to initialize.
                     for i in range(int(INITIALIZATION_TIME / WAIT_TIME)):
                         wait(camera)
@@ -161,6 +159,8 @@ def main():
                     motion_detector.reset_base_frame()
                     was_not_running = False
 
+                if ir_controller is not None:
+                    ir_controller.turn_on()
                 wait(camera)
                 motion_detected, motion_frame_bytes = motion_detector.detect()
                 if motion_detected:
