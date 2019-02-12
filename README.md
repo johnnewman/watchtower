@@ -2,11 +2,11 @@
 
 ### Overview
 
-This is a DIY Python Raspberry Pi project that will detect motion on a Pi camera's feed and save the video to disk and Dropbox in the h264 format. The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py).
+This is a DIY Raspberry Pi project that will detect motion on a Pi camera's feed and save the video to disk and Dropbox in the h264 format. The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py).
 
 This project is designed for the Pi NoIR camera and contains an Arduino program that can communicate with the Pi, read analog room brightness, and control infrared LEDs for night vision.
 
-A 3D model of a case for the system is located in ![ancillary/case/](ancillary/case/). This houses the Raspberry Pi, camera, Arduino, servo, array of IR LEDs, photoresistor, and a status LED. A Fritzing prototype of the case's internal hardware is included in ![ancillary/arduino/](ancillary/arduino).
+A 3D model of a case for the system is located in ![ancillary/case/](ancillary/case/). This houses the Raspberry Pi, camera, Arduino, servo, array of IR LEDs, photoresistor, and status LED. A Fritzing prototype of the case's internal hardware is included in ![ancillary/arduino/](ancillary/arduino).
 
 <img src="ancillary/case/Case_XRay.png" width="300" />
 
@@ -20,7 +20,7 @@ Dependencies:
 - numpy http://www.numpy.org/
 - PiServoServer https://github.com/johnnewman/PiServoServer
 
-The rest of this readme breaks down each component and describes its corresponding configuration located in [config/camera_config.json](config/camera_config.json).
+The rest of this readme breaks down each component and describes its configuration located in [camera_config.json](config/camera_config.json) or [proxy_config.json](ancillary/apache/config/proxy_config.json).
  1. [Motion Detection](#1-motion-detection)
  2. [Dropbox File Upload](#2-dropbox-file-upload)
  3. [Arduino/Infrared](#3-arduinoinfrared)
@@ -98,7 +98,7 @@ In the `server` object:
 
 ### 5. Apache Proxy
 
-This project comes with server-side Python CGI scripts that work on Apache 2, located in [ancillary/apache/](ancillary/apache). These scripts proxy commands to a series of PiSecurityCam instances that rest behind your firewall. Each python file in that directory corresponds to an endpoint.
+This project comes with server-side Python CGI scripts that work on Apache 2, located in [ancillary/apache/](ancillary/apache). These scripts proxy commands to a series of PiSecurityCam instances that rest behind your firewall. Each Python file in that directory corresponds to an endpoint.
 
 The `cgi_common` package located in ![ancillary/apache/cgi_common/](ancillary/apache/cgi_common) contains convenience modules and functions that are shared throughout the endpoints. This includes functionality to send JSON back to the client, log errors, verify API keys, hit endpoints on each camera, and coalesce the camera responses into one JSON response for the client.
 
