@@ -112,7 +112,7 @@ class CommandServer(Thread):
         :param request: The request string from the client.
         """
         re_result = re.match('^GET /{}(\?fps=(?P<fps>\d+\.?\d*))?'.format(STREAM_ENDPOINT), request)
-        if re_result is None:
+        if re_result is None or re_result.group('fps') is None:
             self.__logger.info('No FPS supplied. Using 1.0.')
             fps = 1.0
         else:
