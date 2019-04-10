@@ -17,7 +17,7 @@ while getopts ":hi:o:k:f:" opt; do
         h )
             echo "Usage:"
             echo "    -h       Display help."
-            echo "    -i       Input directory to search for h264 or h264e files."
+            echo "    -i       Input directory to search for h264 files."
             echo "    -o       Output directory to send mp4 files."
             echo "    -k       Optional path to pem file containing private key used to decrypt the video files."
             echo "    -f       Framerate of the video files."
