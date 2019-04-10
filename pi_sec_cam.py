@@ -106,16 +106,19 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
                                     name=_debug_name,
                                     stop_when_empty=stop_when_empty)
 
-    def create_dropbox_writer(_path):
+    def create_dropbox_writer(_path, _pem_path=None):
         return writer.DropboxWriter(full_path=_path,
                                     dropbox_token=dropbox_token,
-                                    file_chunk_size=dropbox_chunk_size)
+                                    file_chunk_size=dropbox_chunk_size,
+                                    public_pem_path=_pem_path)
 
     streamers = []
     if isinstance(stream, picamera.PiCameraCircularIO):
         streamers.append(create_cam_stream(debug_name+'.loc', writer.DiskWriter(path)))
         if dropbox_token is not None:
-            streamers.append(create_cam_stream(debug_name+'.dbx', create_dropbox_writer('/'+path)))
+            streamers.append(create_cam_stream(debug_name+'.dbx',
+                                               create_dropbox_writer('/'+path,
+                                                                     dropbox_public_pem_path)))
     else:
         streamers.append(create_stream(debug_name+'loc', writer.DiskWriter(path)))
         if dropbox_token is not None:
@@ -208,6 +211,7 @@ if __name__ == '__main__':
     cam_name = config['cam_name']
     dropbox_token = config['dropbox']['token']
     dropbox_chunk_size = config['dropbox']['file_chunk_megs']
+    dropbox_public_pem_path = config['dropbox']['public_pem_path']
     if dropbox_chunk_size is not None:
         dropbox_chunk_size *= 1024 * 1024
     rec_sec_before_trigger = config['motion']['rec_sec_before']

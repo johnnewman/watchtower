@@ -8,7 +8,8 @@
     ],
     "dropbox": {
         "file_chunk_megs": 3,
-        "token": null
+        "token": null,
+        "public_pem_path": null
     },
     "formats": {
         "overlay_date_format": "%Y-%m-%d %H:%M:%S",
