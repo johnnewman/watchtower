@@ -19,6 +19,7 @@ Dependencies:
 - opencv https://github.com/opencv/opencv
 - numpy http://www.numpy.org/
 - PiServoServer https://github.com/johnnewman/PiServoServer
+- cryptography https://cryptography.io/en/latest/
 
 The rest of this readme breaks down each component and describes its configuration located in [camera_config.json](config/camera_config.json) or [proxy_config.json](ancillary/apache/config/proxy_config.json).
  1. [Motion Detection](#1-motion-detection)
@@ -47,13 +48,16 @@ In the `motion` object of `config/camera_config.json`:
 
 Video files are sent to Dropbox in small chunks as soon as motion is detected. Splitting the recording into small files keeps network failures from adversely affecting the overall quantity of saved footage.
 
-Because the bytes of the stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a bash script located at [ancillary/mp4_wrapper.sh](ancillary/mp4_wrapper.sh) will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/). 
+Because the bytes of the stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a bash script located at [ancillary/mp4_wrapper.sh](ancillary/mp4_wrapper.sh) will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/).
+
+The files sent to Dropbox can be encrypted using Fernet encryption if a public asymmetric encryption key path is supplied in the config JSON. The random symmetric Fernet key used to encrypt the file data is encrypted using the supplied public key, base64 encoded, and padded onto the beginning of the Dropbox file. The resulting file data has the format: `{key_length_int} {encoded_encrypted_key}{encrypted_data}`.   
 
 #### Config
 
 In the `dropbox` object:
 - `file_chunk_megs` determines the maximum file size in megabytes that will be uploaded to Dropbox. Files are saved in series using the name `video#.h264` like `video0.h264`, `video1.h264`, etc..
 - `token` is the Dropbox API token for your account. If `null` is supplied, Dropbox will not be used.
+- `public_pem_path` the path to the public asymmetric key. If `null` is supplied, the Dropbox files are not encrypted.
 
 ### 3. Arduino/Infrared
 
