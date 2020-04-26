@@ -40,7 +40,7 @@
         }
     ],
     "infrared_controller": {
-        "enabled": true,
+        "enabled": false,
         "baudrate": 9600,
         "on_command": "on",
         "off_command": "off",

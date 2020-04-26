@@ -13,16 +13,16 @@ class SocketWriter(byte_writer.ByteWriter):
         super(SocketWriter, self).__init__(None)
         self.__socket = comm_socket
 
-    def append_bytes(self, byte_string, close=False):
+    def append_bytes(self, bts, close=False):
         """
-        Writes the byte_string to the socket in its entirety. Any exception is
+        Writes the bytes to the socket in its entirety. Any exception is
         thrown to the caller.
-        :param byte_string: The string to write to the socket.
+        :param byts: The bytes object to write to the socket.
         :param close: When True, this will close the socket after writing.
         """
         total_sent = 0
-        while total_sent < len(byte_string) and len(byte_string) > 0:
-            sent = self.__socket.send(byte_string[total_sent:])
+        while total_sent < len(bts) and len(bts) > 0:
+            sent = self.__socket.send(bts[total_sent:])
             if sent == 0:
                 raise RuntimeError('Socket connection is broken.')
             total_sent += sent
@@ -41,20 +41,21 @@ class MJPEGSocketWriter(SocketWriter):
         super(MJPEGSocketWriter, self).__init__(comm_socket)
         self.__has_sent_header = False
 
-    def append_bytes(self, byte_string, close=False):
+    def append_bytes(self, bts, close=False):
         header_content = ''
         if not self.__has_sent_header:
             header_content = 'HTTP/1.1 200 OK\r\n' + \
                              'Content-Type: multipart/x-mixed-replace; boundary=' + BOUNDARY + '\r\n' + \
                              'Connection: keep-alive\r\n\r\n'
             self.__has_sent_header = True
-
-        byte_string = header_content + '--' + BOUNDARY + '\r\n' + \
+        
+        payload = header_content + '--' + BOUNDARY + '\r\n' + \
             'Content-Type: image/jpeg\r\n' + \
-            'Content-Length: ' + str(len(byte_string)) + '\r\n\r\n' + \
-            byte_string + \
-            '\r\n\r\n'
-        super(MJPEGSocketWriter, self).append_bytes(byte_string, close)
+            'Content-Length: ' + str(len(bts)) + '\r\n\r\n'
+
+        super(MJPEGSocketWriter, self).append_bytes(payload.encode(), False)
+        super(MJPEGSocketWriter, self).append_bytes(bts, False)
+        super(MJPEGSocketWriter, self).append_bytes('\r\n\r\n'.encode(), close)
 
 
 class ServoSocketWriter(SocketWriter):
@@ -69,4 +70,4 @@ class ServoSocketWriter(SocketWriter):
         super(ServoSocketWriter, self).__init__(comm_socket)
 
     def send_angle(self, angle):
-        self.append_bytes('%d %d' % (self.__servo_pin, angle), close=True)
+        self.append_string('%d %d' % (self.__servo_pin, angle), close=True)

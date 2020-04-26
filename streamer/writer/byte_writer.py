@@ -12,5 +12,8 @@ class ByteWriter:
         self.full_path = full_path
 
     @abstractmethod
-    def append_bytes(self, byte_string, close=False):
+    def append_bytes(self, bts, close=False):
         pass
+
+    def append_string(self, string, close=False):
+        self.append_bytes(string.encode(), close)

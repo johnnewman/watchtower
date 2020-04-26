@@ -5,7 +5,7 @@ import socket
 import ssl
 import time
 from streamer.writer.socket_writer import SocketWriter, MJPEGSocketWriter, ServoSocketWriter
-from streamer import MJPEGStreamer
+from streamer.mjpeg_streamer import MJPEGStreamer
 from threading import Thread
 
 TIMEOUT = 3
@@ -13,6 +13,7 @@ STATUS_ENDPOINT = 'status'
 START_ENDPOINT = 'start'
 STOP_ENDPOINT = 'stop'
 STREAM_ENDPOINT = 'stream'
+RECORD = 'record'
 
 
 class CommandServer(Thread):
@@ -70,10 +71,10 @@ class CommandServer(Thread):
 
         def write_forbidden():
             writer = SocketWriter(comm_socket)
-            writer.append_bytes('HTTP/1.1 403 Forbidden\r\n\r\n', close=True)
+            writer.append_string('HTTP/1.1 403 Forbidden\r\n\r\n', close=True)
             return False
-
-        index = request.find('{}: {}'.format(self.__api_key_header_name, self.__api_key))
+        (api_key_header, api_key) = (self.__api_key_header_name, self.__api_key)
+        index = request.find(f'{api_key_header}: {api_key}')
         if index == -1:
             self.__logger.warning('Bad API key supplied.')
             return write_forbidden()
@@ -87,12 +88,12 @@ class CommandServer(Thread):
         :param request: The request string from the client.
         :return: The endpoint string requested or None.
         """
-        supported_endpoints = [STATUS_ENDPOINT, START_ENDPOINT, STOP_ENDPOINT, STREAM_ENDPOINT]
-        re_result = re.match('^GET /(?P<endpoint>({}|{}|{}|{}))(\?|\s)'.format(*supported_endpoints), request)
+        supported_endpoints = [STATUS_ENDPOINT, START_ENDPOINT, STOP_ENDPOINT, STREAM_ENDPOINT, RECORD]
+        re_result = re.search(r'GET /(?P<endpoint>({}))(\?|\s)'.format('|'.join(supported_endpoints)), request)
 
         def write_not_found():
             writer = SocketWriter(comm_socket)
-            writer.append_bytes('HTTP/1.1 404 Not Found\r\n\r\n', close=True)
+            writer.append_string('HTTP/1.1 404 Not Found\r\n\r\n', close=True)
             return None
 
         if re_result is None:
@@ -111,7 +112,7 @@ class CommandServer(Thread):
         :param comm_socket: The socket to send to the MJPEG streamer.
         :param request: The request string from the client.
         """
-        re_result = re.match('^GET /{}(\?fps=(?P<fps>\d+\.?\d*))?'.format(STREAM_ENDPOINT), request)
+        re_result = re.search(r'GET /{}(\?fps=(?P<fps>\d+\.?\d*))?'.format(STREAM_ENDPOINT), request)
         if re_result is None or re_result.group('fps') is None:
             self.__logger.info('No FPS supplied. Using 1.0.')
             fps = 1.0
@@ -138,8 +139,8 @@ class CommandServer(Thread):
         :param comm_socket: To socket to send the status.
         """
         writer = SocketWriter(comm_socket)
-        writer.append_bytes('HTTP/1.1 200 OK\r\n\r\n')
-        writer.append_bytes(json.dumps(dict(running=self.__camera.should_monitor)), close=True)
+        writer.append_string('HTTP/1.1 200 OK\r\n\r\n')
+        writer.append_string(json.dumps(dict(running=self.__camera.should_monitor)), close=True)
 
     def expose_camera(self):
         for servo in self.__camera.servos:
@@ -158,20 +159,20 @@ class CommandServer(Thread):
             server_socket.bind(('', self.__port))
             self.__logger.debug('Waiting for a command on socket %d' % self.__port)
         except Exception as e:
-            self.__logger.exception('An exception occurred setting up the server socket: %s' % e.message)
+            self.__logger.exception('An exception occurred setting up the server socket: %s' % e)
             return
 
         while True:
             try:
                 server_socket.listen(2)
-                client_socket, address = server_socket.accept()
+                client_socket, _ = server_socket.accept()
 
                 if self.__context is not None:
                     comm_socket = self.__context.wrap_socket(client_socket, server_side=True)
                 else:
                     comm_socket = client_socket
 
-                request = comm_socket.recv(2048)
+                request = str(comm_socket.recv(2048))
                 if not self.verify_api_key(comm_socket, request):
                     continue
                 endpoint = self.get_endpoint(comm_socket, request)
@@ -191,6 +192,11 @@ class CommandServer(Thread):
                     self.hide_camera()
                     self.__camera.should_monitor = False
                     self.send_status(comm_socket)
+                elif endpoint == RECORD:
+                    self.__camera.should_record = True
+                    writer = SocketWriter(comm_socket)
+                    writer.append_string('HTTP/1.1 200 OK\r\n\r\n', close=True)
+
 
                 else:  # Should not be possible after the endpoint regex.
                     self.__logger.warning('Unsupported message.')
@@ -198,5 +204,5 @@ class CommandServer(Thread):
                     comm_socket.close()
 
             except Exception as e:
-                self.__logger.exception('An exception occurred listening for commands: %s' % e.message)
+                self.__logger.exception('An exception occurred listening for commands: %s' % e)
                 time.sleep(TIMEOUT)

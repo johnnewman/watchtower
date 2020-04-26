@@ -1,4 +1,4 @@
-from stream_saver import StreamSaver
+from streamer.stream_saver import StreamSaver
 
 
 class CamStreamSaver(StreamSaver):
@@ -21,14 +21,13 @@ class CamStreamSaver(StreamSaver):
         with self.stream.lock:
             start_frame = None
             for frame in self.stream.frames:
-                if frame.timestamp is not None and (frame.timestamp / 1000000) <= self.__start_time:
+                is_before_start_time = frame.timestamp is not None and (frame.timestamp / 1000000) <= self.__start_time
+                if start_frame is None or is_before_start_time:
                     start_frame = frame
-                    self.__last_streamed_frame = start_frame
-            if start_frame is not None:
-                self.logger.debug('Found frame with timestamp: %d' % (start_frame.timestamp / 1000000))
-            else:
-                self.logger.debug('Did not find a start frame. Using 0 position.')
-            return start_frame.position if start_frame is not None else 0
+            timestamp = (start_frame.timestamp / 1000000) if start_frame.timestamp is not None else 0
+            self.logger.debug('Using frame with timestamp: %d' % timestamp)
+            self.__last_streamed_frame = start_frame
+            return start_frame.position
 
     def read(self, position, length=None):
         """

@@ -4,11 +4,11 @@ import datetime as dt
 import io
 import json
 import logging.config
-import motion
+import motion.motion_detector as motion
 import os
 import picamera
-import streamer
-import streamer.writer as writer
+import streamer.cam_stream_saver as streamer
+from streamer.writer import dropbox_writer, disk_writer
 import time
 
 WAIT_TIME = 0.1
@@ -107,25 +107,25 @@ def save_stream(stream, path, debug_name, stop_when_empty=False):
                                     stop_when_empty=stop_when_empty)
 
     def create_dropbox_writer(_path, _pem_path=None):
-        return writer.DropboxWriter(full_path=_path,
-                                    dropbox_token=dropbox_token,
-                                    file_chunk_size=dropbox_chunk_size,
-                                    public_pem_path=_pem_path)
+        return dropbox_writer.DropboxWriter(full_path=_path,
+                                            dropbox_token=dropbox_token,
+                                            file_chunk_size=dropbox_chunk_size,
+                                            public_pem_path=_pem_path)
 
     streamers = []
     if isinstance(stream, picamera.PiCameraCircularIO):
-        streamers.append(create_cam_stream(debug_name+'.loc', writer.DiskWriter(path)))
+        streamers.append(create_cam_stream(debug_name+'.loc', disk_writer.DiskWriter(path)))
         if dropbox_token is not None:
             streamers.append(create_cam_stream(debug_name+'.dbx',
                                                create_dropbox_writer('/'+path,
                                                                      dropbox_public_pem_path)))
     else:
-        streamers.append(create_stream(debug_name+'loc', writer.DiskWriter(path)))
+        streamers.append(create_stream(debug_name+'.loc', disk_writer.DiskWriter(path)))
         if dropbox_token is not None:
             stream = io.BytesIO(stream.getvalue())  # Create a new stream for Dropbox.
             streamers.append(create_stream(debug_name+'.dbx', create_dropbox_writer('/'+path)))
 
-    map(lambda x: x.start(), streamers)
+    list(map(lambda x: x.start(), streamers))
     return streamers
 
 
@@ -156,7 +156,7 @@ def main():
 
                 if was_not_running:
                     # Allow the camera a few seconds to initialize.
-                    for i in range(int(INITIALIZATION_TIME / WAIT_TIME)):
+                    for _ in range(int(INITIALIZATION_TIME / WAIT_TIME)):
                         wait(camera)
                     # Reset the base frame after coming online.
                     motion_detector.reset_base_frame()
@@ -165,18 +165,18 @@ def main():
                 if ir_controller is not None:
                     ir_controller.turn_on()
                 wait(camera)
-                motion_detected, motion_frame_bytes = motion_detector.detect()
-                if motion_detected:
+                motion_detected, frame_bytes = motion_detector.detect()
+                if motion_detected or camera.should_record:
                     motion_detector.reset_base_frame_date()
-                    logger.info('Motion detected!')
+                    logger.info('Recording triggered.')
                     event_time = time.time()
                     event_date = dt.datetime.now()
                     day_str = event_date.strftime(day_dir_format)
                     time_str = event_date.strftime(time_dir_format)
                     full_dir = cam_name + '/' + day_str + '/' + time_str
 
-                    save_stream(io.BytesIO(motion_frame_bytes),
-                                path=full_dir + '/motion.jpg',
+                    save_stream(io.BytesIO(frame_bytes),
+                                path=full_dir + '/trigger.jpg',
                                 debug_name=time_str + '.jpg',
                                 stop_when_empty=True)
                     video_streamers = save_stream(stream,
@@ -187,19 +187,20 @@ def main():
                     last_motion_trigger = time.time()
                     while camera.should_monitor and time.time() - last_motion_trigger <= rec_sec_after_trigger and \
                             time.time() - event_time <= max_event_time:
-                        more_motion, motion_frame_bytes = motion_detector.detect()
+                        more_motion, _ = motion_detector.detect()
                         if more_motion:
                             logger.debug('More motion detected!')
                             last_motion_trigger = time.time()
-                        for i in range(int(MOTION_INTERVAL_WHILE_SAVING / WAIT_TIME)):
+                        for _ in range(int(MOTION_INTERVAL_WHILE_SAVING / WAIT_TIME)):
                             wait(camera)
 
                     # Now that motion is done, stop uploading
-                    map(lambda x: x.stop(), video_streamers)
+                    list(map(lambda x: x.stop(), video_streamers))
+                    camera.should_record = False
                     elapsed_time = (dt.datetime.now() - event_date).seconds
                     logger.info('Ending recording. Elapsed time %ds' % elapsed_time)
         except Exception as e:
-            logger.exception('An exception occurred: %s' % e.message)
+            logger.exception('An exception occurred: %s' % e)
         finally:
             camera.stop_recording()
             camera.close()

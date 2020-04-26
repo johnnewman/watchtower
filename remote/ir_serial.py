@@ -2,7 +2,7 @@ import logging
 import serial
 from threading import Thread, Lock
 import time
-import Queue
+import queue
 
 
 class InfraredComm(Thread):
@@ -41,7 +41,7 @@ class InfraredComm(Thread):
                                           bytesize=serial.EIGHTBITS,
                                           timeout=timeout)
         self.__sleep_time = sleep_time
-        self.__command_queue = Queue.Queue(1)
+        self.__command_queue = queue.Queue(1)
         self.__logger = logging.getLogger(__name__)
         self.__room_brightness = 1.0
         self.__on_command = on_command
@@ -85,11 +85,11 @@ class InfraredComm(Thread):
         """
         try:
             self.__command_queue.put(command)
-        except Queue.Full:
+        except queue.Full:
             self.__logger.warn('Queue is full! Removing an element.')
             try:
                 self.__command_queue.get_nowait()
-            except Queue.Empty:
+            except queue.Empty:
                 pass
             self.__enqueue_command(command)  # Recursively try again.
 
@@ -100,7 +100,7 @@ class InfraredComm(Thread):
         """
         total_sent = 0
         while total_sent < len(command) and len(command) > 0:
-            sent = self.__controller.write((command + '\n').encode('utf-8'))
+            sent = self.__controller.write((command + '\n').encode())
             if sent == 0:
                 raise RuntimeError('Failed to write to serial port.')
             total_sent += sent
@@ -115,10 +115,10 @@ class InfraredComm(Thread):
             # Attempt to write any new commands
             try:
                 self.__write_command(self.__command_queue.get_nowait())
-            except Queue.Empty:
+            except queue.Empty:
                 pass
-            except RuntimeError as ex:
-                self.__logger.exception('Runtime exception: %s' % ex.message)
+            except RuntimeError as e:
+                self.__logger.exception('Runtime exception: %s' % e)
 
             # Now read the light level
             if self.__controller.in_waiting > 0:

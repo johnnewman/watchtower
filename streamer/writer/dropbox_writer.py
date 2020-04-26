@@ -35,22 +35,22 @@ class DropboxWriter(byte_writer.ByteWriter):
         self.__dbx = dropbox.Dropbox(dropbox_token)
         self.__file_chunk_size = file_chunk_size
         self.__file_count = 0
-        self.__byte_pool = ''
+        self.__byte_pool = ''.encode()
         self.__public_key = None
         if public_pem_path:
             with open(public_pem_path, "rb") as public_key_file:
                 self.__public_key = serialization.load_pem_public_key(public_key_file.read(), backend=default_backend())
 
-    def append_bytes(self, byte_string, close=False):
-        self.__append_bytes(byte_string, close, False)
+    def append_bytes(self, bts, close=False):
+        self.__append_bytes(bts, close, False)
 
-    def __append_bytes(self, byte_string, close=False, ignore_previous_bytes=False):
+    def __append_bytes(self, bts, close=False, ignore_previous_bytes=False):
         """
         Private function that allows us to ignore the data that has accumulated
         in the ``__byte_pool``. This is only useful when breaking the data into
         files.
 
-        :param byte_string: The bytes to append to the pool.
+        :param bts: The bytes to append to the pool.
         :param close: If true, this uploads all the data supplied.
         :param ignore_previous_bytes: If true, ignores what is stored in
         ``__byte_pool``.
@@ -60,18 +60,18 @@ class DropboxWriter(byte_writer.ByteWriter):
             logger = logging.getLogger(__name__)
 
         if not ignore_previous_bytes:
-            byte_string = self.__byte_pool + byte_string
-            total_available_space = self.__file_chunk_size - len(byte_string)
-            if len(byte_string) > total_available_space:
-                # Break the byte_string into max sized smaller chunks.
+            bts = self.__byte_pool + bts
+            total_available_space = self.__file_chunk_size - len(bts)
+            if len(bts) > total_available_space:
+                # Break the bytes into max sized smaller chunks.
                 logger.debug('Attempting to upload beyond max size. Splitting.')
-                substring = byte_string[:self.__file_chunk_size]
-                while len(substring) == self.__file_chunk_size:
-                    self.__append_bytes(substring, close=True, ignore_previous_bytes=True)  # Save each substring.
-                    byte_string = byte_string[self.__file_chunk_size:]  # Remove the substring.
-                    substring = byte_string[:self.__file_chunk_size]  # Fetch the next substring.
-                byte_string = substring  # This will now be the last chunk, under the size limit.
-            self.__byte_pool = byte_string
+                sub_bytes = bts[:self.__file_chunk_size]
+                while len(sub_bytes) == self.__file_chunk_size:
+                    self.__append_bytes(sub_bytes, close=True, ignore_previous_bytes=True)  # Save each slice.
+                    bts = bts[self.__file_chunk_size:]  # Remove the slice.
+                    sub_bytes = bts[:self.__file_chunk_size]  # Fetch the next slice.
+                bts = sub_bytes  # This will now be the last chunk, under the size limit.
+            self.__byte_pool = bts
 
         if close:
             if self.__public_key:
@@ -81,11 +81,11 @@ class DropboxWriter(byte_writer.ByteWriter):
                                                                               algorithm=hashes.SHA256(),
                                                                               label=None))
                 encoded_fernet_key = base64.b64encode(encrypted_fernet_key)
-                encrypted_bytes = Fernet(fernet_key).encrypt(byte_string)
-                byte_string = str(len(encoded_fernet_key)) + ' ' + encoded_fernet_key + encrypted_bytes
+                encrypted_bytes = Fernet(fernet_key).encrypt(bts)
+                bts = str(len(encoded_fernet_key)).encode() + ' '.encode() + encoded_fernet_key + encrypted_bytes
 
             path, extension = os.path.splitext(self.full_path)
             full_path = path + str(self.__file_count) + extension
-            self.__dbx.files_upload(byte_string, full_path)
+            self.__dbx.files_upload(bts, full_path)
             logger.debug('Uploaded file \"%s\"' % full_path)
             self.__file_count += 1

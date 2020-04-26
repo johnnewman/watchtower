@@ -93,7 +93,7 @@ class MotionDetector:
         contours = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
 
         # Filter out small contours. Draw the large ones.
-        contours = filter(lambda c: cv2.contourArea(c) >= self.min_area, contours)
+        contours = list(filter(lambda c: cv2.contourArea(c) >= self.min_area, contours))
         for contour in contours:
             (x, y, w, h) = cv2.boundingRect(contour)
             cv2.rectangle(current_frame, (x, y), (x + w, y + h), color=MOTION_COLOR, thickness=MOTION_BORDER)
@@ -101,7 +101,7 @@ class MotionDetector:
 
     def downsize_image(self, image_array):
         return cv2.resize(image_array,
-                          tuple(i/DOWNSIZE_FACTOR for i in self.__camera.resolution),
+                          tuple(i//DOWNSIZE_FACTOR for i in self.__camera.resolution),
                           interpolation=cv2.INTER_AREA)
 
     def post_process_image(self, bgr_array):

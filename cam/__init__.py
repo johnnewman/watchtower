@@ -16,12 +16,26 @@ class SafeCamera (picamera.PiCamera):
     def __init__(self, resolution, framerate, servos):
         super(SafeCamera, self).__init__(resolution=resolution, framerate=framerate)
         self.__should_monitor = True
+        self.__should_record = False
         self.__lock = Lock()
         self.__servos = servos
 
     @property
     def servos(self):
         return self.__servos
+
+    @property
+    def should_record(self):
+        self.__lock.acquire()
+        should_record = self.__should_record
+        self.__lock.release()
+        return should_record
+
+    @should_record.setter
+    def should_record(self, value):
+        self.__lock.acquire()
+        self.__should_record = value
+        self.__lock.release()
 
     @property
     def should_monitor(self):

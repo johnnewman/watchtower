@@ -1,7 +1,7 @@
 import io
 import sys
-from stream_saver import StreamSaver
-from writer import socket_writer
+from streamer.stream_saver import StreamSaver
+from streamer.writer import socket_writer
 
 MJPEG_DOWNSCALE_FACTOR = 0.666
 
@@ -31,7 +31,7 @@ class MJPEGStreamer(StreamSaver):
         self.stream.seek(0)  # Always reset to 0
         self.__camera.safe_capture(self.stream,
                                    downscale_factor=MJPEG_DOWNSCALE_FACTOR)
-        return super(MJPEGStreamer, self).read(0, length=sys.maxint)
+        return super(MJPEGStreamer, self).read(0, length=sys.maxsize)
 
     def ended(self):
         """
