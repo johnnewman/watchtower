@@ -9,10 +9,12 @@
 # It starts PiServoServer, switches to the Python virtual
 # environment used for PiSecurityCam, and starts an instance.
 
-cd /home/<username>/PiServoServer
-python main.py &
+source /home/pi/PiServoServer/venv/bin/activate
+cd /home/pi/PiServoServer
+python3 main.py &
+deactivate
 
-source /usr/local/bin/virtualenvwrapper.sh
-workon cv
-cd /home/<username>/PiSecurityCam
-python pi_sec_cam.py &
+source /home/pi/PiSecurityCam/venv/bin/activate
+cd /home/pi/PiSecurityCam
+python3 pi_sec_cam.py &
+deactivate
