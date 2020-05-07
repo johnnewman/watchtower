@@ -2,7 +2,7 @@ import base64
 import dropbox
 import logging
 import os
-from streamer.writer import byte_writer
+from . import byte_writer
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes

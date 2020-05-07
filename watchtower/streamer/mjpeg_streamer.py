@@ -1,7 +1,7 @@
 import io
 import sys
-from streamer.stream_saver import StreamSaver
-from streamer.writer import socket_writer
+from .stream_saver import StreamSaver
+from .writer import socket_writer
 
 MJPEG_DOWNSCALE_FACTOR = 0.666
 

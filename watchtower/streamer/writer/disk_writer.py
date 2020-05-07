@@ -1,5 +1,5 @@
 import os
-from streamer.writer import byte_writer
+from . import byte_writer
 
 
 class DiskWriter(byte_writer.ByteWriter):

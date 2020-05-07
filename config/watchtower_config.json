@@ -1,0 +1,43 @@
+{
+    "CAMERA_NAME": "room0",
+
+    "VIDEO_FRAMERATE": 30,
+    "VIDEO_ROTATION": 0,
+    "VIDEO_SIZE": [
+        1280,
+        720
+    ],
+    "VIDEO_DATE_FORMAT": "%Y-%m-%d %H:%M:%S",
+
+    "DIR_DAY_FORMAT": "%Y-%m-%d",
+    "DIR_TIME_FORMAT": "%H.%M.%S",
+
+    "MOTION_MAX_EVENT_TIME": 60,
+    "MOTION_MAX_TRIGGER_AREA": 0.005,
+    "MOTION_PIXEL_DELTA_TRIGGER": 50,
+    "MOTION_RECORDING_PADDING": 8,
+
+    "SERVER_API_KEY": null,
+    "SERVER_MJPEG_FRAMERATE_CAP": 2.0,
+
+    "INFRA_ENABLED": false,
+    "INFRA_BAUDRATE": 9600,
+    "INFRA_ON_COMMAND": "on",
+    "INFRA_OFF_COMMAND": "off",
+    "INFRA_PORT": "/dev/serial0",
+    "INFRA_TIMEOUT": 1,
+    "INFRA_UPDATE_HZ": 5,
+
+    "SERVOS": [
+        {
+            "BOARD_PIN": 7,
+            "ANGLE_ON": 40,
+            "ANGLE_OFF": 90
+        },
+        {
+            "BOARD_PIN": 11,
+            "ANGLE_ON": 127,
+            "ANGLE_OFF": 180
+        }
+    ]
+}

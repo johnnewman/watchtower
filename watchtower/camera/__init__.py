@@ -13,16 +13,21 @@ class SafeCamera (picamera.PiCamera):
     monitoring status.
     """
 
-    def __init__(self, resolution, framerate, servos):
+    def __init__(self, name, resolution, framerate, servos):
         super(SafeCamera, self).__init__(resolution=resolution, framerate=framerate)
         self.__should_monitor = True
         self.__should_record = False
         self.__lock = Lock()
         self.__servos = servos
+        self.__name = name
 
     @property
     def servos(self):
         return self.__servos
+
+    @property
+    def name(self):
+        return self.__name
 
     @property
     def should_record(self):
@@ -60,4 +65,3 @@ class SafeCamera (picamera.PiCamera):
                      use_video_port=use_video_port,
                      resize=new_resolution)
         self.__lock.release()
-

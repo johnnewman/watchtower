@@ -1,5 +1,5 @@
 import socket
-from streamer.writer import byte_writer
+from . import byte_writer
 
 BOUNDARY = 'FRAME'
 
@@ -56,6 +56,12 @@ class MJPEGSocketWriter(SocketWriter):
         super(MJPEGSocketWriter, self).append_bytes(payload.encode(), False)
         super(MJPEGSocketWriter, self).append_bytes(bts, False)
         super(MJPEGSocketWriter, self).append_bytes('\r\n\r\n'.encode(), close)
+
+class MJPEGSocketWriterTwo(MJPEGSocketWriter):
+
+    def __init__(self):
+        super(MJPEGSocketWriterTwo, self).__init__(None)
+
 
 
 class ServoSocketWriter(SocketWriter):

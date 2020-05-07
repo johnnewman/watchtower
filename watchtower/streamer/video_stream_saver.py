@@ -1,7 +1,7 @@
-from streamer.stream_saver import StreamSaver
+from .stream_saver import StreamSaver
 
 
-class CamStreamSaver(StreamSaver):
+class VideoStreamSaver(StreamSaver):
     """
     A StreamSaver that uses a camera stream. Safely locks the camera stream
     while accessing it. Also determines the best starting point to read the
@@ -9,7 +9,7 @@ class CamStreamSaver(StreamSaver):
     """
 
     def __init__(self, stream, byte_writer, name, start_time, stop_when_empty=False):
-        super(CamStreamSaver, self).__init__(stream, byte_writer, name, stop_when_empty)
+        super(VideoStreamSaver, self).__init__(stream, byte_writer, name, stop_when_empty)
         self.__start_time = start_time
         self.__last_streamed_frame = None
 
@@ -55,7 +55,7 @@ class CamStreamSaver(StreamSaver):
             last_frame = next(reversed(self.stream.frames))  # Read to the last frame
             length = last_frame.position - self.__last_streamed_frame.position
             self.__last_streamed_frame = last_frame
-            return super(CamStreamSaver, self).read(position, length)
+            return super(VideoStreamSaver, self).read(position, length)
 
     def ended(self):
         """
