@@ -118,13 +118,13 @@ class RunLoop(Thread):
         streamers = []
         if isinstance(stream, picamera.PiCameraCircularIO):
             streamers.append(create_cam_stream(debug_name+'.loc', disk_writer.DiskWriter(path)))
-            if self.__dropbox_config is not None:
+            if len(self.__dropbox_config) != 0:
                 streamers.append(create_cam_stream(debug_name+'.dbx',
                                                 create_dropbox_writer('/'+path,
                                                                         dropbox_config['public_key_path'])))
         else:
             streamers.append(create_stream(debug_name+'.loc', disk_writer.DiskWriter(path)))
-            if self.__dropbox_config is not None:
+            if len(self.__dropbox_config) != 0:
                 stream = io.BytesIO(stream.getvalue())  # Create a new stream for Dropbox.
                 streamers.append(create_stream(debug_name+'.dbx', create_dropbox_writer('/'+path)))
 
