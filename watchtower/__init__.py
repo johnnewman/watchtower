@@ -5,7 +5,8 @@ import os
 import time
 from .run_loop import RunLoop
 from .streamer.mjpeg_streamer import MJPEGStreamer
-from .streamer.writer.socket_writer import MJPEGSocketWriterTwo, ServoSocketWriter
+from .streamer.writer.socket_writer import ServoSocketWriter
+from .streamer.writer import http_writer
 
 
 def setup_logging(app):
@@ -51,22 +52,24 @@ def create_app(test_config=None):
 
     @app.route('/stream')
     def stream():
+        fps = 0.5
+        writer = http_writer.HTTPMultipartWriter()
         streamer = MJPEGStreamer(main.camera,
-                                byte_writer=MJPEGSocketWriterTwo(),
-                                name='MJPEG',
-                                rate=1.0)
-        
+                                 byte_writer=writer,
+                                 name='MJPEG',
+                                 rate=fps)
+        streamer.start()
+
         @stream_with_context
         def generate():
-            while True:
-                frame_bytes, _ = streamer.read(0)
-                payload = '--FRAME\r\n' + \
-                    'Content-Type: image/jpeg\r\n' + \
-                    'Content-Length: ' + str(len(frame_bytes)) + '\r\n\r\n'
-                byts = payload.encode() + frame_bytes + b'\r\n\r\n'
-                time.sleep(1)
-                yield(byts)
-        return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=FRAME')
+            try:
+                while True:
+                    yield(writer.blocking_read())
+            except:
+                streamer.stop()
+
+        mimetype = 'multipart/x-mixed-replace; boundary=' + http_writer.MULTIPART_BOUNDARY
+        return Response(generate(), mimetype=mimetype)
 
     def expose_camera():
         for servo in main.camera.servos:
