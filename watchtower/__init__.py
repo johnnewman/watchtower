@@ -1,3 +1,10 @@
+"""Entry point for the Watchtower Flask app.
+
+This is where the Flask app is created to monitor a Raspberry Pi camera's feed.
+All supported API endpoints are defined in this module. One instance of the
+RunLoop thread is started when the app is initialized.
+"""
+
 from flask import Flask, Response, stream_with_context
 import json
 import logging.config
@@ -8,6 +15,12 @@ from .streamer.mjpeg_streamer import MJPEGStreamer
 from .streamer.writer.socket_writer import ServoSocketWriter
 from .streamer.writer import http_writer
 
+__author__ = "John Newman"
+__copyright__ = "Copyright 2020, John Newman"
+__license__ = "MIT"
+__version__ = "1.1.0"
+__maintainer__ = "John Newman"
+__status__ = "Development"
 
 def setup_logging(app):
     #TODO CLEANUP THE LOGGING
@@ -36,7 +49,7 @@ def create_app(test_config=None):
 
     @app.route('/status')
     def status():
-        return dict(running=main.camera.should_monitor)
+        return dict(monitoring=main.camera.should_monitor)
 
     @app.route('/stop')
     def stop():
@@ -50,8 +63,19 @@ def create_app(test_config=None):
         expose_camera()
         return status()
 
+    @app.route('/record')
+    def record():
+        main.camera.should_record = True
+        return '', 204
+
     @app.route('/stream')
     def stream():
+        """
+        Starts an MJPEG stream using an HTTPMultipartWriter fed to an instance
+        of MJPEGStreamer. A generator is used to continuously block, waiting on
+        a signal from the writer when a new frame is ready for output to the
+        client.
+        """
         fps = 0.5
         writer = http_writer.HTTPMultipartWriter()
         streamer = MJPEGStreamer(main.camera,

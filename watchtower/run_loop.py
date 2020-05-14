@@ -6,7 +6,6 @@ import logging
 import datetime as dt
 import picamera
 import time
-
 from .camera import Servo, SafeCamera
 from .motion.motion_detector import MotionDetector
 from .streamer import video_stream_saver as streamer
@@ -19,7 +18,11 @@ MOTION_INTERVAL_WHILE_SAVING = 1.0  # In Seconds
 
 class RunLoop(Thread):
     """
-    ...
+    This is the central threaded class for Watchtower that is started when the
+    Flask app is initialized. It starts a continuous camera stream and waits
+    for motion to be detected. Once motion is detected, the triggered frame
+    and associated video are saved to disk. The same files can be encrytped and
+    sent to Dropbox when configured to do so in the watchtower_config file.
     """
 
     def __init__(self, app):
@@ -91,8 +94,8 @@ class RunLoop(Thread):
         self.camera.wait_recording(WAIT_TIME)
 
     def save_stream(self, stream, path, debug_name, stop_when_empty=False):
-        """Saves the ``stream`` to disk and optionally Dropbox, if a Dropbox token
-        was supplied as a parameter to the program."""
+        """Saves the ``stream`` to disk and optionally Dropbox, if Dropbox
+        configurations were supplied in the config file."""
 
         stream_start_time = max(0, int(time.time() - self.start_time - self.__padding))
 
