@@ -1,0 +1,22 @@
+server {
+    listen 443 ssl;
+    server_name cam0 www.cam0;
+
+    ssl_certificate        /etc/watchtower/certs/server.crt;
+    ssl_certificate_key    /etc/watchtower/certs/server.key;
+    ssl_client_certificate /etc/watchtower/certs/ca.crt;
+    ssl_verify_client      on;
+
+    allow <web server IP>;
+    deny all;
+
+    location ~^/(status|start|stop|stream|record) {
+        include uwsgi_params;
+        uwsgi_pass unix:/tmp/watchtower.sock;
+        uwsgi_buffering off;
+    }
+
+    location / {
+        deny all;
+    }
+}
