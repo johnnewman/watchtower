@@ -9,10 +9,10 @@ from cryptography.hazmat.primitives.asymmetric import padding
 John Newman
 April 8, 2019
 
-This file is used for decrypting any file that was encrypted using Fernet
-encryption. The first bytes of the file contain the character length (int) of
-the encrypted Fernet key. The Fernet key is expected to be base64 encoded and
-to appear in the file following the length and a space.
+This program is used for decrypting files encrypted by watchtower. The first
+bytes of the file contain the character length (int) of the encrypted Fernet
+key. The key is expected to be base64 encoded and to appear in the file
+following the length and a space.
 
 File format:
 "{length_int} {encoded_encrypted_key}{encrypted_data}"

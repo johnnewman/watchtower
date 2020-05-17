@@ -15,10 +15,10 @@ class DropboxWriter(byte_writer.ByteWriter):
     """
     A class that accumulates bytes up to the ``file_chunk_size`` to upload to
     Dropbox as an individual file. Creates additional files as the chunk size
-    is reached. If a public key pem path is supplied, the video data will be
-    encrypted and the random symmetric encryption key will be padded to the
-    front of the file. Fernet encryption is used. The key itself is encrypted
-    using the public key.
+    is reached. If the path to a public key file is supplied, the video data
+    will be encrypted and the random symmetric encryption key will be padded
+    to the front of the file. Fernet encryption is used. The key itself is
+    encrypted using the public key.
     """
 
     def __init__(self, full_path, dropbox_token, file_chunk_size=3, public_pem_path=None):
