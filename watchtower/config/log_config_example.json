@@ -8,15 +8,15 @@
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "default",
-            "level": 20
+            "level": 10
         },
         "file": {
             "backupCount": 7,
             "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/pyseccam.log",
+            "filename": "/var/log/watchtower/wt.log",
             "formatter": "default",
             "interval": 1,
-            "level": 20,
+            "level": 10,
             "when": "d"
         }
     },
@@ -25,7 +25,7 @@
             "console",
             "file"
         ],
-        "level": 20
+        "level": 10
     },
     "version": 1
 }
