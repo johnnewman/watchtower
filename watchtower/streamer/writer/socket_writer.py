@@ -31,39 +31,6 @@ class SocketWriter(byte_writer.ByteWriter):
             self.__socket.close()
 
 
-class MJPEGSocketWriter(SocketWriter):
-    """
-    A class that appends some HTTP header data to the byte string to make it a
-    proper HTTP MJPEG stream. This string is sent to the superclass for output.
-    """
-
-    def __init__(self, comm_socket):
-        super(MJPEGSocketWriter, self).__init__(comm_socket)
-        self.__has_sent_header = False
-
-    def append_bytes(self, bts, close=False):
-        header_content = ''
-        if not self.__has_sent_header:
-            header_content = 'HTTP/1.1 200 OK\r\n' + \
-                             'Content-Type: multipart/x-mixed-replace; boundary=' + BOUNDARY + '\r\n' + \
-                             'Connection: keep-alive\r\n\r\n'
-            self.__has_sent_header = True
-        
-        payload = header_content + '--' + BOUNDARY + '\r\n' + \
-            'Content-Type: image/jpeg\r\n' + \
-            'Content-Length: ' + str(len(bts)) + '\r\n\r\n'
-
-        super(MJPEGSocketWriter, self).append_bytes(payload.encode(), False)
-        super(MJPEGSocketWriter, self).append_bytes(bts, False)
-        super(MJPEGSocketWriter, self).append_bytes('\r\n\r\n'.encode(), close)
-
-class MJPEGSocketWriterTwo(MJPEGSocketWriter):
-
-    def __init__(self):
-        super(MJPEGSocketWriterTwo, self).__init__(None)
-
-
-
 class ServoSocketWriter(SocketWriter):
     """
     A class that communicates with PiServoServer. Used to set a servo's angle.
