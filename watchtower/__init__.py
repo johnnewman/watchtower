@@ -20,28 +20,24 @@ __copyright__ = "Copyright 2020, John Newman"
 __license__ = "MIT"
 __version__ = "1.1.0"
 __maintainer__ = "John Newman"
-__status__ = "Development"
+__status__ = "Production"
 
 def setup_logging(app):
-    #TODO CLEANUP THE LOGGING
-    # log_dir = 'logs/'
-    # if not os.path.exists(log_dir):
-    #     os.makedirs(log_dir)
-    with open(app.instance_path + '/log_config.json', 'r') as log_config_file:
+    filename = os.path.join(app.instance_path, 'log_config.json')
+    with open(filename, 'r') as log_config_file:
         logging.config.dictConfig(json.load(log_config_file))
     return logging.getLogger(__name__)
 
 def create_app(test_config=None):
+    """
+    Initializes the Flask app and starts the main RunLoop thread. This is how
+    uWSGI starts the program.
+    """
     app = Flask(__name__, instance_relative_config=True)
     if test_config is None:
         app.config.from_json('watchtower_config.json', silent=False)
     else:
         app.config.from_mapping(test_config)
-
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
     
     setup_logging(app)
     main = RunLoop(app)
