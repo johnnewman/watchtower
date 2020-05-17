@@ -82,7 +82,7 @@ class DropboxWriter(byte_writer.ByteWriter):
                                                                               label=None))
                 encoded_fernet_key = base64.b64encode(encrypted_fernet_key)
                 encrypted_bytes = Fernet(fernet_key).encrypt(bts)
-                bts = str(len(encoded_fernet_key)).encode() + ' '.encode() + encoded_fernet_key + encrypted_bytes
+                bts = str(len(encoded_fernet_key)).encode() + b' ' + encoded_fernet_key + encrypted_bytes
 
             path, extension = os.path.splitext(self.full_path)
             full_path = path + str(self.__file_count) + extension
