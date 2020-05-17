@@ -1,7 +1,7 @@
-dropbox
-cryptography
-numpy
+dropbox==10.1.1
+cryptography==2.9.2
+numpy==1.18.3
 opencv-python-headless==3.4.6.27
-picamera
-pyserial
-serial
+picamera==1.13
+pyserial==3.4
+uWSGI==2.0.18
