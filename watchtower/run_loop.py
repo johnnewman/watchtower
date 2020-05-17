@@ -1,9 +1,10 @@
 
 from flask import Flask
 from threading import Thread
+import datetime as dt
 import io
 import logging
-import datetime as dt
+import os
 import picamera
 import time
 from .camera import Servo, SafeCamera
@@ -36,7 +37,7 @@ class RunLoop(Thread):
         self.camera = self.setup_camera(app)
         
         motion_config = app.config.get_namespace('MOTION_')
-        area = motion_config['max_trigger_area']
+        area = motion_config['min_trigger_area']
         delta = motion_config['pixel_delta_trigger']
         self.__padding = motion_config['recording_padding']
         self.__max_event_time = motion_config['max_event_time']
@@ -48,6 +49,8 @@ class RunLoop(Thread):
         self.__time_format = app.config['DIR_TIME_FORMAT']
         self.__video_date_format = app.config['VIDEO_DATE_FORMAT']
         self.__dropbox_config  = app.config.get_namespace('DROPBOX_')
+
+        self.__instance_path = app.instance_path
 
     @property
     def ir_controller(self):
@@ -114,19 +117,20 @@ class RunLoop(Thread):
 
         def create_dropbox_writer(_path, _pem_path=None):
             return dropbox_writer.DropboxWriter(full_path=_path,
-                                                dropbox_token=self.__dropbox_config['token'],
+                                                dropbox_token=self.__dropbox_config['api_token'],
                                                 file_chunk_size=self.__dropbox_config['file_chunk_mb'] * 1024 * 1024,
                                                 public_pem_path=_pem_path)
 
         streamers = []
+        disk_path = os.path.join(self.__instance_path, path)
         if isinstance(stream, picamera.PiCameraCircularIO):
-            streamers.append(create_cam_stream(debug_name+'.loc', disk_writer.DiskWriter(path)))
+            streamers.append(create_cam_stream(debug_name+'.loc', disk_writer.DiskWriter(disk_path)))
             if len(self.__dropbox_config) != 0:
                 streamers.append(create_cam_stream(debug_name+'.dbx',
                                                 create_dropbox_writer('/'+path,
-                                                                        dropbox_config['public_key_path'])))
+                                                                      self.__dropbox_config['public_key_path'])))
         else:
-            streamers.append(create_stream(debug_name+'.loc', disk_writer.DiskWriter(path)))
+            streamers.append(create_stream(debug_name+'.loc', disk_writer.DiskWriter(disk_path)))
             if len(self.__dropbox_config) != 0:
                 stream = io.BytesIO(stream.getvalue())  # Create a new stream for Dropbox.
                 streamers.append(create_stream(debug_name+'.dbx', create_dropbox_writer('/'+path)))
@@ -138,7 +142,7 @@ class RunLoop(Thread):
         
         camera = self.camera
         logger = logging.getLogger(__name__)
-        logger.info('Running main loop.')
+        logger.info('Starting main loop.')
         camera.start_recording(self.__stream, format='h264')
 
         self.__start_time = time.time()
@@ -173,14 +177,14 @@ class RunLoop(Thread):
                     event_date = dt.datetime.now()
                     day_str = event_date.strftime(self.__day_format)
                     time_str = event_date.strftime(self.__time_format)
-                    full_dir = self.camera.name + '/' + day_str + '/' + time_str
-
+                    full_dir = os.path.join(self.camera.name, day_str, time_str)
+                    logger.info(full_dir)
                     self.save_stream(io.BytesIO(frame_bytes),
-                                        path=full_dir + '/trigger.jpg',
+                                        path=os.path.join(full_dir, 'trigger.jpg'),
                                         debug_name=time_str + '.jpg',
                                         stop_when_empty=True)
                     video_streamers = self.save_stream(self.__stream,
-                                                       path=full_dir+'/video.h264',
+                                                       path=os.path.join(full_dir, 'video.h264'),
                                                        debug_name=time_str+'.vid')
 
                     # Wait for motion to stop
