@@ -10,7 +10,7 @@
 # over $days_to_save old will be deleted.
 #
 # Example crontab listing to execute every 5 minutes:
-# */5 * * * * /home/<username>/watchtower/ancillary/pi/disk_purge.sh "/home/<username>/watchtower/<cam name>" >> /var/logs/watchtower/disk_purge.log
+# */5 * * * * <watchtower_dir>/ancillary/pi/disk_purge.sh "<watchtower_dir>/instance/recordings" >> /var/logs/watchtower/disk_purge.log
 
 min_usage=80
 days_to_save=3
