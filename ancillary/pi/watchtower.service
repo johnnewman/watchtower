@@ -5,9 +5,9 @@ After=network.target
 [Service]
 User=user
 Group=www-data
-WorkingDirectory=/home/user/watchtower
-Environment="PATH=/home/user/watchtower/venv/bin"
-ExecStart=/home/user/watchtower/venv/bin/uwsgi --ini wsgi.ini
+WorkingDirectory=<watchtower_path>
+Environment="PATH=<watchtower_path>/venv/bin"
+ExecStart=<watchtower_path>/venv/bin/uwsgi --ini wsgi.ini
 
 [Install]
 WantedBy=multi-user.target
