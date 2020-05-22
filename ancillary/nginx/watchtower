@@ -1,14 +1,14 @@
 server {
     listen 443 ssl;
-    server_name cam0 www.cam0;
+    server_name _;
 
-    ssl_certificate        /etc/watchtower/certs/server.crt;
-    ssl_certificate_key    /etc/watchtower/certs/server.key;
-    ssl_client_certificate /etc/watchtower/certs/ca.crt;
+    ssl_certificate        /etc/nginx/certs/wt.crt;
+    ssl_certificate_key    /etc/nginx/certs/wt.key;
+    ssl_client_certificate /etc/nginx/certs/ca.crt;
     ssl_verify_client      on;
 
-    allow <web server IP>;
-    deny all;
+    # allow <reverse proxy ip>;
+    # deny all;
 
     location ~^/(status|start|stop|stream|record) {
         include uwsgi_params;
