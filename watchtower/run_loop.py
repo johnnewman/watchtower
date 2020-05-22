@@ -123,18 +123,18 @@ class RunLoop(Thread):
                                                 public_pem_path=_pem_path)
 
         streamers = []
-        disk_path = os.path.join(self.__instance_path, path)
+        disk_path = os.path.join(self.__instance_path, 'recordings', path)
         if isinstance(stream, picamera.PiCameraCircularIO):
             streamers.append(create_cam_stream(debug_name+'.loc', disk_writer.DiskWriter(disk_path)))
             if len(self.__dropbox_config) != 0:
                 streamers.append(create_cam_stream(debug_name+'.dbx',
-                                                create_dropbox_writer('/'+path,
+                                                create_dropbox_writer('/'+os.path.join(self.camera.name, path),
                                                                       self.__dropbox_config['public_key_path'])))
         else:
             streamers.append(create_stream(debug_name+'.loc', disk_writer.DiskWriter(disk_path)))
             if len(self.__dropbox_config) != 0:
                 stream = io.BytesIO(stream.getvalue())  # Create a new stream for Dropbox.
-                streamers.append(create_stream(debug_name+'.dbx', create_dropbox_writer('/'+path)))
+                streamers.append(create_stream(debug_name+'.dbx', create_dropbox_writer('/'+os.path.join(self.camera.name, path))))
 
         list(map(lambda x: x.start(), streamers))
         return streamers
@@ -178,7 +178,7 @@ class RunLoop(Thread):
                     event_date = dt.datetime.now()
                     day_str = event_date.strftime(self.__day_format)
                     time_str = event_date.strftime(self.__time_format)
-                    full_dir = os.path.join(self.camera.name, day_str, time_str)
+                    full_dir = os.path.join(day_str, time_str)
                     logger.info(full_dir)
                     self.save_stream(io.BytesIO(frame_bytes),
                                         path=os.path.join(full_dir, 'trigger.jpg'),
