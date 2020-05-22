@@ -74,10 +74,11 @@ class RunLoop(Thread):
 
     def setup_camera(self, app):
         servos = []
-        for s in app.config.get('SERVOS'):
-            servos.append(Servo(pin=s['BOARD_PIN'],
-                                angle_off=s['ANGLE_OFF'],
-                                angle_on=s['ANGLE_ON']))
+        if app.config.get('SERVOS') is not None:
+            for s in app.config.get('SERVOS'):
+                servos.append(Servo(pin=s['BOARD_PIN'],
+                                    angle_off=s['ANGLE_OFF'],
+                                    angle_on=s['ANGLE_ON']))
         camera = SafeCamera(name = app.config["CAMERA_NAME"],
                             resolution=tuple(app.config['VIDEO_SIZE']),
                             framerate=app.config['VIDEO_FRAMERATE'],
