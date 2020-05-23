@@ -47,7 +47,7 @@ echo "Created $WATCHTOWER_LOG_PATH directory."
 
 # Set up cron job to keep disk usage under control.
 CRON_JOB="*/5 * * * * $WATCHTOWER_PATH/ancillary/pi/disk_purge.sh $WATCHTOWER_PATH/instance/recordings >> $WATCHTOWER_LOG_PATH/disk_purge.log"
-(crontab -l ; echo "$CRON_JOB") 2>&1 | grep -v "no crontab" | sort | uniq | crontab
+(crontab -l ; echo "$CRON_JOB") | sort | uniq | crontab
 echo "Created disk_purge cron job."
 
 # Put the real user and path into the service file and install it.
@@ -70,8 +70,11 @@ sudo ln -s /etc/nginx/sites-available/watchtower /etc/nginx/sites-enabled/
 
 echo -e "\n\nInstallation finished! The camera is configured to record to disk at $WATCHTOWER_PATH/instance/recordings.\n\
 Final steps to take: \n\
-1) Required: Enable serial and camera access via 'sudo raspiconfig'\n\
-2) Optional: To use the HTTP API, upload SSL certificates to /etc/nginx/certs\n\
+1) Required: Enable camera access via 'sudo raspiconfig'\n\
+2) Optional: Enable serial access via 'sudo raspiconfig'\n\
+
+3) Optional: To use the HTTP API, upload SSL certificates to /etc/nginx/certs\n\
              Restart nginx: 'sudo systemctl restart nginx'\n\
-3) Optional: Configure the main reverse proxy with an upstream location to this machine. See $WATCHTOWER_PATH/ancillary/nginx/reverse_proxy\n\
-4) Optional: Configure $WATCHTOWER_PATH/instance/watchtower_config.json with Dropbox, infrared, or servo support"
+4) Optional: Only allow HTTP access from trusted sources by editing /etc/nginx/sites-available/watchtower\n\
+5) Optional: Configure the main reverse proxy with an upstream location to this machine. See $WATCHTOWER_PATH/ancillary/nginx/reverse_proxy\n\
+6) Optional: Configure $WATCHTOWER_PATH/instance/watchtower_config.json with Dropbox, infrared, or servo support"
