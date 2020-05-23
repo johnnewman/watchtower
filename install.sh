@@ -45,6 +45,11 @@ sudo chgrp adm "$WATCHTOWER_LOG_PATH"
 sudo chmod 775 "$WATCHTOWER_LOG_PATH"
 echo "Created $WATCHTOWER_LOG_PATH directory."
 
+# Set up cron job to keep disk usage under control.
+CRON_JOB="*/5 * * * * $WATCHTOWER_PATH/ancillary/pi/disk_purge.sh $WATCHTOWER_PATH/instance/recordings >> $WATCHTOWER_LOG_PATH/disk_purge.log"
+(crontab -l ; echo "$CRON_JOB") 2>&1 | grep -v "no crontab" | sort | uniq | crontab
+echo -e "Created disk_purge cron job.\n"
+
 # Put the real user and path into the service file and install it.
 sed -i".bak" "s,<user>,$USER,g ; s,<watchtower_path>,$WATCHTOWER_PATH,g" "$WATCHTOWER_PATH/ancillary/pi/watchtower.service"
 sudo ln -s "$WATCHTOWER_PATH/ancillary/pi/watchtower.service" "/etc/systemd/system/"
@@ -58,11 +63,6 @@ sudo ln -s "$SERVO_PATH/ancillary/servo.service" "/etc/systemd/system/"
 echo "Created systemd servo.service file. It is NOT configured to run on boot."
 echo "   NOTE: If you are using servos, execute 'sudo systemctl enable servo.service' to have it start every system boot."
 
-# Set up cron job to keep disk usage under control.
-CRON_JOB="*/5 * * * * $WATCHTOWER_PATH/ancillary/pi/disk_purge.sh $WATCHTOWER_PATH/instance/recordings >> $WATCHTOWER_LOG_PATH/disk_purge.log"
-(crontab -l ; echo "$CRON_JOB") 2>&1 | grep -v "no crontab" | sort | uniq | crontab
-echo -e "Created disk_purge cron job.\n"
-
 # Install nginx configuration for uWSGI and watchtower
 sudo mkdir -p /etc/nginx/certs
 sudo cp $WATCHTOWER_PATH/ancillary/nginx/watchtower /etc/nginx/sites-available/
@@ -73,5 +73,5 @@ Final steps to take: \n\
 1) Required: Enable serial and camera access via 'sudo raspiconfig'\n\
 2) Optional: To use the HTTP API, upload SSL certificates to /etc/nginx/certs\n\
              Restart nginx: 'sudo systemctl restart nginx'\n\
-3) Optional: Set up the main reverse proxy with an upstream location to this machine. See $WATCHTOWER_PATH/ancillary/nginx/reverse_proxy\n\
-4) Optional: Set up $WATCHTOWER_PATH/instance/watchtower_config.json with Dropbox, infrared, or servo support"
+3) Optional: Configure the main reverse proxy with an upstream location to this machine. See $WATCHTOWER_PATH/ancillary/nginx/reverse_proxy\n\
+4) Optional: Configure $WATCHTOWER_PATH/instance/watchtower_config.json with Dropbox, infrared, or servo support"
