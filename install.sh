@@ -27,7 +27,7 @@ echo "Setting up the optional PiServoServer app..."
 git clone https://github.com/johnnewman/PiServoServer.git "$SERVO_PATH"
 echo "Creating Python virtual environment for PiServoServer..."
 python3 -m venv "$SERVO_PATH/venv"
-source "$SERVO_PATH/bin/activate"
+source "$SERVO_PATH/venv/bin/activate"
 echo "Installing Python dependencies..."
 pip install -r "$SERVO_PATH/requirements.txt"
 deactivate
@@ -45,12 +45,18 @@ sudo chgrp adm "$WATCHTOWER_LOG_PATH"
 sudo chmod 775 "$WATCHTOWER_LOG_PATH"
 echo "Created $WATCHTOWER_LOG_PATH directory."
 
-# Put the real path into the service file and install it.
-sed -i".bak" "s,<watchtower_path>,$WATCHTOWER_PATH,g" "$WATCHTOWER_PATH/ancillary/pi/watchtower.service"
+# Put the real user and path into the service file and install it.
+sed -i".bak" "s,<user>,$USER,g ; s,<watchtower_path>,$WATCHTOWER_PATH,g" "$WATCHTOWER_PATH/ancillary/pi/watchtower.service"
 sudo ln -s "$WATCHTOWER_PATH/ancillary/pi/watchtower.service" "/etc/systemd/system/"
 sudo systemctl enable watchtower.service
 echo "Created systemd watchtower.service file and configured it to run on boot."
-echo "        NOTE: This service has not been started. More configuration is needed."
+echo "   NOTE: This service has not been started. More configuration is needed."
+
+# Set up the PiServoServer service
+sed -i".bak" "s,<user>,$USER,g ; s,<path>,$SERVO_PATH,g" "$SERVO_PATH/ancillary/servo.service"
+sudo ln -s "$SERVO_PATH/ancillary/servo.service" "/etc/systemd/system/"
+echo "Created systemd servo.service file. It is NOT configured to run on boot."
+echo "   NOTE: If you are using servos, execute 'sudo systemctl enable servo.service' to have it start every system boot."
 
 # Set up cron job to keep disk usage under control.
 CRON_JOB="*/5 * * * * $WATCHTOWER_PATH/ancillary/pi/disk_purge.sh $WATCHTOWER_PATH/instance/recordings >> $WATCHTOWER_LOG_PATH/disk_purge.log"
@@ -62,7 +68,7 @@ sudo mkdir -p /etc/nginx/certs
 sudo cp $WATCHTOWER_PATH/ancillary/nginx/watchtower /etc/nginx/sites-available/
 sudo ln -s /etc/nginx/sites-available/watchtower /etc/nginx/sites-enabled/
 
-echo -e "Installation finished! The camera is configured set up to record to disk at $WATCHTOWER_PATH/instance/recordings.\n\
+echo -e "Installation finished! The camera is configured to record to disk at $WATCHTOWER_PATH/instance/recordings.\n\
 Final steps to take: \n\
 1) Required: Enable serial and camera access via 'sudo raspiconfig'\n\
 2) Optional: To use the HTTP API, upload SSL certificates to /etc/nginx/certs\n\
