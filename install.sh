@@ -1,6 +1,6 @@
 set -e
 
-WATCHTOWER_LOG_PATH="/var/logs/watchtower"
+WATCHTOWER_LOG_PATH="/var/log/watchtower"
 WATCHTOWER_PATH=`dirname "$(readlink -f "$0")"`
 SERVO_PATH="$WATCHTOWER_PATH/PiServoServer"
 
