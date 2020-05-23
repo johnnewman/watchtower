@@ -1,3 +1,24 @@
+#!/bin/sh
+
+# install.sh
+#
+# John Newman
+# 2020-05-23
+#
+# This script installs all of the necessary dependencies for watchtower to run.
+# In summary:
+# - Installs all system libs and python dependencies for watchtower.
+# - Installs PiServoServer and its dependencies.
+# - Configures a Firewall to only allow HTTP(S) and SSH traffic.
+# - Schedules a cron job to manage disk usage.
+# - Creates systemd services for watchtower and PiServoServer.
+# - Creates the log directory for watchtower and the cron job.
+# - Creates a simple watchtower configuration to only save motion to disk.
+# - Copies the nginx app gateway config file to access watchtower via uWSGI.
+# 
+# Additional setup to the watchtower_config file is needed to enable Dropbox
+# uploads, servo control, and the serial interface, described in the output.
+
 set -e
 
 WATCHTOWER_LOG_PATH="/var/log/watchtower"
