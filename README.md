@@ -34,11 +34,11 @@ Both the reverse proxy and the upstream server configurations encrypt all traffi
 ---
 
 The rest of this readme breaks down each component and describes its configuration located in [watchtower_config.json](config/watchtower_config.json).
- 1. [API Endpoints](#1-api-endpoints)
- 1. [Motion Detection](#2-motion-detection)
- 2. [Dropbox File Upload](#3-dropbox-file-upload)
- 3. [Arduino/Infrared](#4-arduinoinfrared)
- 4. [Servos](#5-servos)
+ 1. [API endpoints](#1-api-endpoints)
+ 2. [Motion detection](#2-motion-detection)
+ 3. [Dropbox file upload](#3-dropbox-file-upload)
+ 4. [Arduino and infrared](#4-arduinoinfrared)
+ 5. [Servos](#5-servos)
  
  ---
 
@@ -82,7 +82,7 @@ All Dropbox properties are prefixed with `DROPBOX_` in the config file. Dropbox 
 - `PUBLIC_KEY_PATH` the path to the public asymmetric key. If `null` is supplied, the Dropbox files are not encrypted. **Encryption is strongly recommended.**
 </details>
 
-### 4. Arduino/Infrared
+### 4. Arduino and Infrared
 
 The project can be optionally configured to work with a micro controller to turn on/off infrared lighting for night vision. A schematic for the Arduino and IR LED circuit [is included](/ancillary/arduino).
 
