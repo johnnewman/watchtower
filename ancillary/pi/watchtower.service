@@ -3,7 +3,7 @@ Description=uWSGI instance to run watchtower
 After=network.target
 
 [Service]
-User=user
+User=<user>
 Group=www-data
 WorkingDirectory=<watchtower_path>
 Environment="PATH=<watchtower_path>/venv/bin"
