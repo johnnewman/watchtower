@@ -1,30 +1,39 @@
 upstream camera0 {
-    server <address>:443;
+    server <camera 0 address>:443;
 }
 
 upstream camera1 {
-    server <address>:443;
+    server <camera 1 address>:443;
 }
 
-auth_basic             "Please Log In";
-auth_basic_user_file   /etc/apache2/.htpasswd;
-
-ssl_certificate        /etc/nginx/certs/server.crt;
-ssl_certificate_key    /etc/nginx/certs/server.key;
-ssl_client_certificate /etc/nginx/certs/ca.crt;
-ssl_verify_client      on;
-
-proxy_ssl_session_reuse       on;
-proxy_ssl_trusted_certificate /etc/nginx/certs/ca.crt;
-proxy_ssl_verify              on;
-proxy_ssl_verify_depth        2;
-proxy_ssl_certificate         /etc/nginx/certs/proxy_client.crt;
-proxy_ssl_certificate_key     /etc/nginx/certs/proxy_client.key;
-proxy_buffering               off;
+server {
+    if ($host = <host here>) {
+        return 301 https://$host$request_uri;
+    }
+    listen 80 ;
+    listen [::]:80 ;
+    server_name <host here>;
+    return 404;
+}
 
 server {
     listen 443 ssl;
-    server_name <name>;
+    server_name <host here>;
+    root /var/www/html;
+    index index.html;
+
+    ssl_certificate        /etc/nginx/certs/server.crt;
+    ssl_certificate_key    /etc/nginx/certs/server.key;
+    ssl_client_certificate /etc/nginx/certs/ca.crt;
+    ssl_verify_client      on;
+    
+    proxy_ssl_session_reuse       on;
+    proxy_ssl_trusted_certificate /etc/nginx/certs/ca.crt;
+    proxy_ssl_verify              on;
+    proxy_ssl_verify_depth        2;
+    proxy_ssl_certificate         /etc/nginx/certs/proxy_client.crt;
+    proxy_ssl_certificate_key     /etc/nginx/certs/proxy_client.key;
+    proxy_buffering               off;
 
     location /camera0/ {
         proxy_pass https://camera0/;
@@ -35,6 +44,8 @@ server {
     }
 
     location / {
-        deny all;
+	    # First attempt to serve request as file, then
+	    # as directory, then fall back to displaying a 404.
+	    try_files $uri $uri/ =404;
     }
 }
