@@ -1,5 +1,3 @@
-#!/bin/sh
-
 # install.sh
 #
 # John Newman
@@ -68,7 +66,8 @@ echo "Created $WATCHTOWER_LOG_PATH directory."
 
 # Set up cron job to keep disk usage under control.
 CRON_JOB="*/5 * * * * $WATCHTOWER_PATH/ancillary/pi/disk_purge.sh $WATCHTOWER_PATH/instance/recordings >> $WATCHTOWER_LOG_PATH/disk_purge.log"
-(crontab -l ; echo "$CRON_JOB") | sort | uniq | crontab
+CRON_JOB=`(crontab -l 2>/dev/null ; echo "$CRON_JOB")`
+echo "$CRON_JOB" | crontab
 echo "Created disk_purge cron job."
 
 # Put the real user and path into the service file and install it.
