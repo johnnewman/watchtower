@@ -92,7 +92,6 @@ echo -e "\n\nInstallation finished! The camera is configured to record to disk a
 Final steps to take: \n\
 1) Required: Enable camera access via 'sudo raspiconfig'\n\
 2) Optional: Enable serial access via 'sudo raspiconfig'\n\
-
 3) Optional: To use the HTTP API, upload SSL certificates to /etc/nginx/certs\n\
              Restart nginx: 'sudo systemctl restart nginx'\n\
 4) Optional: Only allow HTTP access from trusted sources by editing /etc/nginx/sites-available/watchtower\n\
