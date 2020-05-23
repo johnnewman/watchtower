@@ -48,7 +48,7 @@ echo "Created $WATCHTOWER_LOG_PATH directory."
 # Set up cron job to keep disk usage under control.
 CRON_JOB="*/5 * * * * $WATCHTOWER_PATH/ancillary/pi/disk_purge.sh $WATCHTOWER_PATH/instance/recordings >> $WATCHTOWER_LOG_PATH/disk_purge.log"
 (crontab -l ; echo "$CRON_JOB") 2>&1 | grep -v "no crontab" | sort | uniq | crontab
-echo -e "Created disk_purge cron job.\n"
+echo "Created disk_purge cron job."
 
 # Put the real user and path into the service file and install it.
 sed -i".bak" "s,<user>,$USER,g ; s,<watchtower_path>,$WATCHTOWER_PATH,g" "$WATCHTOWER_PATH/ancillary/pi/watchtower.service"
@@ -68,7 +68,7 @@ sudo mkdir -p /etc/nginx/certs
 sudo cp $WATCHTOWER_PATH/ancillary/nginx/watchtower /etc/nginx/sites-available/
 sudo ln -s /etc/nginx/sites-available/watchtower /etc/nginx/sites-enabled/
 
-echo -e "Installation finished! The camera is configured to record to disk at $WATCHTOWER_PATH/instance/recordings.\n\
+echo -e "\n\nInstallation finished! The camera is configured to record to disk at $WATCHTOWER_PATH/instance/recordings.\n\
 Final steps to take: \n\
 1) Required: Enable serial and camera access via 'sudo raspiconfig'\n\
 2) Optional: To use the HTTP API, upload SSL certificates to /etc/nginx/certs\n\
