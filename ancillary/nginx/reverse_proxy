@@ -10,14 +10,15 @@ server {
     if ($host = <host here>) {
         return 301 https://$host$request_uri;
     }
-    listen 80 ;
-    listen [::]:80 ;
+    listen 80;
+    listen [::]:80 ipv6only=on;
     server_name <host here>;
     return 404;
 }
 
 server {
     listen 443 ssl;
+    listen [::]:443 ipv6only=on;
     server_name <host here>;
     root /var/www/html;
     index index.html;
