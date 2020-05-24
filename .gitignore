@@ -1,3 +1,10 @@
 venv/*
+venv3/*
 .idea/workspace.xml
 *.pyc
+launch.json
+logs/*
+certs/*
+*.jpg
+*.h264
+instance/*

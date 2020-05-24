@@ -1,0 +1,52 @@
+upstream camera0 {
+    server <camera 0 address>:443;
+}
+
+upstream camera1 {
+    server <camera 1 address>:443;
+}
+
+server {
+    if ($host = <host here>) {
+        return 301 https://$host$request_uri;
+    }
+    listen 80;
+    listen [::]:80 ipv6only=on;
+    server_name <host here>;
+    return 404;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ipv6only=on;
+    server_name <host here>;
+    root /var/www/html;
+    index index.html;
+
+    ssl_certificate        /etc/nginx/certs/server.crt;
+    ssl_certificate_key    /etc/nginx/certs/server.key;
+    ssl_client_certificate /etc/nginx/certs/ca.crt;
+    ssl_verify_client      on;
+    
+    proxy_ssl_session_reuse       on;
+    proxy_ssl_trusted_certificate /etc/nginx/certs/ca.crt;
+    proxy_ssl_verify              on;
+    proxy_ssl_verify_depth        2;
+    proxy_ssl_certificate         /etc/nginx/certs/proxy_client.crt;
+    proxy_ssl_certificate_key     /etc/nginx/certs/proxy_client.key;
+    proxy_buffering               off;
+
+    location /camera0/ {
+        proxy_pass https://camera0/;
+    }
+
+    location /camera1/ {
+        proxy_pass https://camera1/;
+    }
+
+    location / {
+	    # First attempt to serve request as file, then
+	    # as directory, then fall back to displaying a 404.
+	    try_files $uri $uri/ =404;
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s  %(levelname)-6s %(name)-10s %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+            "level": 10
+        },
+        "file": {
+            "backupCount": 7,
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": "/var/log/watchtower/wt.log",
+            "formatter": "default",
+            "interval": 1,
+            "level": 10,
+            "when": "d"
+        }
+    },
+    "root": {
+        "handlers": [
+            "console",
+            "file"
+        ],
+        "level": 10
+    },
+    "version": 1
+}

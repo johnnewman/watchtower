@@ -1,132 +1,117 @@
-# Pi Security Camera
+
+<p align="center">
+  <img src="ancillary/watchtower.png" width="250" />
+</p>
+<p class="aligncenter">
+    
 
 ### Overview
 
-This is a DIY Raspberry Pi project that will detect motion on a Pi camera's feed and save the video to disk and Dropbox in the h264 format. The entry point of the program is [pi_sec_cam.py](pi_sec_cam.py).
+Watchtower turns your Raspberry Pi into a DIY security camera. Put as many cameras as you want on your network and each instance will independently scan for motion and, when triggered, will save a recording to disk in the h264 format and upload an encrypted copy to Dropbox.
 
-This project is designed for the Pi NoIR camera and contains an Arduino program that can communicate with the Pi, read analog room brightness, and control infrared LEDs for night vision.
+The central package that runs on each Raspberry Pi is named [watchtower](watchtower). It's a Python 3 Flask app with API endpoints that allow you to start and stop monitoring, stream via MJPEG, manually record, and request the status of the Watchtower instance.
 
-A 3D model of a case for the system is located in ![ancillary/case/](ancillary/case/). This houses the Raspberry Pi, camera, Arduino, servo, array of IR LEDs, photoresistor, and status LED. A Fritzing prototype of the case's internal hardware is included in ![ancillary/arduino/](ancillary/arduino).
+Watchtower was designed to take advantage of the capabilities of the Pi NoIR camera. An optional Arduino program is included to read analog room brightness, control infrared LED intensity for night vision, and communicate with Watchtower over the Raspberry Pi's GPIO ports.
 
-<img src="ancillary/case/Case_XRay.png" width="300" />
+A sample case model for the system is located in [ancillary/case/](ancillary/case/). This case houses the Raspberry Pi, camera, Arduino, servo, array of IR LEDs, photoresistor, and status LED. A Fritzing prototype of the case's internal hardware is included in [ancillary/arduino/](ancillary/arduino).
 
-This project hosts a simple web server to interface with the camera and stream an MJPEG feed. This API rarely needs to be hit directly. Instead, this project also contains Apache CGI scripts that create single endpoints that proxy with multiple Pi Security Camera instances.
+<p align="center">
+    <img src="ancillary/case/Case_XRay.png" width="300" />
+</p>
 
-Dependencies:
-- picamera https://picamera.readthedocs.io/en/release-1.13/
-- pyserial https://pypi.org/project/pyserial/
-- dropbox https://github.com/dropbox/dropbox-sdk-python
-- opencv https://github.com/opencv/opencv
-- numpy http://www.numpy.org/
-- PiServoServer https://github.com/johnnewman/PiServoServer
-- cryptography https://cryptography.io/en/latest/
+### Server setup
 
-The rest of this readme breaks down each component and describes its configuration located in [camera_config.json](config/camera_config.json) or [proxy_config.json](ancillary/apache/config/proxy_config.json).
- 1. [Motion Detection](#1-motion-detection)
- 2. [Dropbox File Upload](#2-dropbox-file-upload)
- 3. [Arduino/Infrared](#3-arduinoinfrared)
- 4. [Local Server](#4-local-server)
- 5. [Apache Proxy](#5-apache-proxy)
- 6. [Servos](#6-servos)
+A [uWSGI configuration file](wsgi.ini) is included that will start the Watchtower Flask app and allow up to 5 simultaneous network connections. An nginx configuration file is included in [ancillary/nginx/app_gateway](ancillary/nginx/app_gateway) to run uWSGI behind nginx and proxy all requests to the uWSGI instance.
+
+A second nginx configuration file is included in [ancillary/nginx/reverse_proxy](ancillary/nginx/reverse_proxy) for the main server that will handle traffic from the internet. This is deisgned to proxy all requests to one of the upstream nginx servers running Watchtower.
+
+<p align="center">
+<img src="ancillary/system_diagram.png"/>
+</p>
+
+Both the reverse proxy and the upstream app gateway configurations encrypt all traffic and perform x509 client certificate authorization.
+
+---
+
+There is an included [install script](install.sh) for Raspbian Buster that will set up a simple Watchtower instance and place it behind a firewall. The final steps outside of the script's scope are creating your SSL certificates for the web API, configuring the nginx reverse proxy, and fine-tuning your Watchtower config file for Dropbox, servo, and Arduino support.
+
+The rest of this readme breaks down each Watchtower component and describes its configuration located in [watchtower_config.json](watchtower/config/watchtower_config_example.json).
+ 1. [API endpoints](#1-api-endpoints)
+ 2. [Motion detection](#2-motion-detection)
+ 3. [Dropbox file upload](#3-dropbox-file-upload)
+ 4. [Arduino and infrared](#4-arduino-and-infrared)
+ 5. [Servos](#5-servos)
  
-<hr />
+ ---
 
-### 1. Motion Detection
+ ### 1. API Endpoints
 
-Motion is detected using background subtraction in [motion/motion_detector.py](motion/motion_detector.py). The implementation is based heavily on this article: https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/. A blurred grayscale image of the current camera frame is generated and subtracted from a static image of the scene. If a large enough area of pixels has significantly changed, it triggers a motion event and the area is outlined in the image. This image will be saved along with the video.
-
-#### Config
-
-In the `motion` object of `config/camera_config.json`:
-- `max_event_time` is the maximum number of seconds for a single recording before a new base frame is selected. This is a failsafe to avoid infinitely recording in the event that the scene is permanently altered.
-- `min_trigger_area` the minimum percentage (represented as a float between 0 and 1) of the image that must be detected as motion before a motion event is triggered.
-- `min_pixel_delta_trigger` the minimum delta value between the base frame and current frame that marks the pixel as a motion area. This is on a scale of 0-255.
-- `rec_sec_after` the number of seconds to record after motion stops.
-- `rec_sec_before` the number of seconds before the motion event that should be included in the recording.
-
-### 2. Dropbox File Upload
-
-Video files are sent to Dropbox in small chunks as soon as motion is detected. Splitting the recording into small files keeps network failures from adversely affecting the overall quantity of saved footage.
-
-Because the bytes of the stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a bash script located at [ancillary/mp4_wrapper.sh](ancillary/mp4_wrapper.sh) will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/).
-
-The files sent to Dropbox can be encrypted using Fernet encryption if a public asymmetric encryption key path is supplied in the config JSON. The random symmetric Fernet key used to encrypt the file data is encrypted using the supplied public key, base64 encoded, and padded onto the beginning of the Dropbox file. The resulting file data has the format: `{key_length_int} {encoded_encrypted_key}{encrypted_data}`.   
-
-#### Config
-
-In the `dropbox` object:
-- `file_chunk_megs` determines the maximum file size in megabytes that will be uploaded to Dropbox. Files are saved in series using the name `video#.h264` like `video0.h264`, `video1.h264`, etc..
-- `token` is the Dropbox API token for your account. If `null` is supplied, Dropbox will not be used.
-- `public_pem_path` the path to the public asymmetric key. If `null` is supplied, the Dropbox files are not encrypted.
-
-### 3. Arduino/Infrared
-
-The project can be optionally configured to work with a micro controller to turn on/off infrared lighting for night vision. A schematic for the Arduino and IR LED circuit ![is included](/ancillary/arduino).
-
-An Arduino program located in [ancillary/arduino/ir_controller/ir_controller.ino](ancillary/arduino/ir_controller/ir_controller.ino) is configured to communicate serially with the PiSecurityCam program. It is small enough to fit on an Adafruit Trinket/Atmel Attiny85, which is what the circuit diagram uses.  The Arduino reads the analog room brightness and uses PWM to change the LED brightness.
-
-The serial connection is operated by [remote/ir_serial.py](remote/ir_serial.py). This module is also configured to read the room brightness value from the serial connection, which will be displayed in the camera feed's annotation area.
-
-#### Config
-
-In the `infrared_controller` object:
-- `enabled` will determine if infrared is used. If `false`, the `ir_serial` module will be not be used.
-- `baudrate` is the baudrate of the serial connection.
-- `on_command` is the string written over the serial connection that turns on the room brightness sensing and IR controls.
-- `off_command` string that turns off the room brightness sensing and IR controls.
-- `serial_port` is the location of the serial connection, like `"/dev/serial0"` on Raspbian.
-- `serial_timeout` is the time in seconds to wait for serial transmission timeouts.
-- `updates_per_sec` the number serial loops per second. Each loop writes any pending commands and reads the room brightness. 
-
-### 4. Local Server
-
-The program contains a basic HTTP web server implementation at [remote/command_server.py](remote/command_server.py).  This can receive start and stop commands, send the camera status, and also stream the feed using the MJPEG protocol.  The server is configured to use SSL and perform client validation using a secret HTTP header field. The web server is not intended to face the internet.
-
-#### API
-
-- `/status` will send back `{"running":true/false}`. 
+- `/status` will send back `{"monitoring":true/false}`. 
 - `/start` will start monitoring and return the same payload as `/status`.
 - `/stop` will stop monitoring and return the same payload as `/status`.
-- `/stream` will start an MJPEG stream. `fps` is an optional float parameter that specifies how many JPEGs per second to stream.
+- `/stream` will start an MJPEG stream.
+- `/record` will start recording if the camera is not already recording.
 
-#### Config
+### 2. Motion Detection
 
-In the `server` object:
-- `enabled` determines if the server will be used.
-- `api_key` is the secret value in the HTTP header that is allowed to access the API. Values that do not match this string will result in an API error.
-- `api_key_header_name` is the name of the HTTP header that contains the `api_key`.
-- `certfile_path` the path of the certfile for SSL.
-- `keyfile_path` the path of the keyfile for SSL.
-- `mjpeg_framerate_cap` the maximum number of JPEGs per second that the `/stream` endpoint will allow. This is useful to avoid consuming bandwidth. 
-- `server_port` the port that the server uses for connections.
+Motion is detected using background subtraction in [watchtower/motion/motion_detector.py](watchtower/motion/motion_detector.py). The implementation is based heavily on this article: https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/. A blurred grayscale image of the current camera frame is generated and subtracted from a static image of the scene. If a large enough area of pixels has significantly changed, it triggers a motion event and the area is outlined in a JPEG. This image will be saved along with the video.
 
-### 5. Apache Proxy
+<details>
+  <summary><b>Configuration</b></summary>
+  
+All motion properties are prefixed with `MOTION_` in the config file:
+- `MAX_EVENT_TIME` is the maximum number of seconds for a single recording before a new base frame is selected. This is a failsafe to avoid infinitely recording in the event that the scene is permanently altered.
+- `MIN_TRIGGER_AREA` the minimum percentage (represented as a float between 0 and 1) of the image that must be detected as motion before a motion event is triggered.
+- `MIN_PIXEL_DELTA_TRIGGER` the minimum delta value between the base frame and current frame that marks the pixel as a motion area. This is on a scale of 0-255.
+- `RECORDING_PADDING` the number of seconds to record before and after motion occurs.
+</details>
 
-This project comes with server-side Python CGI scripts that work on Apache 2, located in [ancillary/apache/](ancillary/apache). These scripts proxy commands to a series of PiSecurityCam instances that rest behind your firewall. Each Python file in that directory corresponds to an endpoint.
 
-The `cgi_common` package located in ![ancillary/apache/cgi_common/](ancillary/apache/cgi_common) contains convenience modules and functions that are shared throughout the endpoints. This includes functionality to send JSON back to the client, log errors, verify API keys, hit endpoints on each camera, and coalesce the camera responses into one JSON response for the client.
+### 3. Dropbox File Upload
 
-#### Config
+Video files are sent to Dropbox in small chunks as soon as motion is detected. Splitting the recording into small files keeps network failures from adversely affecting the quantity of saved footage. Because the bytes of the stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a shell script located at [ancillary/mp4_wrapper.sh](ancillary/mp4_wrapper.sh) will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/). MP4Box only needs to be installed on the machine that opens recordings from Dropbox; no need to install it alongside any Watchtower instance.
 
-Configuration for the Apache proxy is located in [ancillary/apache/config/proxy_config.json](ancillary/apache/config/proxy_config.json). By default, this file should be located on the web server in `/etc/piseccam/proxy_config.json`. This path can be configured in [cgi_common/\_\_init__.py](/ancillary/apache/cgi_common/__init__.py).
+The video files uploaded to Dropbox can be encrypted using symmetric key encryption. All you need to do is supply a path in the config file to a public asymmetric encryption key in PEM format. When this path is supplied, a symmetric [Fernet](https://cryptography.io/en/latest/fernet/) key is generated for each file uploaded and will be used to encrypt the contents of the file. This key is then itself encrypted using the supplied public key. This encrypted key is base64 encoded and padded onto the beginning of the Dropbox file. The resulting file data has the format: `{key_length_int} {encoded_and_encrypted_key}{encrypted_data}`. [mp4_wrapper.sh](ancillary/mp4_wrapper.sh) can accept a path to the asymmetric private key and will automatically decrypt the files before stitching them together and converting the final video to an mp4.
 
-The keys are as follows:
-- `api_key` the API key that will allow access to the proxy endpoints. Values that do not match this string will result in an API error.
-- `api_key_header_name` is the name of the HTTP header that contains the `api_key`.
-- `cameras` an object containing a series of key/value pairs where each key is a camera name. Many of these fields will match the `server` object of the [Local Server](#4-local-server) section above. Each `camera` value contains:
-   - `api_key_header_name` the name used for the HTTP header containing the key. This corresponds to `api_key_header_name` of the camera's `server` config object.
-   - `api_key` is the secret value in the HTTP header that is allowed to access the camera API. This corresponds to `api_key` of the camera's `server` config object.
-   - `port` the port to connect to the camera's server. This corresponds to `server_port` of the camera's `server` config object.
-   - `cert_location` is the location of the certfile for accessing the camera's server. This is the same file that `certfile_path` points to in the camera's `server` config object.
-   - `default_fps` is the FPS to use if none is supplied, when hitting the `/stream` endpoint on the camera.
+<details>
+  <summary><b>Configuration</b></summary>
 
- ### 6. Servos
+All Dropbox properties are prefixed with `DROPBOX_` in the config file. Dropbox can be disabled by deleting all items prefixed wtih `DROPBOX_`.
+- `FILE_CHUNK_MB` determines the maximum file size in megabytes that will be uploaded to Dropbox. Files are saved in series using the name `video#.h264` like `video0.h264`, `video1.h264`, etc.
+- `API_TOKEN` is the Dropbox API token for your account.
+- `PUBLIC_KEY_PATH` the path to the public asymmetric key. If `null` is supplied, the Dropbox files are not encrypted.
+</details>
+
+### 4. Arduino and Infrared
+
+The project can be optionally configured to work with a micro controller to enable and disable infrared lighting for night vision. A schematic for the Arduino and IR LED circuit [is included](/ancillary/arduino).
+
+The Arduino program located in [ancillary/arduino/ir_controller/ir_controller.ino](ancillary/arduino/ir_controller/ir_controller.ino) is configured to communicate serially with Watchtower. This program is small enough to fit on an Adafruit Trinket/Atmel Attiny85, which is what the circuit diagram uses. The Arduino reads the analog room brightness and uses PWM to change the LED brightness.
+
+The serial connection is operated by [watchtower/remote/ir_serial.py](watchtower/remote/ir_serial.py). This module is also configured to read the room brightness value from the serial connection, which will be displayed in the camera's annotation area along with the camera name and the current time.
+
+<details>
+  <summary><b>Configuration</b></summary>
+
+All infrared properties are prefixed with `INFRA_` in the config file:
+- `ENABLED` will determine if infrared is used. If `false`, the `ir_serial` module will be not be used.
+- `BAUDRATE` is the baudrate of the serial connection.
+- `ON_COMMAND` is the string written over the serial connection that turns on the room brightness sensing and IR controls.
+- `OFF_COMMAND` string that turns off the room brightness sensing and IR controls.
+- `PORT` is the location of the serial connection, like `/dev/serial0` on Raspbian.
+- `TIMEOUT` is the time in seconds to wait for serial transmission timeouts.
+- `UPDATE_HZ` the number serial loops per second. Each loop writes any pending commands and reads the room brightness. 
+</details>
+
+ ### 5. Servos
  
- In the event that the camera should rotate or be covered when not in use, any number of servos can be controlled with this program. This makes use of [PiServoServer](https://github.com/johnnewman/PiServoServer) to command each servo connected to the Pi.  
+ In the event that the camera should rotate or be covered when not in use, any number of servos can be controlled with this program. This makes use of [PiServoServer](https://github.com/johnnewman/PiServoServer) to command each servo connected to the Raspberry Pi.  
  
- #### Config
- 
- In the `servos` array, each object represents one physical servo and contains:
- - `board_pin` the board numbering pin of the servo
- - `angle_off` the angle (from 0-180) of the servo for the off state
- - `angle_on` the angle (from 0-180) of the servo for the on state 
+ <details>
+  <summary><b>Configuration</b></summary>
+
+ In the `SERVOS` array, each object represents one physical servo and contains:
+ - `BOARD_PIN` the board numbering pin of the servo.
+ - `ANGLE_ON` the angle (from 0-180) of the servo for the on state.
+ - `ANGLE_OFF` the angle (from 0-180) of the servo for the off state.
+</details>

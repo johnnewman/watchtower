@@ -1,0 +1,13 @@
+[Unit]
+Description=uWSGI instance to run watchtower
+After=network.target
+
+[Service]
+User=<user>
+Group=www-data
+WorkingDirectory=<watchtower_path>
+Environment="PATH=<watchtower_path>/venv/bin"
+ExecStart=<watchtower_path>/venv/bin/uwsgi --ini wsgi.ini
+
+[Install]
+WantedBy=multi-user.target
