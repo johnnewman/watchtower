@@ -1,13 +1,9 @@
 
-<p class="aligncenter">
-    <img src="ancillary/watchtower.png" width="200" />
+<p align="center">
+  <img src="ancillary/watchtower.png" width="200" />
 </p>
-
-<style>
-.aligncenter {
-    text-align: center;
-}
-</style>
+<p class="aligncenter">
+    
 
 ### Overview
 
@@ -19,7 +15,7 @@ Watchtower was designed to take advantage of the capabilities of the Pi NoIR cam
 
 A 3D model of a sample case for the system is located in [ancillary/case/](ancillary/case/). This case houses the Raspberry Pi, camera, Arduino, servo, array of IR LEDs, photoresistor, and status LED. A Fritzing prototype of the case's internal hardware is included in [ancillary/arduino/](ancillary/arduino).
 
-<p class="aligncenter">
+<p align="center">
     <img src="ancillary/case/Case_XRay.png" width="300" />
 </p>
 
