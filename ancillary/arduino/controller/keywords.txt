@@ -1,0 +1,3 @@
+TinyServo	KEYWORD1
+attach	KEYWORD2
+writeAngle	KEYWORD2
