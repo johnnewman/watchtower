@@ -19,11 +19,25 @@ class TinyServo {
 
     // Sets up the pin for output and initializes the timer.
     void attach(int pin, int minPulseWidth, int maxPulseWidth);
+
+    // Moves the servo to the specified angle from 0 to 180.
     void writeAngle(int angle);
+
+    void interrupt();
+    
   private:
-    int *_compareRegister;
-    int *_minPulseWidth;
-    int *_maxPulseWidth;
+    int _pin;
+    int _minPulseWidth;
+    int _maxPulseWidth;
+    int _pulseCount;
+
+    // Disconnects the servo's pin from the timer and disables
+    // interrupts for the servo's timer register.
+    void _disconnect();
+
+    // Connects the servo's pin to the timer running in PWM mode.
+    // This also enables interrupts for every pulse.
+    int* _connect();
 };
 
 #endif
