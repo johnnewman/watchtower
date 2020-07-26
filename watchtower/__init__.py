@@ -10,9 +10,9 @@ import json
 import logging.config
 import os
 import time
+from remote.servo import Servo
 from .run_loop import RunLoop
 from .streamer.mjpeg_streamer import MJPEGStreamer
-from .streamer.writer.socket_writer import ServoSocketWriter
 from .streamer.writer import http_writer
 
 __author__ = "John Newman"
@@ -92,11 +92,11 @@ def create_app(test_config=None):
         return Response(generate(), mimetype=mimetype)
 
     def expose_camera():
-        if main.micro_comm is not None and main.servo is not None:
-            main.micro_comm.set_servo_angle(main.servo.angle_on)
+        if main.servo is not None:
+            main.servo.enable()
     
     def hide_camera():
-        if main.micro_comm is not None and main.servo is not None:
-            main.micro_comm.set_servo_angle(main.servo.angle_off)
+        if main.servo is not None:
+            main.servo.disable()
 
     return app

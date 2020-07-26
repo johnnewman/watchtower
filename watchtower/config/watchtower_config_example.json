@@ -21,11 +21,10 @@
     "DROPBOX_FILE_CHUNK_MB": 3,
     "DROPBOX_PUBLIC_KEY_PATH": "/etc/watchtower/certs/dropbox.crt",
 
-    "SERIAL_ENABLED": false,
-    "SERIAL_BAUDRATE": 9600,
-    "SERIAL_PORT": "/dev/serial0",
-    "SERIAL_TRANSMISSION_HZ": 2,
-    
-    "SERVO_ANGLE_ON": 40,
-    "SERVO_ANGLE_OFF": 90
+    "MICRO_ENABLED": false,
+    "MICRO_BAUDRATE": 9600,
+    "MICRO_PORT": "/dev/serial0",
+    "MICRO_TRANSMISSION_FREQ": 2,
+    "MICRO_SERVO_ANGLE_ON": 40,
+    "MICRO_SERVO_ANGLE_OFF": 90
 }

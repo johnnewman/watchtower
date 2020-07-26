@@ -10,11 +10,9 @@ import picamera
 import time
 from .camera import SafeCamera
 from .motion.motion_detector import MotionDetector
+from .remote.servo import Servo
 from .streamer import video_stream_saver as streamer
 from .streamer.writer import dropbox_writer, disk_writer
-
-
-Servo = namedtuple('Servo', 'angle_on angle_off')
 
 WAIT_TIME = 0.1
 INITIALIZATION_TIME = 3  # In Seconds
@@ -33,13 +31,12 @@ class RunLoop(Thread):
     def __init__(self, app):
         super(RunLoop, self).__init__()
 
-        if app.config.get('SERIAL_ENABLED') == True:
+        if app.config.get('MICRO_ENABLED') == True:
             self.__micro_comm = self.setup_microcontroller_comm(app)
         else:
             self.__micro_comm = None
 
         self.camera = self.setup_camera(app)
-        self.servo = self.setup_servo(app)
         
         motion_config = app.config.get_namespace('MOTION_')
         area = motion_config['min_trigger_area']
@@ -57,29 +54,28 @@ class RunLoop(Thread):
         self.__instance_path = app.instance_path
 
     @property
-    def servo(self):
+    def servo(self) -> Servo:
         return self.servo
-
-    @property
-    def micro_comm(self):
-        return self.__micro_comm
 
     @property
     def start_time(self):
         return self.__start_time
 
     def setup_microcontroller_comm(self, app):
-        servo_config = app.config.get_namespace('SERVO_')
-        if servo_config is not None:
-            self.servo = Servo(servo_config["angle_on"],
-                               servo_config["angle_off"])
-        
         from .remote.microcontroller_comm import MicrocontrollerComm
-        serial_config = app.config.get_namespace('SERIAL_')
+        controller_config = app.config.get_namespace('MICRO_')
         controller = MicrocontrollerComm(port=serial_config['port'],
                                          baudrate=serial_config['baudrate'],
-                                         transmission_interval=serial_config['transmission_hz'])
+                                         transmission_interval=serial_config['transmission_freq'])
         controller.start()
+
+        angle_on = micro_config['angle_on']
+        angle_off = micro_config['angle_off']
+        if angle_on is not None and angle_off is not None:
+            self.servo = Servo(angle_on
+                               angle_off
+                               controller)
+         
         return controller
 
     def setup_camera(self, app):
@@ -96,8 +92,8 @@ class RunLoop(Thread):
 
         date_string = dt.datetime.now().strftime(self.__video_date_format)
         self.camera.annotate_text = '{} {}'.format(self.camera.name, date_string)
-        if self.micro_comm is not None:
-            self.camera.annotate_text = self.camera.annotate_text + ' ' + str(self.micro_comm.room_brightness)
+        if self.__micro_comm is not None:
+            self.camera.annotate_text = self.camera.annotate_text + ' ' + str(self.__micro_comm.room_brightness)
         self.camera.wait_recording(WAIT_TIME)
 
     def save_stream(self, stream, path, debug_name, stop_when_empty=False):
@@ -155,8 +151,8 @@ class RunLoop(Thread):
             was_not_running = True
             while True:
                 if not camera.should_monitor:
-                    if self.micro_comm is not None:
-                        self.micro_comm.infrared_running = False
+                    if self.__micro_comm is not None:
+                        self.__micro_comm.infrared_running = False
                     was_not_running = True
                     self.wait()
                     continue
@@ -169,8 +165,8 @@ class RunLoop(Thread):
                     self.__motion_detector.reset_base_frame()
                     was_not_running = False
 
-                if self.micro_comm is not None:                        
-                    self.micro_comm.infrared_running = True
+                if self.__micro_comm is not None:                        
+                    self.__micro_comm.infrared_running = True
 
                 self.wait()
                 motion_detected, frame_bytes = self.__motion_detector.detect()
