@@ -26,7 +26,7 @@ const int RX_PIN = 9;
 const int TX_PIN = 10;
 
 const int LED_PWM_PIN = 7;  // For large number of LED's, use a transistor.
-const int LIGHT_SENSOR_PIN = A0;
+const int LIGHT_SENSOR_PIN = A3;
 
 // The analogRead light value is constrained between MAX and MIN.
 const int MAX_LIGHT_THRESH = 100;
@@ -40,7 +40,11 @@ const int SERVO_MAX_PULSE_WIDTH = 2300;
 const String IR_ON_COMMAND = "ir_on";
 const String IR_OFF_COMMAND = "ir_off";
 const String SERVO_ANGLE_COMMAND = "servo_angle_";
+
+// Valid messages sent over TX_PIN
 const String SUCCESS_MESSAGE = "ok";
+const String REBOOT_MESSAGE = "reboot";
+const String BRIGHTNESS_PREFIX = "bright: ";
 
 
 SoftwareSerial comm(RX_PIN, TX_PIN);
@@ -54,7 +58,7 @@ void setup() {
   pinMode(LIGHT_SENSOR_PIN, INPUT);
   comm.begin(BAUD_RATE);
   servo.attach(SERVO_PIN, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
-  comm.println("online");
+  comm.println(REBOOT_MESSAGE);
 }
 
 void loop() {
@@ -73,6 +77,8 @@ void loop() {
       updateLED(readLight());
       lastTransmission = millis();
     }
+
+    delay(250);
 }
 
 /**
@@ -98,8 +104,6 @@ void processServoCommand(String command) {
     comm.println(SUCCESS_MESSAGE);
     int angle = angleString.toInt();
     servo.writeAngle(angle);
-    comm.print("new angle: ");
-    comm.println(angle);
   }
 }
 
@@ -138,6 +142,6 @@ void updateLED(int lightValue) {
   int pwmValue = 255 - map(lightValue, MIN_LIGHT_THRESH, MAX_LIGHT_THRESH, 0, 255);
   analogWrite (LED_PWM_PIN, pwmValue);
   // Transmit light data. Avoid using floats to save memory.
-  comm.print("ir: ");
+  comm.print(BRIGHTNESS_PREFIX);
   comm.println(100 - (pwmValue * 100 / 255));
 }

@@ -10,8 +10,9 @@ INFRARED_OFF_COMMAND = "ir_off"
 SERVO_COMMAND_PREFIX = "servo_angle_"
 
 # Known responses
-BRIGHTNESS_PREFIX = "light: "
 SUCCESS_MESSAGE = "ok"
+REBOOT_MESSAGE = "reboot"
+BRIGHTNESS_PREFIX = "light: "
 
 
 class MicrocontrollerComm(Thread):
@@ -125,9 +126,11 @@ class MicrocontrollerComm(Thread):
         """
         if self.__controller.in_waiting > 0:
             response = self.__controller.readline()
-            if response == SUCCESS_MESSAGE
+            if response == SUCCESS_MESSAGE:
                 self.__logger.info('Received an \"%s\" message!' % SUCCESS_MESSAGE)
                 return True
+            else if response == REBOOT_MESSAGE:
+                self.__logger.warn('Microcontroller has rebooted.')
             else if response.startswith(BRIGHTNESS_PREFIX):
                 try:
                     self.room_brightness = int(response[len(BRIGHTNESS_PREFIX):])
@@ -142,7 +145,6 @@ class MicrocontrollerComm(Thread):
         Infinitely loops, checking for new commands to transmit over the serial
         connection while also processing any input data from the connection.
         """
-
         while True:
 
             # Only transmit at the transmission interval so that the receiving
@@ -166,5 +168,6 @@ class MicrocontrollerComm(Thread):
                 if not self.__process_input():
                     self.__logger.warning('Did not receive success code for command \"%s\". Retrying.' % command)
                     self.__enqueue_command(command)
+            
             wait_for_success_message = False
-            time.sleep(0.1)
+            time.sleep(1.0/self.__transmission_interval/2.0)
