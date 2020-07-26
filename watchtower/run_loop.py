@@ -1,4 +1,5 @@
 
+from collections import namedtuple
 from flask import Flask
 from threading import Thread
 import datetime as dt
@@ -7,10 +8,13 @@ import logging
 import os
 import picamera
 import time
-from .camera import Servo, SafeCamera
+from .camera import SafeCamera
 from .motion.motion_detector import MotionDetector
 from .streamer import video_stream_saver as streamer
 from .streamer.writer import dropbox_writer, disk_writer
+
+
+Servo = namedtuple('Servo', 'angle_on angle_off')
 
 WAIT_TIME = 0.1
 INITIALIZATION_TIME = 3  # In Seconds
@@ -29,12 +33,13 @@ class RunLoop(Thread):
     def __init__(self, app):
         super(RunLoop, self).__init__()
 
-        if app.config.get('INFRA_ENABLED') == True:
-            self.__ir_controller = self.setup_infrared_controller(app)
+        if app.config.get('SERIAL_ENABLED') == True:
+            self.__micro_comm = self.setup_microcontroller_comm(app)
         else:
-            self.__ir_controller = None
+            self.__micro_comm = None
 
         self.camera = self.setup_camera(app)
+        self.servo = self.setup_servo(app)
         
         motion_config = app.config.get_namespace('MOTION_')
         area = motion_config['min_trigger_area']
@@ -49,40 +54,38 @@ class RunLoop(Thread):
         self.__time_format = app.config['DIR_TIME_FORMAT']
         self.__video_date_format = app.config['VIDEO_DATE_FORMAT']
         self.__dropbox_config  = app.config.get_namespace('DROPBOX_')
-
         self.__instance_path = app.instance_path
 
     @property
-    def ir_controller(self):
-        return self.__ir_controller
+    def servo(self):
+        return self.servo
+
+    @property
+    def micro_comm(self):
+        return self.__micro_comm
 
     @property
     def start_time(self):
         return self.__start_time
 
-    def setup_infrared_controller(self, app):
-        from .remote.ir_serial import InfraredComm
-        infra_config = app.config.get_namespace('INFRA_')
-        controller = InfraredComm(on_command=infra_config['on_command'],
-                                  off_command=infra_config['off_command'],
-                                  port=infra_config['port'],
-                                  baudrate=infra_config['baudrate'],
-                                  timeout=infra_config['timeout'],
-                                  sleep_time=1.0/infra_config['update_hz'])
+    def setup_microcontroller_comm(self, app):
+        servo_config = app.config.get_namespace('SERVO_')
+        if servo_config is not None:
+            self.servo = Servo(servo_config["angle_on"],
+                               servo_config["angle_off"])
+        
+        from .remote.microcontroller_comm import MicrocontrollerComm
+        serial_config = app.config.get_namespace('SERIAL_')
+        controller = MicrocontrollerComm(port=serial_config['port'],
+                                         baudrate=serial_config['baudrate'],
+                                         transmission_interval=serial_config['transmission_hz'])
         controller.start()
         return controller
 
     def setup_camera(self, app):
-        servos = []
-        if app.config.get('SERVOS') is not None:
-            for s in app.config.get('SERVOS'):
-                servos.append(Servo(pin=s['BOARD_PIN'],
-                                    angle_off=s['ANGLE_OFF'],
-                                    angle_on=s['ANGLE_ON']))
         camera = SafeCamera(name = app.config["CAMERA_NAME"],
                             resolution=tuple(app.config['VIDEO_SIZE']),
-                            framerate=app.config['VIDEO_FRAMERATE'],
-                            servos=servos)
+                            framerate=app.config['VIDEO_FRAMERATE'])
         camera.rotation = app.config.get('VIDEO_ROTATION')
         camera.annotate_background = picamera.Color('black')
         camera.annotate_text_size = 12
@@ -93,8 +96,8 @@ class RunLoop(Thread):
 
         date_string = dt.datetime.now().strftime(self.__video_date_format)
         self.camera.annotate_text = '{} {}'.format(self.camera.name, date_string)
-        if self.ir_controller is not None:
-            self.camera.annotate_text = self.camera.annotate_text + ' ' + str(self.ir_controller.room_brightness)
+        if self.micro_comm is not None:
+            self.camera.annotate_text = self.camera.annotate_text + ' ' + str(self.micro_comm.room_brightness)
         self.camera.wait_recording(WAIT_TIME)
 
     def save_stream(self, stream, path, debug_name, stop_when_empty=False):
@@ -152,8 +155,8 @@ class RunLoop(Thread):
             was_not_running = True
             while True:
                 if not camera.should_monitor:
-                    if self.ir_controller is not None:
-                        self.ir_controller.turn_off()
+                    if self.micro_comm is not None:
+                        self.micro_comm.infrared_running = False
                     was_not_running = True
                     self.wait()
                     continue
@@ -166,8 +169,8 @@ class RunLoop(Thread):
                     self.__motion_detector.reset_base_frame()
                     was_not_running = False
 
-                if self.ir_controller is not None:                        
-                    self.ir_controller.turn_on()
+                if self.micro_comm is not None:                        
+                    self.micro_comm.infrared_running = True
 
                 self.wait()
                 motion_detected, frame_bytes = self.__motion_detector.detect()

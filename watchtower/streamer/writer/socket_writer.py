@@ -1,8 +1,6 @@
 import socket
 from . import byte_writer
 
-BOUNDARY = 'FRAME'
-
 
 class SocketWriter(byte_writer.ByteWriter):
     """
@@ -29,18 +27,3 @@ class SocketWriter(byte_writer.ByteWriter):
         if close:
             self.__socket.shutdown(socket.SHUT_RDWR)
             self.__socket.close()
-
-
-class ServoSocketWriter(SocketWriter):
-    """
-    A class that communicates with PiServoServer. Used to set a servo's angle.
-    """
-
-    def __init__(self, servo_pin):
-        self.__servo_pin = servo_pin
-        comm_socket = socket.socket(socket.AF_INET)
-        comm_socket.connect(("127.0.0.1", 9338))
-        super(ServoSocketWriter, self).__init__(comm_socket)
-
-    def send_angle(self, angle):
-        self.append_string('%d %d' % (self.__servo_pin, angle), close=True)

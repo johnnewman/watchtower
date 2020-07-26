@@ -21,24 +21,11 @@
     "DROPBOX_FILE_CHUNK_MB": 3,
     "DROPBOX_PUBLIC_KEY_PATH": "/etc/watchtower/certs/dropbox.crt",
 
-    "INFRA_ENABLED": false,
-    "INFRA_BAUDRATE": 9600,
-    "INFRA_ON_COMMAND": "on",
-    "INFRA_OFF_COMMAND": "off",
-    "INFRA_PORT": "/dev/serial0",
-    "INFRA_TIMEOUT": 1,
-    "INFRA_UPDATE_HZ": 5,
-
-    "SERVOS": [
-        {
-            "BOARD_PIN": 7,
-            "ANGLE_ON": 40,
-            "ANGLE_OFF": 90
-        },
-        {
-            "BOARD_PIN": 11,
-            "ANGLE_ON": 127,
-            "ANGLE_OFF": 180
-        }
-    ]
+    "SERIAL_ENABLED": false,
+    "SERIAL_BAUDRATE": 9600,
+    "SERIAL_PORT": "/dev/serial0",
+    "SERIAL_TRANSMISSION_HZ": 2,
+    
+    "SERVO_ANGLE_ON": 40,
+    "SERVO_ANGLE_OFF": 90
 }

@@ -92,11 +92,11 @@ def create_app(test_config=None):
         return Response(generate(), mimetype=mimetype)
 
     def expose_camera():
-        for servo in main.camera.servos:
-            ServoSocketWriter(servo.pin).send_angle(servo.angle_on)
+        if main.micro_comm is not None and main.servo is not None:
+            main.micro_comm.set_servo_angle(main.servo.angle_on)
     
     def hide_camera():
-        for servo in main.camera.servos:
-            ServoSocketWriter(servo.pin).send_angle(servo.angle_off)
+        if main.micro_comm is not None and main.servo is not None:
+            main.micro_comm.set_servo_angle(main.servo.angle_off)
 
     return app
