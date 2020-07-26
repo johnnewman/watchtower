@@ -8,3 +8,4 @@ certs/*
 *.jpg
 *.h264
 instance/*
+.vscode/*
