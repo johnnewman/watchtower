@@ -11,33 +11,56 @@
 #include "Arduino.h"
 
 class TinyServo {
+  
   public:
+  
     TinyServo();
 
-    // Sets up the pin for output and initializes the timer.
-    void attach(int pin);
+    /**
+     * Sets up the pin for output and initializes the timer.
+     */
+    void attach(byte pin);
 
-    // Sets up the pin for output and initializes the timer.
-    void attach(int pin, int minPulseWidth, int maxPulseWidth);
+    /**
+     * Sets up the pin for output and initializes the timer. The pulse
+     * widths are in microseconds, so a 2.5 millisecond pulse width
+     * should be specified as 2500.
+     */
+    void attach(byte pin, unsigned int minPulseWidth, unsigned int maxPulseWidth);
 
-    // Moves the servo to the specified angle from 0 to 180.
-    void writeAngle(int angle);
+    /**
+     * Moves the servo to the specified angle from 0 to 180.
+     */
+    void writeAngle(byte angle);
 
+    /**
+     * Called for every pulse on the servo's control pin, which pulses
+     * 50 times a second. After 1 second, we disconnect the servo.
+     */
     void interrupt();
     
   private:
-    int _pin;
-    int _minPulseWidth;
-    int _maxPulseWidth;
-    int _pulseCount;
-
-    // Disconnects the servo's pin from the timer and disables
-    // interrupts for the servo's timer register.
+  
+    byte _pin;
+    
+    unsigned int _minPulseWidth;
+    
+    unsigned int _maxPulseWidth;
+    
+    byte _pulseCount;
+    
+    /**
+     * Disconnects the servo's pin from the timer and disables
+     * interrupts for the servo's timer register.
+     */
     void _disconnect();
 
-    // Connects the servo's pin to the timer running in PWM mode.
-    // This also enables interrupts for every pulse.
-    int* _connect();
+    /**
+     * Connects the servo's pin to the timer running in PWM mode.
+     * This also enables interrupts for every pulse. Returns a
+     * pointer to the OCR1x register.
+     */
+    unsigned int* _connect();
 };
 
 #endif

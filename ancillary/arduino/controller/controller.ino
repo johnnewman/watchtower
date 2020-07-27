@@ -1,6 +1,7 @@
 /*
   controller
-  Reads the light in the room using and adjusts IR LEDs to the
+  
+  Reads the analog light in the room and adjusts IR LEDs to the
   appropriate brightness. Also controls a servo to expose and hide
   the camera.
   
@@ -10,62 +11,72 @@
   This can also receive servo commands to move a servo to a desired
   angle.
   
-  This program is designed to run on an Atmel ATtiny84 and should
-  consume around 5k of program space when Link Time Optimization is
-  enabled.
+  This program is designed to run on an Atmel ATtiny84 or 44 and
+  should consume about 3.6KB of program space when link time optimization
+  is enabled.
   
-  Created June 20, 2020
-  By John Newman
+  Created by John Newman, June 20, 2020.
+  MIT License.
 */
 
 #include <SoftwareSerial.h>
 #include "TinyServo.h"
 
-const int BAUD_RATE = 9600;
-const int RX_PIN = 9;
-const int TX_PIN = 10;
+const unsigned int BAUD_RATE = 19200;
+const unsigned int RX_PIN = 9;
+const unsigned int TX_PIN = 10;
 
-const int LED_PWM_PIN = 7;  // For large number of LED's, use a transistor.
-const int LIGHT_SENSOR_PIN = A3;
+const unsigned int LED_PWM_PIN = 7;  // For large number of LED's, use a transistor.
+const unsigned int LIGHT_SENSOR_PIN = A3;
 
-// The analogRead light value is constrained between MAX and MIN.
-const int MAX_LIGHT_THRESH = 100;
-const int MIN_LIGHT_THRESH = 40;
+// The analogRead light value (0-255) is constrained between MIN and MAX.
+const byte MIN_LIGHT_READING = 40;
+const byte MAX_LIGHT_READING = 100;
 
-const int SERVO_PIN = 5;
-const int SERVO_MIN_PULSE_WIDTH = 500;
-const int SERVO_MAX_PULSE_WIDTH = 2300;
+const unsigned int SERVO_PIN = 5;
+const unsigned int SERVO_MIN_PULSE_WIDTH = 500;
+const unsigned int SERVO_MAX_PULSE_WIDTH = 2300;
 
 // The valid commands received from RX_PIN.
-const String IR_ON_COMMAND = "ir_on";
-const String IR_OFF_COMMAND = "ir_off";
-const String SERVO_ANGLE_COMMAND = "servo_angle_";
+const char IR_ON_COMMAND[] = "ir_on";
+const char IR_OFF_COMMAND[] = "ir_off";
+const char SERVO_ANGLE_COMMAND[] = "servo_angle_";
 
-// Valid messages sent over TX_PIN
-const String SUCCESS_MESSAGE = "ok";
-const String REBOOT_MESSAGE = "reboot";
-const String BRIGHTNESS_PREFIX = "bright: ";
+// The valid messages sent over TX_PIN.
+const char SUCCESS_MESSAGE[] = "ok\n";
+const char REBOOT_MESSAGE[] = "reboot\n";
+const char BRIGHTNESS_PREFIX[] = "bright: ";
 
+// Length of maximum received string. "servo_angle_1xx\n"
+const byte MAX_COMMAND_LENGTH = 16;
 
 SoftwareSerial comm(RX_PIN, TX_PIN);
+
 TinyServo servo;
 
-bool shouldRunIR = true;
+// Start in the "off" state.
+bool shouldRunIR = false;
+
+// Used to keep track of when the last transmission
+// occurred. This keeps us from clogging the TX line
+// while also avoiding calls to delay().
 unsigned long lastTransmission = 0;
+
 
 void setup() {
   pinMode(LED_PWM_PIN, OUTPUT);
   pinMode(LIGHT_SENSOR_PIN, INPUT);
   comm.begin(BAUD_RATE);
+  comm.print(REBOOT_MESSAGE);
   servo.attach(SERVO_PIN, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
-  comm.println(REBOOT_MESSAGE);
 }
 
 void loop() {
-    String command = receiveCommand();
-    if (command != "") {
-      processServoCommand(command);
-      processIRCommand(command);
+    char commandBuffer[MAX_COMMAND_LENGTH] = "";
+    receiveCommand(commandBuffer);
+    if (strlen(commandBuffer) > 0) {
+      processServoCommand(commandBuffer);
+      processIRCommand(commandBuffer);
     }
 
     if (!shouldRunIR) {
@@ -77,47 +88,53 @@ void loop() {
       updateLED(readLight());
       lastTransmission = millis();
     }
-
-    delay(250);
 }
 
 /**
   Reads commands separated by newlines on RX_PIN.
   
-  @return the command string or the empty string.
+  @return the command string or an empty array.
 */
-String receiveCommand() {
+void receiveCommand(char *commandBuffer) {
   comm.listen();
   if (comm.available()) {
-    return comm.readStringUntil('\n');
+    comm.readBytesUntil('\n', commandBuffer, MAX_COMMAND_LENGTH);
   }
-  return "";
 }
 
-void processServoCommand(String command) {
-  if (!command.startsWith(SERVO_ANGLE_COMMAND)) {
+
+/**
+ * Parses servo commands, extracting the angle information
+ * and passing that along to the TinyServo instance.
+ * 
+ * @param command The command string to check.
+ */
+void processServoCommand(const char *command) {
+  if (strstr(command, SERVO_ANGLE_COMMAND) == NULL) {
     return;
   }
-  
-  String angleString = command.substring(SERVO_ANGLE_COMMAND.length());
-  if (angleString.length() > 0) {
-    comm.println(SUCCESS_MESSAGE);
-    int angle = angleString.toInt();
+
+  const char *angleString = &command[strlen(SERVO_ANGLE_COMMAND)];
+  if (strlen(angleString) > 0) {
+    byte angle = atoi(angleString);
     servo.writeAngle(angle);
+    sendSuccessMessage();
   }
 }
 
 /**
+ * Parses infrared commands, flipping the shouldRunIR flag
+ * if one is found.
  * 
+ * @param command The command string to check.
  */
-void processIRCommand(String command) {
-  // Explicitly check for valid commands to ignore signal noise.
-  if (command == IR_ON_COMMAND) {
-    comm.println(SUCCESS_MESSAGE);
+void processIRCommand(const char *command) {
+  if (strcmp(command, IR_ON_COMMAND) == 0) {
     shouldRunIR = true;
-  } else if (command == IR_OFF_COMMAND) {
-    comm.println(SUCCESS_MESSAGE);
+    sendSuccessMessage();
+  } else if (strcmp(command, IR_OFF_COMMAND) == 0) {
     shouldRunIR = false;
+    sendSuccessMessage();
   }
 }
 
@@ -126,9 +143,9 @@ void processIRCommand(String command) {
  * 
  * @return The clamped/constrained light value.
  */
-int readLight() {
-  int light = analogRead(LIGHT_SENSOR_PIN);
-  return constrain(light, MIN_LIGHT_THRESH, MAX_LIGHT_THRESH);
+byte readLight() {
+  byte light = analogRead(LIGHT_SENSOR_PIN);
+  return constrain(light, MIN_LIGHT_READING, MAX_LIGHT_READING);
 }
 
 /**
@@ -137,11 +154,18 @@ int readLight() {
 
   @param lightValue The analog light reading from 0 to 255.
 */
-void updateLED(int lightValue) {
+void updateLED(byte lightValue) {
   // Reverse it and map to 0-255 scale.
-  int pwmValue = 255 - map(lightValue, MIN_LIGHT_THRESH, MAX_LIGHT_THRESH, 0, 255);
-  analogWrite (LED_PWM_PIN, pwmValue);
-  // Transmit light data. Avoid using floats to save memory.
+  byte pwmValue = map(lightValue, MIN_LIGHT_READING, MAX_LIGHT_READING, 255, 0);
+  analogWrite(LED_PWM_PIN, pwmValue);
   comm.print(BRIGHTNESS_PREFIX);
-  comm.println(100 - (pwmValue * 100 / 255));
+  comm.print(map(pwmValue, 0, 255, 100, 0));
+  comm.print('\n');
+}
+
+/**
+ * Used anytime a success message is transmitted.
+ */
+void sendSuccessMessage() {
+  comm.print(SUCCESS_MESSAGE);
 }

@@ -7,25 +7,24 @@
 
 #include "TinyServo.h"
 
-const int PIN_A = 6;
-const int PIN_B = 5;
-const int PULSE_HZ = 50;
-const int TIMER_TOP = 20000;
-const int MIN_PULSE_WIDTH = 1000; // 1ms
-const int MAX_PULSE_WIDTH = 2500; // 2.5ms
-const int SERVO_COUNT = 2;
+const unsigned int PIN_A = 6;
+const unsigned int PIN_B = 5;
+const unsigned int PULSE_HZ = 50;
+const unsigned int TIMER_TOP = 20000;
+const unsigned int MIN_PULSE_WIDTH = 1000; // 1ms
+const unsigned int MAX_PULSE_WIDTH = 2500; // 2.5ms
 
-static TinyServo *servos[SERVO_COUNT];
+static TinyServo *servos[2];
 
 TinyServo::TinyServo() { }
 
-void TinyServo::attach(int pin) {
+void TinyServo::attach(byte pin) {
   this->attach(pin, MIN_PULSE_WIDTH, MAX_PULSE_WIDTH);
 }
 
-void TinyServo::attach(int pin, int minPulseWidth, int maxPulseWidth) {
+void TinyServo::attach(byte pin, unsigned int minPulseWidth, unsigned int maxPulseWidth) {
 
-  int index;
+  byte index;
   switch (pin) {
     case PIN_A:
       index = 0;
@@ -68,14 +67,14 @@ void TinyServo::attach(int pin, int minPulseWidth, int maxPulseWidth) {
   pinMode(pin, OUTPUT);
 }
 
-void TinyServo::writeAngle(int angle) {
+void TinyServo::writeAngle(byte angle) {
   angle = constrain(angle, 0, 180);
   cli();
   *(_connect()) = map(angle, 0, 180, _minPulseWidth, _maxPulseWidth);
   sei();
 }
 
-int* TinyServo::_connect() {
+unsigned int* TinyServo::_connect() {
   /*
    Bits COM1n1 COM2n1
              1     0
@@ -107,8 +106,6 @@ void TinyServo::_disconnect() {
   }
 }
 
-// Called for every pulse on the servo's control pin, which pulses
-// 50 times a second. After 1 second, we disconnect the servo.
 void TinyServo::interrupt() {
   _pulseCount++;
   if (_pulseCount >= PULSE_HZ) {
