@@ -60,7 +60,7 @@ class TinyServo {
      * This also enables interrupts for every pulse. Returns a
      * pointer to the OCR1x register.
      */
-    unsigned int* _connect();
+    volatile unsigned int* _connect();
 };
 
 #endif

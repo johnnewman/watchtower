@@ -74,7 +74,7 @@ void TinyServo::writeAngle(byte angle) {
   sei();
 }
 
-unsigned int* TinyServo::_connect() {
+volatile unsigned int* TinyServo::_connect() {
   /*
    Bits COM1n1 COM2n1
              1     0
@@ -91,6 +91,7 @@ unsigned int* TinyServo::_connect() {
       TCCR1A |= _BV(COM1B1);
       return &OCR1B;
   }
+  return NULL;
 }
 
 void TinyServo::_disconnect() {
