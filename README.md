@@ -13,10 +13,10 @@ The central package that runs on each Raspberry Pi is named [watchtower](watchto
 
 Watchtower was designed to take advantage of the capabilities of the Pi NoIR camera. An optional program for a microcontroller is included to read analog room brightness, control infrared LED intensity for night vision, move an optional servo, and communicate with Watchtower over the Raspberry Pi's GPIO ports.
 
-A sample case model for the system is located in [ancillary/case/](ancillary/case/). This case houses the Raspberry Pi, camera, microcontroller, servo, array of IR LEDs, photoresistor, status LED, and cooling fan. A Fritzing prototype of the case's internal hardware is included in [ancillary/arduino/](ancillary/arduino).
+A sample case model for the system is located in [ancillary/case/](ancillary/case/). This case houses the Raspberry Pi, camera, microcontroller, servo, array of IR LEDs, photoresistor, status LED, and cooling fan. A Fritzing prototype of the case's internal hardware is included in [ancillary/hardware/](ancillary/hardware).
 
 <p align="center">
-    <img src="ancillary/case/Case_XRay.png" width="300" />
+    <img src="ancillary/case/v1/Case_XRay.png" width="300" />
 </p>
 
 ### Server setup
@@ -33,7 +33,7 @@ Both the reverse proxy and the upstream app gateway configurations encrypt all t
 
 ---
 
-There is an included [install script](install.sh) for Raspbian Buster that will set up a simple Watchtower instance and place it behind a firewall. The final steps outside of the script's scope are creating your SSL certificates for the web API, configuring the public-facing nginx reverse proxy, and fine-tuning your Watchtower config file for Dropbox, servo, and microcontroller support.
+There is an included [install script](install.sh) for Raspbian Buster that will set up a simple Watchtower instance and place it behind a firewall. The final steps outside of the script's scope are creating your SSL certificates for the web API, configuring the public-facing nginx reverse proxy, and fine-tuning your Watchtower config file for Dropbox and microcontroller support.
 
 The rest of this readme breaks down each Watchtower component and describes its configuration located in [watchtower_config.json](watchtower/config/watchtower_config_example.json).
  1. [API endpoints](#1-api-endpoints)
@@ -83,11 +83,11 @@ All Dropbox properties are prefixed with `DROPBOX_` in the config file. Dropbox 
 
 ### 4. Optional Microcontroller, Infrared, and Servos
 
-The project can be optionally configured to work with a microcontroller to enable and disable infrared lighting for night vision. The controller also reads the analog room brightness and uses PWM to fine-tune the infrared brightness. In the event that the camera should rotate or be covered when not in use, this controller can also move an attached servo. A schematic for the microcontroller circuit [is included](/ancillary/arduino).
+The project can be optionally configured to work with a microcontroller to enable and disable infrared lighting for night vision. The controller also reads the analog room brightness and uses PWM to fine-tune the infrared brightness. In the event that the camera should rotate or be covered when not in use, this controller can also move an attached servo. A schematic for the microcontroller circuit [is included](/ancillary/hardware).
 
 I used an AVR ATTiny84 for its small size and low price. This microcontroller has more than enough IO ports for Watchtower and it comes with a second internal timer that can be dedicated for servo usage.
 
-The ATTiny84 program located in [ancillary/arduino/controller/controller.ino](ancillary/arduino/controller/controller.ino) is configured to communicate serially with Watchtower. This program along with the [TinyServo](ancillary/arduino/controller/TinyServo.h) library consumes about 5.5KB of program space if link time optimization (LTO) is used, and about 7KB without LTO. Either approach works fine with the ATTiny84's 8KB of program space. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) is a great project that you can use with the Arduino IDE to program the ATTiny microcontroller and enable LTO.
+The ATTiny84 program located in [ancillary/hardware/controller/controller.ino](ancillary/hardware/controller/controller.ino) is configured to communicate serially with Watchtower. This program along with the [TinyServo](ancillary/hardware/controller/TinyServo.h) library consumes about 3.6KB of program space if link time optimization (LTO) is used, and about 4.5KB without LTO. Either approach works fine with the ATTiny84's 8KB of program space. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) is a great project that you can use with the Arduino IDE to program the ATTiny microcontroller and enable LTO.
 
 The serial connection inside Watchtower is operated by [watchtower/remote/microcontroller_comm.py](watchtower/remote/microcontroller_comm.py). This module is also configured to read the room brightness value from the serial connection, which will be displayed in the camera's annotation area along with the camera name and the current time.
 
@@ -98,7 +98,7 @@ All microcontroller properties are prefixed with `MICRO_` in the config file:
 - `ENABLED` - if `false`, the `microcontroller_comm` module will be not be used and the following config fields are ignored.
 - `BAUDRATE` is the baudrate of the serial connection to the microcontroller.
 - `PORT` is the location of the serial connection, like `/dev/serial0` on Raspbian.
-- `TRANSMISSION_FREQ` the frequency as "messages per second" that transmissions can be sent or received to and from the microcontroller. With the default implementation of [controller.ino](ancillary/arduino/controller/controller.ino), a value of 2 is good.
+- `TRANSMISSION_FREQ` the frequency as "messages per second" that transmissions can be sent or received to and from the microcontroller. With the default implementation of [controller.ino](ancillary/hardware/controller/controller.ino), a value of 2 is good.
 - `SERVO_ANGLE_ON` the angle (from 0-180) of the servo for the on state.
 - `SERVO_ANGLE_OFF` the angle (from 0-180) of the servo for the off state.
 </details>
