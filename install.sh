@@ -3,25 +3,25 @@
 # John Newman
 # 2020-05-23
 #
-# This script installs all of the necessary dependencies for watchtower to run.
+# This script installs all of the necessary dependencies for Watchtower to run.
 # In summary:
-# - Installs all system libs and python dependencies for watchtower.
-# - Installs PiServoServer and its dependencies.
+# - Installs all system libs and python dependencies for Watchtower.
+# - Installs Icebox and its dependencies for cooling the system.
 # - Configures a Firewall to only allow HTTP(S) and SSH traffic.
 # - Schedules a cron job to manage disk usage.
-# - Creates systemd services for watchtower and PiServoServer.
-# - Creates the log directory for watchtower and the cron job.
-# - Creates a simple watchtower configuration to only save motion to disk.
-# - Copies the nginx app gateway config file to access watchtower via uWSGI.
+# - Creates systemd services for Watchtower and Icebox.
+# - Creates the log directory for Watchtower and the cron job.
+# - Creates a simple Watchtower configuration to only save motion to disk.
+# - Copies the nginx app gateway config file to access Watchtower via uWSGI.
 # 
 # Additional setup to the watchtower_config file is needed to enable Dropbox
-# uploads, servo control, and the serial interface, described in the output.
+# uploads and microcontroller support, described in the output.
 
 set -e
 
 WATCHTOWER_LOG_PATH="/var/log/watchtower"
 WATCHTOWER_PATH=`dirname "$(readlink -f "$0")"`
-SERVO_PATH="$WATCHTOWER_PATH/PiServoServer"
+ICEBOX_PATH ="$WATCHTOWER_PATH/icebox"
 
 sudo apt update
 sudo apt upgrade -y
@@ -33,29 +33,25 @@ sudo ufw enable
 sudo ufw allow 'Nginx Full'
 sudo ufw allow 'ssh'
 
-# Set up watchtower
-echo "Creating Python virtual environment for watchtower..."
+# Set up Watchtower
+echo "Creating Python virtual environment for Watchtower..."
 python3 -m venv "$WATCHTOWER_PATH/venv"
 source "$WATCHTOWER_PATH/venv/bin/activate"
 echo "Installing Python dependencies..."
 pip install -r "$WATCHTOWER_PATH/requirements.txt"
 deactivate
 
-# Set up the servo app
-echo "Setting up the optional PiServoServer app..."
-git clone https://github.com/johnnewman/PiServoServer.git "$SERVO_PATH"
-echo "Creating Python virtual environment for PiServoServer..."
-python3 -m venv "$SERVO_PATH/venv"
-source "$SERVO_PATH/venv/bin/activate"
-echo "Installing Python dependencies..."
-pip install -r "$SERVO_PATH/requirements.txt"
-deactivate
+# Set up Icebox
+echo "Setting up the optional Icebox app..."
+git clone https://github.com/johnnewman/icebox.git "$ICEBOX_PATH"
+echo "Running the Icebox install script..."
+$ICEBOX_PATH/install.sh
 
 # Create instance folder and move example configs over
 mkdir -p "$WATCHTOWER_PATH/instance"
 cp "$WATCHTOWER_PATH/watchtower/config/log_config_example.json" "$WATCHTOWER_PATH/instance/log_config.json"
-# Remove Dropbox, Servo, and Infrared examples for a basic setup.
-egrep -v "(DROPBOX_|INFRA_)" "$WATCHTOWER_PATH/watchtower/config/watchtower_config_example.json" | sed "/SERVOS/,/]/d ; /^$/d" | tac | sed "0,/,$/{s/,$//}" | tac > "$WATCHTOWER_PATH/instance/watchtower_config.json"
+# Remove Dropbox for a basic setup.
+egrep -v "(DROPBOX_)" "$WATCHTOWER_PATH/watchtower/config/watchtower_config_example.json" > "$WATCHTOWER_PATH/instance/watchtower_config.json"
 echo "Created $WATCHTOWER_PATH/instance directory and added config files."
 
 # Create the logs directory with write permission.
@@ -77,13 +73,7 @@ sudo systemctl enable watchtower.service
 echo "Created systemd watchtower.service file and configured it to run on boot."
 echo "   NOTE: This service has not been started. More configuration is needed."
 
-# Set up the PiServoServer service
-sed -i".bak" "s,<user>,$USER,g ; s,<path>,$SERVO_PATH,g" "$SERVO_PATH/ancillary/servo.service"
-sudo ln -s "$SERVO_PATH/ancillary/servo.service" "/etc/systemd/system/"
-echo "Created systemd servo.service file. It is NOT configured to run on boot."
-echo "   NOTE: If you are using servos, execute 'sudo systemctl enable servo.service' to have it start every system boot."
-
-# Install nginx configuration for uWSGI and watchtower
+# Install nginx configuration for uWSGI and Watchtower
 sudo mkdir -p /etc/nginx/certs
 sudo cp $WATCHTOWER_PATH/ancillary/nginx/watchtower /etc/nginx/sites-available/
 sudo ln -s /etc/nginx/sites-available/watchtower /etc/nginx/sites-enabled/
@@ -96,4 +86,4 @@ Final steps to take: \n\
              Restart nginx: 'sudo systemctl restart nginx'\n\
 4) Optional: Only allow HTTP access from trusted sources by editing /etc/nginx/sites-available/watchtower\n\
 5) Optional: Configure the main reverse proxy with an upstream location to this machine. See $WATCHTOWER_PATH/ancillary/nginx/reverse_proxy\n\
-6) Optional: Configure $WATCHTOWER_PATH/instance/watchtower_config.json with Dropbox, infrared, or servo support"
+6) Optional: Configure $WATCHTOWER_PATH/instance/watchtower_config.json with Dropbox and microcontroller support."
