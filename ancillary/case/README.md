@@ -14,7 +14,7 @@ The cases for Watchtower are housed within their versioned folders here.
 
 - 32% smaller than version 1.
 - Uses M2x5 and M2x6 screws to tightly seal all of its panels.
-- Comes with mounts on the left side panel for a 30x30mm fan to cool the hardware.
+- Comes with mounts on the left side panel for a 30x30mm fan to cool the system.
 - The top panel has a closer seal around the camera's case.
 - The servo's mouting gear attaches directly to the camera's case instead of needing to use a plastic arm that comes with the servo.
 - There is a cradle underneath the camera that v1 does not have. This keeps the camera mount from being damaged if pressure is applied to the top of the case or if the servo is rotated beyond its closing angle.
