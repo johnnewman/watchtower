@@ -55,7 +55,11 @@ class RunLoop(Thread):
 
     @property
     def servo(self) -> Servo:
-        return self.servo
+        return self.__servo
+
+    @servo.setter
+    def servo(self, value):
+        self.__servo = value
 
     @property
     def start_time(self):
@@ -64,16 +68,16 @@ class RunLoop(Thread):
     def setup_microcontroller_comm(self, app):
         from .remote.microcontroller_comm import MicrocontrollerComm
         controller_config = app.config.get_namespace('MICRO_')
-        controller = MicrocontrollerComm(port=serial_config['port'],
-                                         baudrate=serial_config['baudrate'],
-                                         transmission_interval=serial_config['transmission_freq'])
+        controller = MicrocontrollerComm(port=controller_config['port'],
+                                         baudrate=controller_config['baudrate'],
+                                         transmission_interval=controller_config['transmission_freq'])
         controller.start()
 
-        angle_on = micro_config['angle_on']
-        angle_off = micro_config['angle_off']
+        angle_on = controller_config['servo_angle_on']
+        angle_off = controller_config['servo_angle_off']
         if angle_on is not None and angle_off is not None:
-            self.servo = Servo(angle_on
-                               angle_off
+            self.servo = Servo(angle_on,
+                               angle_off,
                                controller)
          
         return controller
