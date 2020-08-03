@@ -10,7 +10,7 @@ import json
 import logging.config
 import os
 import time
-from remote.servo import Servo
+from .remote.servo import Servo
 from .run_loop import RunLoop
 from .streamer.mjpeg_streamer import MJPEGStreamer
 from .streamer.writer import http_writer
@@ -75,6 +75,7 @@ def create_app(test_config=None):
         fps = 0.5
         writer = http_writer.HTTPMultipartWriter()
         streamer = MJPEGStreamer(main.camera,
+                                 servo=main.servo,
                                  byte_writer=writer,
                                  name='MJPEG',
                                  rate=fps)
