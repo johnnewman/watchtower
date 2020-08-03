@@ -8,7 +8,7 @@ class SafeCamera (picamera.PiCamera):
     capture an image using ``safe_capture`` or get/set the monitoring status.
     """
 
-    def __init__(self, name, resolution, framerate, servos):
+    def __init__(self, name, resolution, framerate):
         super(SafeCamera, self).__init__(resolution=resolution, framerate=framerate)
         self.__should_monitor = True
         self.__should_record = False
