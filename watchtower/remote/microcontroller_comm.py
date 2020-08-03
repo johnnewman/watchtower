@@ -83,10 +83,10 @@ class MicrocontrollerComm(Thread):
         # Send the command only if necessary.
         if value == True and old_value == False:
             self.__enqueue_command(INFRARED_ON_COMMAND)
-        else if value == False and old_value == True:
+        elif value == False and old_value == True:
             self.__enqueue_command(INFRARED_OFF_COMMAND)
 
-    def set_servo_angle(angle):
+    def set_servo_angle(self, angle):
         self.__enqueue_command(SERVO_COMMAND_PREFIX + str(angle))
     
     def __enqueue_command(self, command):
@@ -117,6 +117,7 @@ class MicrocontrollerComm(Thread):
             if sent == 0:
                 raise RuntimeError('Failed to write to serial port.')
             total_sent += sent
+        self.__logger.info('Transmitted \"%s\".' % command)
 
     def __process_input(self):
         """
@@ -125,13 +126,13 @@ class MicrocontrollerComm(Thread):
         should be received after transmitting a command.
         """
         if self.__controller.in_waiting > 0:
-            response = self.__controller.readline()
+            response = self.__controller.readline().decode("utf-8").strip()
             if response == SUCCESS_MESSAGE:
                 self.__logger.info('Received an \"%s\" message!' % SUCCESS_MESSAGE)
                 return True
-            else if response == REBOOT_MESSAGE:
+            elif response == REBOOT_MESSAGE:
                 self.__logger.warn('Microcontroller has rebooted.')
-            else if response.startswith(BRIGHTNESS_PREFIX):
+            elif response.startswith(BRIGHTNESS_PREFIX):
                 try:
                     self.room_brightness = int(response[len(BRIGHTNESS_PREFIX):])
                 except TypeError:
@@ -146,10 +147,11 @@ class MicrocontrollerComm(Thread):
         connection while also processing any input data from the connection.
         """
         while True:
+            wait_for_success_message = False
 
             # Only transmit at the transmission interval so that the receiving
             # end has time to process each command.
-            if time.time() - self.__last_transmission_time >= self.__transmission_interval:
+            if time.time() - self.__last_transmission_time >= 1.0/self.__transmission_interval:
                 try:
                     # Attempt to transmit any new commands
                     command = self.__command_queue.get_nowait()
@@ -164,10 +166,9 @@ class MicrocontrollerComm(Thread):
             # Now handle any input
             if not self.__process_input() and wait_for_success_message:
                 # Wait for the next transmission
-                time.sleep(self.__transmission_interval)
+                time.sleep(1.0/self.__transmission_interval)
                 if not self.__process_input():
                     self.__logger.warning('Did not receive success code for command \"%s\". Retrying.' % command)
                     self.__enqueue_command(command)
             
-            wait_for_success_message = False
             time.sleep(1.0/self.__transmission_interval/2.0)

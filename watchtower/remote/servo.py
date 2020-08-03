@@ -17,9 +17,9 @@ class Servo:
         self.__angle_off = angle_off
         self.__controller = controller
 
-    def enable():
+    def enable(self):
         self.__controller.set_servo_angle(self.__angle_on)
 
-    def disable():
+    def disable(self):
         self.__controller.set_servo_angle(self.__angle_off)
         
