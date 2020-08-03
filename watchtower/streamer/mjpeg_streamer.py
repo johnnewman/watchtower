@@ -1,7 +1,7 @@
 import io
 import sys
 from .stream_saver import StreamSaver
-from remote.microcontroller_comm import Servo
+from ..remote.servo import Servo
 
 MJPEG_DOWNSCALE_FACTOR = 0.666
 
