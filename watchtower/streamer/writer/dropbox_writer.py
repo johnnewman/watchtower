@@ -2,23 +2,28 @@ import base64
 import dropbox
 import logging
 import os
+import queue
+import time
 from . import byte_writer
+from collections import namedtuple
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
+from threading import Thread, Lock
 
-logger = None
-
+THREAD_COUNT = 2
+NumberedFile = namedtuple('NumberedFile', 'number bytes')
 
 class DropboxWriter(byte_writer.ByteWriter):
     """
-    A class that accumulates bytes up to the ``file_chunk_size`` to upload to
-    Dropbox as an individual file. Creates additional files as the chunk size
-    is reached. If the path to a public key file is supplied, the video data
-    will be encrypted and the random symmetric encryption key will be padded
-    to the front of the file. Fernet encryption is used. The key itself is
-    encrypted using the public key.
+    A class that accumulates bytes to upload to Dropbox and uploads chunks sized
+    sized according to the ``file_chunk_size``. Creates additional files as the
+    chunk size is reached. If the path to a public key file is supplied, the
+    bytes will be encrypted and the random symmetric encryption key used to
+    encrypt the data will itself be encrypted and prepended to the front of the
+    file. Fernet encryption is used. The key itself is encrypted using the
+    public key.
     """
 
     def __init__(self, full_path, dropbox_token, file_chunk_size=3, public_pem_path=None):
@@ -31,61 +36,135 @@ class DropboxWriter(byte_writer.ByteWriter):
         encryption key.
         """
         super(DropboxWriter, self).__init__(full_path)
-        self.__dropbox_token = dropbox_token
-        self.__dbx = dropbox.Dropbox(dropbox_token)
         self.__file_chunk_size = file_chunk_size
         self.__file_count = 0
         self.__byte_pool = ''.encode()
-        self.__public_key = None
+
+        dbx = dropbox.Dropbox(dropbox_token)
+        public_key = None
         if public_pem_path:
             with open(public_pem_path, "rb") as public_key_file:
-                self.__public_key = serialization.load_pem_public_key(public_key_file.read(), backend=default_backend())
+                public_key = serialization.load_pem_public_key(public_key_file.read(), backend=default_backend())
+                
+        if public_key is not None:
+            logging.getLogger(__name__).debug('Using encryption!')
+
+        path, extension = os.path.splitext(full_path)
+        self.__uploader_threads = []
+        for i in range(THREAD_COUNT):
+            uploader = DropboxFileUploader(dbx, path, extension, public_key)
+            self.__uploader_threads.append(uploader)
+            uploader.start()
+        self.__thread_index = 0
 
     def append_bytes(self, bts, close=False):
-        self.__append_bytes(bts, close, False)
-
-    def __append_bytes(self, bts, close=False, ignore_previous_bytes=False):
         """
-        Private function that allows us to ignore the data that has accumulated
-        in the ``__byte_pool``. This is only useful when breaking the data into
-        files.
-
-        :param bts: The bytes to append to the pool.
-        :param close: If true, this uploads all the data supplied.
-        :param ignore_previous_bytes: If true, ignores what is stored in
-        ``__byte_pool``.
+        This method will append the bytes to a small array. When enough bytes
+        have been appended, one or more chunks is broken off and distributed to
+        an uploader thread.
         """
-        global logger
-        if logger is None:
-            logger = logging.getLogger(__name__)
+        self.__byte_pool += bts
+        logging.getLogger(__name__).debug('Byte pool length: %i bytes' % len(self.__byte_pool))
+        if len(self.__byte_pool) < self.__file_chunk_size and not close:
+            return # Wait for more data.
+        
+        # Break apart the bytes and distribute each chunk to an uploader.
+        sub_bytes = self.__byte_pool[:self.__file_chunk_size]
+        while len(sub_bytes) == self.__file_chunk_size:
+            self.__distribute_file_bytes(sub_bytes)
+            self.__byte_pool = self.__byte_pool[self.__file_chunk_size:]  # Remove the chunk.
+            sub_bytes = self.__byte_pool[:self.__file_chunk_size]  # Fetch the next chunk.
+        self.__byte_pool = sub_bytes  # The last chunk, smaller than file_chunk_size.
+        
+        if close == True:
+            # Dump the remaining data.
+            self.__distribute_file_bytes(self.__byte_pool)
+            # Stop all threads.
+            map(lambda x: x.stop(), self.__uploader_threads)
+    
+    def __distribute_file_bytes(self, bts):
+        """
+        Creates a unique file with the supplied bytes and passes this to an
+        uploader thread in a round robin fasion.
+        """
+        numbered_file = NumberedFile(self.__file_count, bts)
+        self.__uploader_threads[self.__thread_index].append_file(numbered_file)
+        logging.getLogger(__name__).debug('Distributed file to DropboxFileUploader #%i' % self.__thread_index)
+        self.__file_count += 1
+        if self.__thread_index == len(self.__uploader_threads) - 1:
+            self.__thread_index = 0
+        else:
+            self.__thread_index += 1
 
-        if not ignore_previous_bytes:
-            bts = self.__byte_pool + bts
-            total_available_space = self.__file_chunk_size - len(bts)
-            if len(bts) > total_available_space:
-                # Break the bytes into max sized smaller chunks.
-                logger.debug('Attempting to upload beyond max size. Splitting.')
-                sub_bytes = bts[:self.__file_chunk_size]
-                while len(sub_bytes) == self.__file_chunk_size:
-                    self.__append_bytes(sub_bytes, close=True, ignore_previous_bytes=True)  # Save each slice.
-                    bts = bts[self.__file_chunk_size:]  # Remove the slice.
-                    sub_bytes = bts[:self.__file_chunk_size]  # Fetch the next slice.
-                bts = sub_bytes  # This will now be the last chunk, under the size limit.
-            self.__byte_pool = bts
 
-        if close:
-            if self.__public_key:
-                fernet_key = Fernet.generate_key()
-                encrypted_fernet_key = self.__public_key.encrypt(fernet_key,
-                                                                 padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                                                                              algorithm=hashes.SHA256(),
-                                                                              label=None))
-                encoded_fernet_key = base64.b64encode(encrypted_fernet_key)
-                encrypted_bytes = Fernet(fernet_key).encrypt(bts)
-                bts = str(len(encoded_fernet_key)).encode() + b' ' + encoded_fernet_key + encrypted_bytes
+class DropboxFileUploader(Thread):
+    """
+    Threaded class used to accumulate data that needs to be uploaded to Dropbox.
+    If a public key is supplied, this class will optionally encrypt the data
+    before uploading.
+    """
 
-            path, extension = os.path.splitext(self.full_path)
-            full_path = path + str(self.__file_count) + extension
-            self.__dbx.files_upload(bts, full_path)
-            logger.debug('Uploaded file \"%s\"' % full_path)
-            self.__file_count += 1
+    def __init__(self, dbx: dropbox.Dropbox, path: str, extension: str, public_key=None):
+        super(DropboxFileUploader, self).__init__()
+        self.__dbx = dbx
+        self.__path = path
+        self.__extension = extension
+        self.__public_key = public_key
+        self.__stop = False
+        self.__lock = Lock()
+        self.__queue = queue.Queue()
+
+    def __should_stop(self):
+        self.__lock.acquire()
+        should_stop = self.__stop
+        self.__lock.release()
+        return should_stop
+
+    def stop(self):
+        self.__lock.acquire()
+        self.__stop = True
+        self.__lock.release()
+
+    def append_file(self, numbered_file: NumberedFile):
+        logging.getLogger(__name__).debug('Appended file %i' % numbered_file.number)
+        self.__queue.put(numbered_file)
+
+    def __encrypt(self, numbered_file: NumberedFile):
+        """
+        Encrypts the supplied file's data and prepends the encrypted symmetric
+        key to that data.
+        """
+        if self.__public_key is None:
+            logging.getLogger(__name__).debug('Skipping encryption.')
+            return numbered_file
+
+        logging.getLogger(__name__).debug('Encrypting file ...')
+        fernet_key = Fernet.generate_key()
+        encrypted_fernet_key = self.__public_key.encrypt(fernet_key,
+                                                         padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                                                                      algorithm=hashes.SHA256(),
+                                                                      label=None))
+        encoded_fernet_key = base64.b64encode(encrypted_fernet_key)
+        encrypted_bytes = Fernet(fernet_key).encrypt(numbered_file.bytes)
+        logging.getLogger(__name__).debug('Done encrypting.')
+        return numbered_file._replace(bytes=str(len(encoded_fernet_key)).encode() + b' ' + encoded_fernet_key + encrypted_bytes)
+
+    def __upload(self, numbered_file: NumberedFile):
+        full_path = self.__path + str(numbered_file.number) + self.__extension
+        logging.getLogger(__name__).debug('Uploading file \"%s\"' % full_path)
+        self.__dbx.files_upload(numbered_file.bytes, full_path)
+        logging.getLogger(__name__).debug('Uploaded file \"%s\"' % full_path)
+
+    def run(self):
+        logging.getLogger(__name__).debug('Uploader thread running.')
+        # Only stop if the queue is also empty.
+        while not self.__should_stop() or not self.__queue.empty():
+            try:
+                numbered_file = self.__queue.get(block=True, timeout=0.5)
+                logging.getLogger(__name__).debug('Ready to process file %i' % numbered_file.number)
+                self.__upload(self.__encrypt(numbered_file))
+            except queue.Empty:
+                pass
+            except Exception as e:
+                logging.getLogger(__name__).debug('Exception %s.' % e)
+        logging.getLogger(__name__).debug('Uploader thread stopped.')
