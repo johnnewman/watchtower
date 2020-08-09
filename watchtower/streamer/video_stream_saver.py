@@ -1,3 +1,4 @@
+import time
 from .stream_saver import StreamSaver
 
 
@@ -43,6 +44,7 @@ class VideoStreamSaver(StreamSaver):
         stopped.
         """
         with self.stream.lock:
+            start_time = time.time()
             last_streamed_index = self.__last_streamed_frame.index
             for frame in reversed(self.stream.frames):
                 # We have to find the frame in the updated stream each time the
@@ -50,12 +52,28 @@ class VideoStreamSaver(StreamSaver):
                 # being written to, the frame will likely have a new position.
                 self.__last_streamed_frame = frame
                 if frame.index == last_streamed_index:
+                    self.logger.debug('Time to find last frame: %.2f sec' % (time.time() - start_time))
                     break
             position = self.__last_streamed_frame.position
-            last_frame = next(reversed(self.stream.frames))  # Read to the last frame
+            last_frame = next(reversed(self.stream.frames))  # Read up to the last frame
             length = last_frame.position - self.__last_streamed_frame.position
             self.__last_streamed_frame = last_frame
-            return super(VideoStreamSaver, self).read(position, length)
+            
+            if length < 1000000: #1 mbit
+                # Using read() uses less memory but consumes more CPU cycles.
+                # To avoid blocking, only do this when the stream is small.
+                bytes_read, new_position = super(VideoStreamSaver, self).read(position, length)
+                self.logger.debug('Using built-in read() for length of %i bytes. Time: %.2f sec' % (length, time.time() - start_time))
+                return bytes_read, new_position
+            else:
+                # Creating a copy of the stream via getvalue() will consume a
+                # large amount of memory, depending on the stream's bitrate and
+                # its total length in seconds. This is necessary because read()
+                # is far too slow. A 30 mbit array can block for up to 30 sec.
+                byte_array_copy = self.stream.getvalue()
+                bytes_read = byte_array_copy[position:last_frame.position]
+                self.logger.debug('Using byte copy of stream with length length of %i bytes. Time: %.2f sec' % (len(bytes_read), time.time() - start_time))
+                return bytes_read, position + len(bytes_read)
 
     def ended(self):
         """
