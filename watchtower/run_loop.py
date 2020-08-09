@@ -44,7 +44,7 @@ class RunLoop(Thread):
         self.__padding = motion_config['recording_padding']
         self.__max_event_time = motion_config['max_event_time']
         self.__motion_detector = MotionDetector(self.camera, delta, area)
-        self.__stream = picamera.PiCameraCircularIO(self.camera, seconds=self.__padding)
+        self.__stream = picamera.PiCameraCircularIO(self.camera, seconds=self.__padding, bitrate=3000000)
 
         self.__start_time = None
         self.__day_format = app.config['DIR_DAY_FORMAT']
@@ -108,11 +108,12 @@ class RunLoop(Thread):
 
         def create_cam_stream(_debug_name, byte_writer):
             return streamer.VideoStreamSaver(stream=stream,
-                                        byte_writer=byte_writer,
-                                        name=_debug_name,
-                                        start_time=stream_start_time,
-                                        stop_when_empty=stop_when_empty)
+                                             byte_writer=byte_writer,
+                                             name=_debug_name,
+                                             start_time=stream_start_time,
+                                             stop_when_empty=stop_when_empty)
 
+        # Used for BytesIO of the jpeg frame.
         def create_stream(_debug_name, byte_writer):
             return streamer.StreamSaver(stream=stream,
                                         byte_writer=byte_writer,
