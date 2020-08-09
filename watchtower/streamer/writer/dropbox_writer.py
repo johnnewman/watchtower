@@ -52,7 +52,7 @@ class DropboxWriter(byte_writer.ByteWriter):
         path, extension = os.path.splitext(full_path)
         self.__uploader_threads = []
         for i in range(THREAD_COUNT):
-            uploader = DropboxFileUploader(dbx, path, extension, public_key)
+            uploader = DropboxFileUploader(dbx, path, extension, public_key, i)
             self.__uploader_threads.append(uploader)
             uploader.start()
         self.__thread_index = 0
@@ -80,7 +80,7 @@ class DropboxWriter(byte_writer.ByteWriter):
             # Dump the remaining data.
             self.__distribute_file_bytes(self.__byte_pool)
             # Stop all threads.
-            map(lambda x: x.stop(), self.__uploader_threads)
+            list(map(lambda x: x.stop(), self.__uploader_threads))
     
     def __distribute_file_bytes(self, bts):
         """
@@ -104,12 +104,13 @@ class DropboxFileUploader(Thread):
     before uploading.
     """
 
-    def __init__(self, dbx: dropbox.Dropbox, path: str, extension: str, public_key=None):
+    def __init__(self, dbx: dropbox.Dropbox, path: str, extension: str, public_key=None, log_number=0):
         super(DropboxFileUploader, self).__init__()
         self.__dbx = dbx
         self.__path = path
         self.__extension = extension
         self.__public_key = public_key
+        self.__log_number = log_number
         self.__stop = False
         self.__lock = Lock()
         self.__queue = queue.Queue()
@@ -126,8 +127,10 @@ class DropboxFileUploader(Thread):
         self.__lock.release()
 
     def append_file(self, numbered_file: NumberedFile):
-        logging.getLogger(__name__).debug('Appended file %i' % numbered_file.number)
         self.__queue.put(numbered_file)
+
+    def __logger(self) -> logging.Logger:
+        return logging.getLogger("%s.%i" % (__name__, self.__log_number))
 
     def __encrypt(self, numbered_file: NumberedFile):
         """
@@ -135,10 +138,10 @@ class DropboxFileUploader(Thread):
         key to that data.
         """
         if self.__public_key is None:
-            logging.getLogger(__name__).debug('Skipping encryption.')
+            self.__logger().debug('Skipping encryption.')
             return numbered_file
 
-        logging.getLogger(__name__).debug('Encrypting file ...')
+        start_time = time.time()
         fernet_key = Fernet.generate_key()
         encrypted_fernet_key = self.__public_key.encrypt(fernet_key,
                                                          padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),
@@ -146,25 +149,25 @@ class DropboxFileUploader(Thread):
                                                                       label=None))
         encoded_fernet_key = base64.b64encode(encrypted_fernet_key)
         encrypted_bytes = Fernet(fernet_key).encrypt(numbered_file.bytes)
-        logging.getLogger(__name__).debug('Done encrypting.')
+        self.__logger().debug('Done encrypting. Took %.2f sec.' % (time.time() - start_time))
         return numbered_file._replace(bytes=str(len(encoded_fernet_key)).encode() + b' ' + encoded_fernet_key + encrypted_bytes)
 
     def __upload(self, numbered_file: NumberedFile):
         full_path = self.__path + str(numbered_file.number) + self.__extension
-        logging.getLogger(__name__).debug('Uploading file \"%s\"' % full_path)
+        self.__logger().debug('Uploading file \"%s\"...' % full_path)
         self.__dbx.files_upload(numbered_file.bytes, full_path)
-        logging.getLogger(__name__).debug('Uploaded file \"%s\"' % full_path)
+        self.__logger().debug('Done uploading \"%s\".' % full_path)
 
     def run(self):
-        logging.getLogger(__name__).debug('Uploader thread running.')
+        self.__logger().debug('Uploader thread running.')
         # Only stop if the queue is also empty.
         while not self.__should_stop() or not self.__queue.empty():
             try:
                 numbered_file = self.__queue.get(block=True, timeout=0.5)
-                logging.getLogger(__name__).debug('Ready to process file %i' % numbered_file.number)
+                self.__logger().debug('Ready to process file %i' % numbered_file.number)
                 self.__upload(self.__encrypt(numbered_file))
             except queue.Empty:
                 pass
             except Exception as e:
                 logging.getLogger(__name__).debug('Exception %s.' % e)
-        logging.getLogger(__name__).debug('Uploader thread stopped.')
+        self.__logger().debug('Uploader thread stopped.')
