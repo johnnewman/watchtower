@@ -44,7 +44,7 @@ class RunLoop(Thread):
         self.__padding = motion_config['recording_padding']
         self.__max_event_time = motion_config['max_event_time']
         self.__motion_detector = MotionDetector(self.camera, delta, area)
-        self.__stream = picamera.PiCameraCircularIO(self.camera, seconds=self.__padding, bitrate=3000000)
+        self.__stream = picamera.PiCameraCircularIO(self.camera, seconds=(self.__padding))
 
         self.__start_time = None
         self.__day_format = app.config['DIR_DAY_FORMAT']
@@ -88,7 +88,7 @@ class RunLoop(Thread):
                             framerate=app.config['VIDEO_FRAMERATE'])
         camera.rotation = app.config.get('VIDEO_ROTATION')
         camera.annotate_background = picamera.Color('black')
-        camera.annotate_text_size = 12
+        camera.annotate_text_size = 14
         return camera
 
     def wait(self):
@@ -128,7 +128,7 @@ class RunLoop(Thread):
 
         streamers = []
         disk_path = os.path.join(self.__instance_path, 'recordings', path)
-        if isinstance(stream, picamera.PiCameraCircularIO):
+        if isinstance(stream, picamera.PiCameraCircularIO): # Video
             streamers.append(create_cam_stream(debug_name+'.loc', disk_writer.DiskWriter(disk_path)))
             if len(self.__dropbox_config) != 0:
                 key_path = None
@@ -137,7 +137,7 @@ class RunLoop(Thread):
                 streamers.append(create_cam_stream(debug_name+'.dbx',
                                                 create_dropbox_writer('/'+os.path.join(self.camera.name, path),
                                                                       key_path)))
-        else:
+        else: # JPEG
             streamers.append(create_stream(debug_name+'.loc', disk_writer.DiskWriter(disk_path)))
             if len(self.__dropbox_config) != 0:
                 stream = io.BytesIO(stream.getvalue())  # Create a new stream for Dropbox.
@@ -197,8 +197,10 @@ class RunLoop(Thread):
 
                     # Wait for motion to stop
                     last_motion_trigger = time.time()
-                    while camera.should_monitor and time.time() - last_motion_trigger <= self.__padding and \
-                            time.time() - event_time <= self.__max_event_time:
+                    while camera.should_monitor and \
+                        time.time() - last_motion_trigger <= self.__padding and \
+                        time.time() - event_time <= self.__max_event_time:
+                            
                         more_motion, _ = self.__motion_detector.detect()
                         if more_motion:
                             logger.debug('More motion detected!')
