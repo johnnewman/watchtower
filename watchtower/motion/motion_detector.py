@@ -1,15 +1,14 @@
 import cv2
 import datetime as dt
 import logging
+import time
 from picamera.array import PiRGBArray
 
 BASE_FRAME_RESET_INTERVAL = 45  # In seconds.
 BLUR_SIZE = (21, 21)
-DOWNSIZE_FACTOR = 2
+DOWNSCALE_FACTOR = 0.25 # 25 percent of the normal resolution.
 MOTION_COLOR = (0, 0, 255)
 MOTION_BORDER = 2
-
-logger = None
 
 
 class MotionDetector:
@@ -34,30 +33,26 @@ class MotionDetector:
         """
         self.__camera = camera
         self.min_delta = min_delta
-        self.min_area = camera.resolution[0] * camera.resolution[1] * min_area_perc / DOWNSIZE_FACTOR
+        self.min_area = camera.resolution[0] * camera.resolution[1] * min_area_perc * DOWNSCALE_FACTOR
         self.__base_frame = None
         self.__base_frame_date = dt.datetime.now()
 
     def capture_image(self):
         """
-        Captures stills from the camera.
+        Captures scaled down stills from the camera's video feed.
         :return: Returns a ``PiRGBArray`` of image data.
         """
-        bgr_frame = PiRGBArray(self.__camera, size=self.__camera.resolution)
-        self.__camera.safe_capture(bgr_frame, format='bgr')
+        bgr_frame = PiRGBArray(self.__camera, size=tuple(int(i * DOWNSCALE_FACTOR) for i in self.__camera.resolution))
+        self.__camera.safe_capture(bgr_frame, format='bgr', downscale_factor=DOWNSCALE_FACTOR)
         return bgr_frame
 
     def reset_base_frame_date(self):
         self.__base_frame_date = dt.datetime.now()
 
     def reset_base_frame(self):
-        global logger
         self.__base_frame = self.post_process_image(self.capture_image().array)
         self.reset_base_frame_date()
-
-        if logger is None:
-            logger = logging.getLogger(__name__)
-        logger.debug('Updating base frame.')
+        logging.getLogger(__name__).debug('Updating base frame.')
 
     def detect(self):
         """
@@ -76,8 +71,8 @@ class MotionDetector:
             self.reset_base_frame()
             return False, None
 
+        start_time = time.time()
         bgr_frame = self.capture_image()
-        current_frame = self.downsize_image(bgr_frame.array)
         gray_frame = self.post_process_image(bgr_frame.array)
 
         # Compute the difference of the base frame and the current
@@ -92,22 +87,21 @@ class MotionDetector:
         # Find and separate all the dilated areas
         contours = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
 
-        # Filter out small contours. Draw the large ones.
+        # Filter out small contours.
         contours = list(filter(lambda c: cv2.contourArea(c) >= self.min_area, contours))
+
+        # Draw the large countours onto the original image.
         for contour in contours:
             (x, y, w, h) = cv2.boundingRect(contour)
-            cv2.rectangle(current_frame, (x, y), (x + w, y + h), color=MOTION_COLOR, thickness=MOTION_BORDER)
-        return len(contours) > 0, cv2.imencode('.jpg', current_frame)[1]
-
-    def downsize_image(self, image_array):
-        return cv2.resize(image_array,
-                          tuple(i//DOWNSIZE_FACTOR for i in self.__camera.resolution),
-                          interpolation=cv2.INTER_AREA)
+            cv2.rectangle(bgr_frame.array, (x, y), (x + w, y + h), color=MOTION_COLOR, thickness=MOTION_BORDER)
+        
+        jpg_bytes = cv2.imencode('.jpg', bgr_frame.array)[1]
+        logging.getLogger(__name__).debug('Time to process motion %.2f' % (time.time() - start_time))
+        return len(contours) > 0, jpg_bytes
 
     def post_process_image(self, bgr_array):
         """
-        Will downsize, gray and blur the bgr image data.
+        Will gray and blur the bgr image data.
         """
-        bgr_array = self.downsize_image(bgr_array)
         gray_array = cv2.cvtColor(bgr_array, cv2.COLOR_BGR2GRAY)
         return cv2.GaussianBlur(gray_array, BLUR_SIZE, 0)
