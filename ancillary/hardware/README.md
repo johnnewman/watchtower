@@ -26,9 +26,9 @@ A decoupling capacitor is on the 3v line to help mitigate any noise or voltage d
 #### Power Requirements
 
 - The front IR panel consumes 120mA of power when using 20mA LEDs.
-   - There are 14 infrared LEDs total. Of those, there are 4 parallel circuits that contain 3 LEDs in series. With 20mA LEDS, those 4 parallel circuits pull 80mA. The remaining two LEDs pull 40mA, so the whole front IR panel will use 120mA of power.
+   - There are 14 infrared LEDs total. Of those, there are 4 parallel circuits that contain 3 LEDs in series. With 20mA LEDS, those 4 parallel circuits pull 80mA. The remaining two LEDs pull 40mA.
 - The 30x30mm fan I am using has a current draw of 120mA.
-- The status LED draws about 20mA of power.
+- The status LED draws 20mA of power.
 - A Pi 3B+ [typical draw is 500mA](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md). Under stress, [this can average 850mA](https://www.raspberrypi.org/documentation/faqs/#power).
 - The Pi Camera pulls 250mA.
 
