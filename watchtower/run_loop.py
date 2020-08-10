@@ -95,9 +95,9 @@ class RunLoop(Thread):
         """Briefly waits on the camera and updates the annotation on the feed."""
 
         date_string = dt.datetime.now().strftime(self.__video_date_format)
-        text = '{} {}'.format(self.camera.name, date_string)
+        text = '{} | {}'.format(self.camera.name, date_string)
         if self.__micro_comm is not None:
-            text = text + ' Brightness: ' + str(self.__micro_comm.room_brightness)
+            text = text + ' | Brightness: ' + str(self.__micro_comm.room_brightness)
         self.camera.annotate_text = text
         self.camera.wait_recording(WAIT_TIME)
 
@@ -181,6 +181,8 @@ class RunLoop(Thread):
                 self.wait()
                 motion_detected, frame_bytes = self.__motion_detector.detect()
                 if motion_detected or camera.should_record:
+                    self.wait() # Update the annotation area after the heavy detect() call.
+
                     self.__motion_detector.reset_base_frame_date()
                     logger.info('Recording triggered.')
                     event_time = time.time()
@@ -189,20 +191,26 @@ class RunLoop(Thread):
                     time_str = event_date.strftime(self.__time_format)
                     full_dir = os.path.join(day_str, time_str)
                     logger.info(full_dir)
+
+                    # Save the JPG
                     self.save_stream(io.BytesIO(frame_bytes),
                                         path=os.path.join(full_dir, 'trigger.jpg'),
                                         debug_name=time_str + '.jpg',
                                         stop_when_empty=True)
+                    self.wait() # Update the annotation area after the heavy save_stream() call.
+
+                    # Save the video
                     video_streamers = self.save_stream(self.__stream,
                                                        path=os.path.join(full_dir, 'video.h264'),
                                                        debug_name=time_str+'.vid')
+                    self.wait() # Update the annotation area after the heavy save_stream() call.
 
                     # Wait for motion to stop
                     last_motion_trigger = time.time()
                     while camera.should_monitor and \
-                        time.time() - last_motion_trigger <= self.__padding and \
-                        time.time() - event_time <= self.__max_event_time:
-                            
+                            time.time() - last_motion_trigger <= self.__padding and \
+                            time.time() - event_time <= self.__max_event_time:
+                          
                         more_motion, _ = self.__motion_detector.detect()
                         if more_motion:
                             logger.debug('More motion detected!')
