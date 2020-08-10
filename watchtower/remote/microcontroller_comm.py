@@ -12,7 +12,7 @@ SERVO_COMMAND_PREFIX = "servo_angle_"
 # Known responses
 SUCCESS_MESSAGE = "ok"
 REBOOT_MESSAGE = "reboot"
-BRIGHTNESS_PREFIX = "light: "
+BRIGHTNESS_PREFIX = "bright: "
 
 
 class MicrocontrollerComm(Thread):
@@ -135,10 +135,8 @@ class MicrocontrollerComm(Thread):
             elif response.startswith(BRIGHTNESS_PREFIX):
                 try:
                     self.room_brightness = int(response[len(BRIGHTNESS_PREFIX):])
-                except TypeError:
-                    pass
-                except ValueError:
-                    pass
+                except Exception as e:
+                    self.__logger.e('Exception parsing brightness: %s' % e)
         return False
 
     def run(self):

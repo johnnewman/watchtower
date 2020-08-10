@@ -95,9 +95,10 @@ class RunLoop(Thread):
         """Briefly waits on the camera and updates the annotation on the feed."""
 
         date_string = dt.datetime.now().strftime(self.__video_date_format)
-        self.camera.annotate_text = '{} {}'.format(self.camera.name, date_string)
+        text = '{} {}'.format(self.camera.name, date_string)
         if self.__micro_comm is not None:
-            self.camera.annotate_text = self.camera.annotate_text + ' ' + str(self.__micro_comm.room_brightness)
+            text = text + ' Brightness: ' + str(self.__micro_comm.room_brightness)
+        self.camera.annotate_text = text
         self.camera.wait_recording(WAIT_TIME)
 
     def save_stream(self, stream, path, debug_name, stop_when_empty=False):
