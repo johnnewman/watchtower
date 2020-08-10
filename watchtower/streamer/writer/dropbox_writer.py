@@ -3,6 +3,7 @@ import dropbox
 import logging
 import os
 import queue
+import sys
 import time
 from . import byte_writer
 from collections import namedtuple
@@ -18,12 +19,14 @@ NumberedFile = namedtuple('NumberedFile', 'number bytes')
 class DropboxWriter(byte_writer.ByteWriter):
     """
     A class that accumulates bytes to upload to Dropbox and uploads chunks sized
-    sized according to the ``file_chunk_size``. Creates additional files as the
-    chunk size is reached. If the path to a public key file is supplied, the
-    bytes will be encrypted and the random symmetric encryption key used to
-    encrypt the data will itself be encrypted and prepended to the front of the
-    file. Fernet encryption is used. The key itself is encrypted using the
-    public key.
+    according to the ``file_chunk_size``. If the provided size is <= 0, the file
+    is not broken apart and only one upload thread is used. Otherwise, this
+    class creates additional files as the chunk size is reached.
+    
+    If the path to a public key file is supplied, the bytes will be encrypted
+    and the random symmetric encryption key used to encrypt the data will
+    itself be encrypted and prepended to the front of the file. Fernet
+    encryption is used. The key itself is encrypted using the public key.
     """
 
     def __init__(self, full_path, dropbox_token, file_chunk_size=3, public_pem_path=None):
@@ -36,7 +39,11 @@ class DropboxWriter(byte_writer.ByteWriter):
         encryption key.
         """
         super(DropboxWriter, self).__init__(full_path)
-        self.__file_chunk_size = file_chunk_size
+        if file_chunk_size <= 0:
+            self.__file_chunk_size = sys.maxsize
+        else:
+            self.__file_chunk_size = file_chunk_size
+        
         self.__file_count = 0
         self.__byte_pool = ''.encode()
 
@@ -51,7 +58,8 @@ class DropboxWriter(byte_writer.ByteWriter):
 
         path, extension = os.path.splitext(full_path)
         self.__uploader_threads = []
-        for i in range(THREAD_COUNT):
+        thread_count = THREAD_COUNT if file_chunk_size > 0 else 1
+        for i in range(thread_count):
             uploader = DropboxFileUploader(dbx, path, extension, public_key, i)
             self.__uploader_threads.append(uploader)
             uploader.start()
