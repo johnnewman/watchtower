@@ -107,42 +107,43 @@ class RunLoop(Thread):
 
         stream_start_time = max(0, int(time.time() - self.start_time - self.__padding))
 
-        def create_cam_stream(_debug_name, byte_writer):
+        def create_cam_stream(byte_writers):
             return streamer.VideoStreamSaver(stream=stream,
-                                             byte_writer=byte_writer,
-                                             name=_debug_name,
+                                             byte_writers=byte_writers,
+                                             name=debug_name,
                                              start_time=stream_start_time,
                                              stop_when_empty=stop_when_empty)
 
         # Used for BytesIO of the jpeg frame.
-        def create_stream(_debug_name, byte_writer):
+        def create_stream(byte_writers):
             return streamer.StreamSaver(stream=stream,
-                                        byte_writer=byte_writer,
-                                        name=_debug_name,
+                                        byte_writers=byte_writers,
+                                        name=debug_name,
                                         stop_when_empty=stop_when_empty)
 
-        def create_dropbox_writer(_path, _pem_path=None):
+        def create_dropbox_writer(_path, _pem_path=None, _file_chunk_size=-1):
             return dropbox_writer.DropboxWriter(full_path=_path,
                                                 dropbox_token=self.__dropbox_config['api_token'],
-                                                file_chunk_size=self.__dropbox_config['file_chunk_mb'] * 1024 * 1024,
+                                                file_chunk_size=_file_chunk_size,
                                                 public_pem_path=_pem_path)
 
         streamers = []
         disk_path = os.path.join(self.__instance_path, 'recordings', path)
+        writers = [disk_writer.DiskWriter(disk_path)]
         if isinstance(stream, picamera.PiCameraCircularIO): # Video
-            streamers.append(create_cam_stream(debug_name+'.loc', disk_writer.DiskWriter(disk_path)))
             if len(self.__dropbox_config) != 0:
                 key_path = None
                 if 'public_key_path' in self.__dropbox_config:
                     key_path = self.__dropbox_config['public_key_path']
-                streamers.append(create_cam_stream(debug_name+'.dbx',
-                                                create_dropbox_writer('/'+os.path.join(self.camera.name, path),
-                                                                      key_path)))
+                
+                writers.append(create_dropbox_writer('/'+os.path.join(self.camera.name, path),
+                                                     _pem_path=key_path,
+                                                     _file_chunk_size=self.__dropbox_config['file_chunk_mb'] * 1024 * 1024))
+            streamers.append(create_cam_stream(writers))
         else: # JPEG
-            streamers.append(create_stream(debug_name+'.loc', disk_writer.DiskWriter(disk_path)))
             if len(self.__dropbox_config) != 0:
-                stream = io.BytesIO(stream.getvalue())  # Create a new stream for Dropbox.
-                streamers.append(create_stream(debug_name+'.dbx', create_dropbox_writer('/'+os.path.join(self.camera.name, path))))
+                writers.append(create_dropbox_writer('/'+os.path.join(self.camera.name, path)))
+            streamers.append(create_stream(writers))
 
         list(map(lambda x: x.start(), streamers))
         return streamers

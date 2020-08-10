@@ -11,9 +11,9 @@ class MJPEGStreamer(StreamSaver):
     A streamer that captures individual JPEG frames from the camera.
     """
 
-    def __init__(self, camera, servo, byte_writer, name, rate=1):
+    def __init__(self, camera, servo, byte_writers, name, rate=1):
         super(MJPEGStreamer, self).__init__(stream=io.BytesIO(),
-                                            byte_writer=byte_writer,
+                                            byte_writers=byte_writers,
                                             name=name,
                                             stop_when_empty=False)
         self.__camera = camera

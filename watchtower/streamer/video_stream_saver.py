@@ -1,3 +1,4 @@
+import io
 import time
 from .stream_saver import StreamSaver
 
@@ -9,8 +10,8 @@ class VideoStreamSaver(StreamSaver):
     stream based on frame timestamps.
     """
 
-    def __init__(self, stream, byte_writer, name, start_time, stop_when_empty=False):
-        super(VideoStreamSaver, self).__init__(stream, byte_writer, name, stop_when_empty)
+    def __init__(self, stream, byte_writers, name, start_time, stop_when_empty=False):
+        super(VideoStreamSaver, self).__init__(stream, byte_writers, name, stop_when_empty)
         self.__start_time = start_time
         self.__last_streamed_frame = None
 
