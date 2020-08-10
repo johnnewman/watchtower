@@ -4,8 +4,8 @@
     "VIDEO_FRAMERATE": 30,
     "VIDEO_ROTATION": 0,
     "VIDEO_SIZE": [
-        1280,
-        720
+        1640,
+	    1232
     ],
     "VIDEO_DATE_FORMAT": "%Y-%m-%d %H:%M:%S",
 
@@ -22,9 +22,9 @@
     "DROPBOX_PUBLIC_KEY_PATH": "/etc/watchtower/certs/dropbox.crt",
 
     "MICRO_ENABLED": false,
-    "MICRO_BAUDRATE": 9600,
+    "MICRO_BAUDRATE": 19200,
     "MICRO_PORT": "/dev/serial0",
     "MICRO_TRANSMISSION_FREQ": 2,
-    "MICRO_SERVO_ANGLE_ON": 40,
-    "MICRO_SERVO_ANGLE_OFF": 90
+    "MICRO_SERVO_ANGLE_ON": 105,
+    "MICRO_SERVO_ANGLE_OFF": 5
 }
