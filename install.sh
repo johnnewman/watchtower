@@ -21,7 +21,7 @@ set -e
 
 WATCHTOWER_LOG_PATH="/var/log/watchtower"
 WATCHTOWER_PATH=`dirname "$(readlink -f "$0")"`
-ICEBOX_PATH ="$WATCHTOWER_PATH/icebox"
+ICEBOX_PATH="$WATCHTOWER_PATH/icebox"
 
 sudo apt update
 sudo apt upgrade -y
@@ -75,8 +75,8 @@ echo "   NOTE: This service has not been started. More configuration is needed."
 
 # Install nginx configuration for uWSGI and Watchtower
 sudo mkdir -p /etc/nginx/certs
-sudo cp $WATCHTOWER_PATH/ancillary/nginx/watchtower /etc/nginx/sites-available/
-sudo ln -s /etc/nginx/sites-available/watchtower /etc/nginx/sites-enabled/
+sudo cp $WATCHTOWER_PATH/ancillary/nginx/app_gateway /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/app_gateway /etc/nginx/sites-enabled/
 
 echo -e "\n\nInstallation finished! The camera is configured to record to disk at $WATCHTOWER_PATH/instance/recordings.\n\
 Final steps to take: \n\
