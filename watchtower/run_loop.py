@@ -103,48 +103,47 @@ class RunLoop(Thread):
         self.camera.wait_recording(WAIT_TIME)
 
     def save_stream(self, stream, path, debug_name, stop_when_empty=False):
-        """Saves the ``stream`` to disk and optionally Dropbox, if Dropbox
+        """Saves the ``stream`` to disk and optionally to Dropbox, if Dropbox
         configurations were supplied in the config file."""
+                                                
+        streamers = []
+        disk_path = os.path.join(self.__instance_path, 'recordings', path)
+        writers = [disk_writer.DiskWriter(disk_path)] # There will always be a disk writer.
 
-        stream_start_time = max(0, int(time.time() - self.start_time - self.__padding))
+        def create_dropbox_writer(_pem_path=None, _file_chunk_size=-1):
+            """
+            Initializes and returns a Dropbox writer. By default the files are
+            not encrypted and only 1 thread is used for uploading.
 
-        def create_cam_stream(byte_writers):
-            return streamer.VideoStreamSaver(stream=stream,
-                                             byte_writers=byte_writers,
-                                             name=debug_name,
-                                             start_time=stream_start_time,
-                                             stop_when_empty=stop_when_empty)
-
-        # Used for BytesIO of the jpeg frame.
-        def create_stream(byte_writers):
-            return streamer.StreamSaver(stream=stream,
-                                        byte_writers=byte_writers,
-                                        name=debug_name,
-                                        stop_when_empty=stop_when_empty)
-
-        def create_dropbox_writer(_path, _pem_path=None, _file_chunk_size=-1):
-            return dropbox_writer.DropboxWriter(full_path=_path,
+            :param _pem_path: Path to a public key used for encrypting the
+            uploaded data. A None value will mean data is not encrypted.
+            :param _file_chunk_size: the file size used to split up the stream.
+            """
+            return dropbox_writer.DropboxWriter(full_path='/'+os.path.join(self.camera.name, path),
                                                 dropbox_token=self.__dropbox_config['api_token'],
                                                 file_chunk_size=_file_chunk_size,
                                                 public_pem_path=_pem_path)
 
-        streamers = []
-        disk_path = os.path.join(self.__instance_path, 'recordings', path)
-        writers = [disk_writer.DiskWriter(disk_path)]
         if isinstance(stream, picamera.PiCameraCircularIO): # Video
             if len(self.__dropbox_config) != 0:
                 key_path = None
                 if 'public_key_path' in self.__dropbox_config:
                     key_path = self.__dropbox_config['public_key_path']
                 
-                writers.append(create_dropbox_writer('/'+os.path.join(self.camera.name, path),
-                                                     _pem_path=key_path,
+                writers.append(create_dropbox_writer(_pem_path=key_path,
                                                      _file_chunk_size=self.__dropbox_config['file_chunk_mb'] * 1024 * 1024))
-            streamers.append(create_cam_stream(writers))
-        else: # JPEG
+            streamers.append(streamer.VideoStreamSaver(stream=stream,
+                                                       byte_writers=writers,
+                                                       name=debug_name,
+                                                       start_time=max(0, int(time.time() - self.start_time - self.__padding)),
+                                                       stop_when_empty=stop_when_empty))
+        else: # JPG
             if len(self.__dropbox_config) != 0:
-                writers.append(create_dropbox_writer('/'+os.path.join(self.camera.name, path)))
-            streamers.append(create_stream(writers))
+                writers.append(create_dropbox_writer())
+            streamers.append(streamer.StreamSaver(stream=stream,
+                                                  byte_writers=writers,
+                                                  name=debug_name,
+                                                  stop_when_empty=stop_when_empty))
 
         list(map(lambda x: x.start(), streamers))
         return streamers
@@ -155,7 +154,6 @@ class RunLoop(Thread):
         logger = logging.getLogger(__name__)
         logger.info('Starting main loop.')
         camera.start_recording(self.__stream, format='h264')
-
         self.__start_time = time.time()
 
         try:
@@ -211,7 +209,7 @@ class RunLoop(Thread):
                     while camera.should_monitor and \
                             time.time() - last_motion_trigger <= self.__padding and \
                             time.time() - event_time <= self.__max_event_time:
-                          
+                        
                         more_motion, _ = self.__motion_detector.detect()
                         if more_motion:
                             logger.debug('More motion detected!')
