@@ -8,3 +8,4 @@ certs/*
 *.h264
 instance/*
 .vscode/*
+*.bak
