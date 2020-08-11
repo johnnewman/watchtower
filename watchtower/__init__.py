@@ -75,9 +75,9 @@ def create_app(test_config=None):
         fps = 0.5
         writer = http_writer.HTTPMultipartWriter()
         streamer = MJPEGStreamer(main.camera,
-                                 servo=main.servo,
                                  byte_writers=[writer],
                                  name='MJPEG',
+                                 servo=main.servo,
                                  rate=fps)
         streamer.start()
 

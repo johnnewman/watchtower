@@ -35,6 +35,7 @@ class RunLoop(Thread):
             self.__micro_comm = self.setup_microcontroller_comm(app)
         else:
             self.__micro_comm = None
+            self.servo = None
 
         self.camera = self.setup_camera(app)
         
