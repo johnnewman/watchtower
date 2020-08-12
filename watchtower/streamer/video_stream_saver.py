@@ -65,7 +65,7 @@ class VideoStreamSaver(StreamSaver):
                 # To avoid blocking, only do this when the stream is small.
                 start_time = time.time()
                 bytes_read, new_position = super(VideoStreamSaver, self).read(position, length)
-                self.logger.debug('Using built-in read() for length of %i bytes. Time: %.2f sec' % (length, time.time() - start_time))
+                self.logger.debug('Using read() for length of %i bytes. Time: %.2f sec' % (length, time.time() - start_time))
                 return bytes_read, new_position
             else:
                 # Creating a copy of the stream via getvalue() and then creating
@@ -75,7 +75,7 @@ class VideoStreamSaver(StreamSaver):
                 # will cause frames to drop.
                 start_time = time.time()
                 bytes_read = self.stream.getvalue()
-                self.logger.debug('Time to getvalue() of %i bytes. Time: %.2f sec' % (len(bytes_read), time.time() - start_time))
+                self.logger.debug('Using getvalue() for length of %i bytes. Time: %.2f sec' % (len(bytes_read), time.time() - start_time))
                 # At this point, let the stream unlock. Creating a sub array can
                 # take almost as long as the call to getvalue() if we're dealing
                 # with tens of megabytes.
