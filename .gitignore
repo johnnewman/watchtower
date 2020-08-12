@@ -5,6 +5,7 @@ venv3/*
 launch.json
 logs/*
 certs/*
-*.jpg
 *.h264
 instance/*
+.vscode/*
+*.bak

@@ -10,16 +10,17 @@ EMPTY_WAIT_TIME = 0.5  # Wait time for next read if no data found
 class StreamSaver(Thread):
     """
     A threaded class that loops over its stream in chunks and uploads read
-    bytes into its ``byte_writer``.
+    bytes into its ``byte_writer`` instances.
     """
 
-    def __init__(self, stream, byte_writer, name, stop_when_empty=False):
+    def __init__(self, stream, byte_writers, name, stop_when_empty=False):
         """Initializes the streamer.
 
         :param stream: must respond to ``read()`` and ``seek()``. If it is a
         ``PiCameraCircularIO`` type, the ``lock`` will be used to ensure the
         camera doesn't modify the stream while it is read.
-        :param byte_writer: should be a subclass of the ``ByteWriter`` class.
+        :param byte_writers: an array of instances that subclass the
+        ``ByteWriter`` class.
         :param name: should be unique for the steam. It is used for log
         statements.
         :param stop_when_empty: if True, the streamer will stop writing to the
@@ -28,7 +29,7 @@ class StreamSaver(Thread):
         """
         super(StreamSaver, self).__init__()
         self.stream = stream
-        self.__byte_writer = byte_writer
+        self.__byte_writers = byte_writers
         self.__lock = Lock()
         self.__stop_when_empty = stop_when_empty
         self.__stop = False
@@ -45,8 +46,8 @@ class StreamSaver(Thread):
     def stop(self):
         """
         Used to stop uploading. When set, the last array of bytes will be
-        sent to the ``byte_writer`` with the ``close`` flag.  Finally, the
-        thread will stop.
+        sent to the ``byte_writer`` instances with the ``close`` flag. 
+        Finally, the thread will stop.
         """
         self.__lock.acquire()
         self.__stop = True
@@ -77,7 +78,7 @@ class StreamSaver(Thread):
     def run(self):
         """
         Loops over the stream and calls ``read()`` to read bytes in chunks. All
-        bytes are sent to the ``byte_writer``.
+        bytes are sent to the ``byte_writer`` instances.
 
         Reading stops when either ``stop()`` is called or ``__stop_when_empty``
         is ``True`` and no bytes were read in the call to ``read()``.
@@ -90,7 +91,8 @@ class StreamSaver(Thread):
                 read_bytes, stream_pos = self.read(stream_pos)
                 total_bytes += len(read_bytes)
                 stopped = self.__should_stop() or (self.__stop_when_empty and len(read_bytes) == 0)
-                self.__byte_writer.append_bytes(read_bytes, stopped)
+                for writer in self.__byte_writers:
+                    writer.append_bytes(read_bytes, stopped)
                 self.logger.debug('Read %d bytes.' % len(read_bytes)) if len(read_bytes) > 0 else None
                 if len(read_bytes) == 0:
                     time.sleep(EMPTY_WAIT_TIME)  # Wait for more data
@@ -101,7 +103,8 @@ class StreamSaver(Thread):
         except Exception as e:
             self.logger.exception('An exception occurred: %s' % e)
             try:
-                self.__byte_writer.append_string('', close=True)  # Try to close if we have an exception
+                for writer in self.__byte_writers:
+                    writer.append_string('', close=True)  # Try to close if we have an exception
             except Exception as e2:
                 self.logger.exception('Attempted to close the writer. Received an exception: %s' % e2)
         finally:

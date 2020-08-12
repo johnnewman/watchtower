@@ -1,7 +1,7 @@
 import io
 import sys
 from .stream_saver import StreamSaver
-from .writer import socket_writer
+from ..remote.servo import Servo
 
 MJPEG_DOWNSCALE_FACTOR = 0.666
 
@@ -11,12 +11,13 @@ class MJPEGStreamer(StreamSaver):
     A streamer that captures individual JPEG frames from the camera.
     """
 
-    def __init__(self, camera, byte_writer, name, rate=1):
+    def __init__(self, camera, byte_writers, name, servo=None, rate=1):
         super(MJPEGStreamer, self).__init__(stream=io.BytesIO(),
-                                            byte_writer=byte_writer,
+                                            byte_writers=byte_writers,
                                             name=name,
                                             stop_when_empty=False)
         self.__camera = camera
+        self.__servo = servo
         self.read_wait_time = rate
 
     def read(self, position, length=None):
@@ -37,7 +38,8 @@ class MJPEGStreamer(StreamSaver):
         """
         Overridden to flip the servo back off if the camera is not running.
         """
+        
         super(MJPEGStreamer, self).ended()
-        if not self.__camera.should_monitor:
-            for servo in self.__camera.servos:
-                socket_writer.ServoSocketWriter(servo.pin).send_angle(servo.angle_off)
+        if not self.__camera.should_monitor and \
+                self.__servo is not None:
+            self.__servo.disable()
