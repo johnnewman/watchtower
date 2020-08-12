@@ -13,8 +13,7 @@ The central package that runs on each Raspberry Pi is named [watchtower](watchto
 
 Watchtower was designed to take advantage of the capabilities of the Pi NoIR camera. An optional program for a microcontroller is included to read analog room brightness, control infrared LED intensity for night vision, move an optional servo, and communicate with Watchtower over the Raspberry Pi's GPIO ports.
 
-A sample case model for the system is located in [ancillary/case/](ancillary/case/). This case houses the Raspberry Pi, camera, microcontroller, servo, array of IR LEDs, photoresistor, status LED, and cooling fan. A Fritzing prototype of the case's internal hardware is included in [ancillary/hardware/](ancillary/hardware).
-
+A 3D case for the system is located in [ancillary/case/](ancillary/case/). This case houses the Raspberry Pi, camera, microcontroller, servo, array of IR LEDs, photoresistor, status LED, and cooling fan. A Fritzing diagram of the case's internal hardware is included in [ancillary/hardware/](ancillary/hardware).
 <p align="center">
     <img src="ancillary/case/v2/v2_xray.png" width="350" />
 </p>
@@ -39,7 +38,7 @@ The rest of this readme breaks down each Watchtower component and describes its 
  1. [API endpoints](#1-api-endpoints)
  2. [Motion detection](#2-motion-detection)
  3. [Optional Dropbox file upload](#3-optional-dropbox-file-upload)
- 4. [Optional microcontroller](#4-optional-microcontroller,-infrared,-and-servos)
+ 4. [Optional microcontroller](#4-optional-microcontroller-infrared-and-servos)
  
  ---
 
@@ -68,9 +67,9 @@ All motion properties are prefixed with `MOTION_` in the config file:
 
 ### 3. Optional Dropbox File Upload
 
-Video files are sent to Dropbox in small chunks as soon as motion is detected. Splitting the recording into small files keeps network failures from adversely affecting the quantity of saved footage. Because the bytes of the stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a shell script located at [ancillary/mp4_wrapper.sh](ancillary/mp4_wrapper.sh) will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/). MP4Box only needs to be installed on the machine that opens recordings from Dropbox; no need to install it alongside any Watchtower instance.
+Video files are sent to Dropbox in small chunks as soon as motion is detected. Because the bytes of the stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a shell script located at [ancillary/mp4_wrapper.sh](ancillary/mp4_wrapper.sh) will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/). MP4Box only needs to be installed on the machine that opens recordings from Dropbox; no need to install it alongside any Watchtower instance.
 
-The video files uploaded to Dropbox can be encrypted using symmetric key encryption. All you need to do is supply a path in the config file to a public asymmetric encryption key in PEM format. When this path is supplied, a symmetric [Fernet](https://cryptography.io/en/latest/fernet/) key is generated for each file uploaded and will be used to encrypt the contents of the file. This key is then itself encrypted using the supplied public key. This encrypted key is base64 encoded and padded onto the beginning of the Dropbox file. The resulting file data has the format: `{key_length_int} {encoded_and_encrypted_key}{encrypted_data}`. [mp4_wrapper.sh](ancillary/mp4_wrapper.sh) can accept a path to the asymmetric private key and will automatically decrypt the files before stitching them together and converting the final video to an mp4.
+The video files uploaded to Dropbox can be encrypted using symmetric key encryption. All you need to do is supply a path in the config file to a public asymmetric encryption key in PEM format. When this path is supplied, a symmetric [Fernet](https://cryptography.io/en/latest/fernet/) key is generated for each file uploaded. This new key will be used to encrypt the contents of its file and then it will itself be encrypted using the supplied public key. This encrypted key is base64 encoded and padded onto the beginning of the Dropbox file. The resulting file data has the format: `{key_length_int} {encoded_and_encrypted_key}{encrypted_data}`. [mp4_wrapper.sh](ancillary/mp4_wrapper.sh) can accept a path to the asymmetric private key and will automatically decrypt the files before stitching them together and converting the final video to an mp4.
 
 <details>
   <summary><b>Configuration</b></summary>
@@ -83,11 +82,11 @@ All Dropbox properties are prefixed with `DROPBOX_` in the config file. Dropbox 
 
 ### 4. Optional Microcontroller, Infrared, and Servos
 
-The project can be optionally configured to work with a microcontroller to enable and disable infrared lighting for night vision. The controller also reads the analog room brightness and uses PWM to fine-tune the infrared brightness. In the event that the camera should rotate or be covered when not in use, this controller can also move an attached servo. A schematic for the microcontroller circuit [is included](/ancillary/hardware).
+The project can be optionally configured to work with a microcontroller to enable and disable infrared lighting for night vision. The controller also reads the analog room brightness and uses PWM to fine-tune the infrared brightness. In the event that the camera should rotate or be covered when not in use, this controller can also move an attached servo. A diagram for the microcontroller circuit [is included](/ancillary/hardware).
 
 I used an AVR ATTiny84 for its small size and low price. This microcontroller has more than enough IO ports for Watchtower and it comes with a second internal timer that can be dedicated for servo usage.
 
-The ATTiny84 program located in [ancillary/hardware/controller/controller.ino](ancillary/hardware/controller/controller.ino) is configured to communicate serially with Watchtower. This program along with the [TinyServo](ancillary/hardware/controller/TinyServo.h) library consumes about 3.6KB of program space if link time optimization (LTO) is used, and about 4.5KB without LTO. Either approach works fine with the ATTiny84's 8KB of program space. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) is a great project that you can use with the Arduino IDE to program the ATTiny microcontroller and enable LTO.
+The ATTiny84 program located in [ancillary/hardware/controller/controller.ino](ancillary/hardware/controller/controller.ino) is configured to communicate serially with Watchtower. This program along with the [TinyServo](ancillary/hardware/controller/TinyServo.h) library consumes about 3.6KB of program space if link time optimization (LTO) is used, and about 4.5KB without LTO. Either approach works fine with the ATTiny84's 8KB of program space. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) is a great project that you can use with the Arduino IDE to program the ATTiny microcontroller.
 
 The serial connection inside Watchtower is operated by [watchtower/remote/microcontroller_comm.py](watchtower/remote/microcontroller_comm.py). This module is also configured to read the room brightness value from the serial connection, which will be displayed in the camera's annotation area along with the camera name and the current time.
 
