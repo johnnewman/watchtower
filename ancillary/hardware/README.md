@@ -1,4 +1,4 @@
-# Protoboard
+# Hardware
 
 Watchtower uses two Adafruit prototyping boards and one AVR microcontroller:
 - Perma-Proto HAT
