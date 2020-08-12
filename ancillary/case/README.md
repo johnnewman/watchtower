@@ -24,7 +24,7 @@ The system is self-contained except for a space for the power cable. A Raspberry
 
 ### Version 1:
 
-This is an obsolete design that's much larger with sharper corners. It doesn't have any protection for the camera if pressure happens to be applied to the top of the case. This can cause the camera to rotate into the case or possibly break from the servo.
+This is an obsolete design that's much larger. It doesn't have any protection for the camera if pressure happens to be applied to the top of the case. This can cause the camera to rotate into the case or possibly break from the servo.
 
 <img src="./v1/v1_top_front.png" width="250" /> <img src="./v1/v1_bottom_back.png" width="250" />
 <img src="./v1/v1_exploded.png" width="300" />
