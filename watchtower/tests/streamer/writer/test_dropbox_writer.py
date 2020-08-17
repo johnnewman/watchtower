@@ -126,7 +126,7 @@ def encrypted_writer(tmp_path):
         private_out.write(private_pem)
     public_key = private_key.public_key()
     public_pem = public_key.public_bytes(encoding=serialization.Encoding.PEM,
-                                        format=serialization.PublicFormat.SubjectPublicKeyInfo)
+                                         format=serialization.PublicFormat.SubjectPublicKeyInfo)
     with open(os.path.join(tmp_path, 'public.pem'), 'wb') as public_out:
         public_out.write(public_pem)
     
