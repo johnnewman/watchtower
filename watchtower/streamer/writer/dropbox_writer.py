@@ -14,7 +14,9 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from threading import Thread, Lock
 
 THREAD_COUNT = 2
+DEFAULT_FILE_CHUNK_SIZE = 3*1024*1024
 NumberedFile = namedtuple('NumberedFile', 'number bytes')
+
 
 class DropboxWriter(byte_writer.ByteWriter):
     """
@@ -29,7 +31,7 @@ class DropboxWriter(byte_writer.ByteWriter):
     encryption is used. The key itself is encrypted using the public key.
     """
 
-    def __init__(self, full_path, dropbox_token, file_chunk_size=3, public_pem_path=None):
+    def __init__(self, full_path, dropbox_token, file_chunk_size=DEFAULT_FILE_CHUNK_SIZE, public_pem_path=None, test_dropbox_uploader=None):
         """
         :param full_path: The full path of the file.
         :param dropbox_token: Token that will be supplied to Dropbox.
@@ -37,6 +39,9 @@ class DropboxWriter(byte_writer.ByteWriter):
         will be created. Actual size will be larger if encryption is used.
         :param public_pem_path: A path to the public key to encrypt each file's
         encryption key.
+        :param test_dropbox_uploader: An object that will be used in place of
+        the normal Dropbox uploader. Useful for testing. Object must implement
+        the files_upload(bytes, path) method.
         """
         super(DropboxWriter, self).__init__(full_path)
         if file_chunk_size <= 0:
@@ -47,7 +52,11 @@ class DropboxWriter(byte_writer.ByteWriter):
         self.__file_count = 0
         self.__byte_pool = ''.encode()
 
-        dbx = dropbox.Dropbox(dropbox_token)
+        dbx = None
+        if test_dropbox_uploader is None:
+            dbx = dropbox.Dropbox(dropbox_token)
+        else:
+            dbx = test_dropbox_uploader
         public_key = None
         if public_pem_path:
             with open(public_pem_path, "rb") as public_key_file:
@@ -89,6 +98,12 @@ class DropboxWriter(byte_writer.ByteWriter):
             self.__distribute_file_bytes(self.__byte_pool)
             # Stop all threads.
             list(map(lambda x: x.stop(), self.__uploader_threads))
+
+    def is_finished_writing(self):
+        for uploader_thread in self.__uploader_threads:
+            if uploader_thread.is_alive():
+                return False
+        return True
     
     def __distribute_file_bytes(self, bts):
         """
