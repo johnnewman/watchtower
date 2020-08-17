@@ -33,7 +33,7 @@ with open(supplied_args['private_pem'], 'rb') as key_file:
                                                      backend=default_backend())
     with open(supplied_args['file_path'], 'rb') as encrypted_file:
         file_string = encrypted_file.read()
-        separator = file_string.find(' ')
+        separator = file_string.find(b' ')
         key_size = int(file_string[:separator])
         encrypted_key = base64.b64decode(file_string[separator+1:key_size+separator+1])
         decrypted_key = private_key.decrypt(encrypted_key,
