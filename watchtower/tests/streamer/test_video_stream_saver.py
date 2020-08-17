@@ -28,12 +28,12 @@ def test_simulation(stream_saver):
         print(frame)
 
     assert(len(frames) == 6)
-    assert(frames[0].index == 0 and frames[0].position == 0 and frames[0].timestamp_sec() == simulated_time-2)
-    assert(frames[1].index == 1 and frames[1].position == 170 and frames[1].timestamp_sec() == simulated_time-1)
-    assert(frames[2].index == 2 and frames[2].position == 340 and frames[2].timestamp_sec() == simulated_time)
-    assert(frames[3].index == 3 and frames[3].position == 510 and frames[3].timestamp_sec() == simulated_time+1)
-    assert(frames[4].index == 4 and frames[4].position == 680 and frames[4].timestamp_sec() == simulated_time+2)
-    assert(frames[5].index == 5 and frames[5].position == 850 and frames[5].timestamp_sec() == simulated_time+3)
+    assert(frames[0].index == 0 and frames[0].position == 0 and frames[0].timestamp_sec() == int(simulated_time)-2)
+    assert(frames[1].index == 1 and frames[1].position == 170 and frames[1].timestamp_sec() == int(simulated_time)-1)
+    assert(frames[2].index == 2 and frames[2].position == 340 and frames[2].timestamp_sec() == int(simulated_time))
+    assert(frames[3].index == 3 and frames[3].position == 510 and frames[3].timestamp_sec() == int(simulated_time)+1)
+    assert(frames[4].index == 4 and frames[4].position == 680 and frames[4].timestamp_sec() == int(simulated_time)+2)
+    assert(frames[5].index == 5 and frames[5].position == 850 and frames[5].timestamp_sec() == int(simulated_time)+3)
 
 def test_beginning_start_pos(stream_saver):
     """
@@ -165,7 +165,7 @@ class MockFrame:
         self.timestamp = timestamp
     
     def timestamp_sec(self):
-        return self.timestamp/1000000
+        return self.timestamp//1000000
 
     def __repr__(self):
         rep = ("MockFrame index %i; position %i; timestamp (sec) %i" % \
