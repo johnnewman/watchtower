@@ -1,15 +1,8 @@
 import math
 import os
 import pytest
-import sys
 import subprocess
 import time
-
-# Add the watchtower package to the path.
-watchtower_path = os.path.dirname(os.path.realpath(__file__))
-for i in range(3):
-    watchtower_path = os.path.split(watchtower_path)[0]
-sys.path.insert(0, watchtower_path)
 from watchtower.streamer.writer import dropbox_writer
 from watchtower.streamer.writer.disk_writer import DiskWriter
 
@@ -47,7 +40,7 @@ def test_dropbox_writer_integration(writer, random_data, tmp_path):
     # Assert the writer's input data is identical to the data output to disk.
     assert(written_data == random_data)
 
-def test_dropbox_writer_encrypted_integration(encrypted_writer, random_data, tmp_path):
+def test_dropbox_writer_encrypted_integration(encrypted_writer, random_data, tmp_path, installation_path):
     """
     Integration test to feed a DropboxWriter chunks of data, decrypt the
     output, and verify that the decrypted data is identical to the input data.
@@ -70,7 +63,6 @@ def test_dropbox_writer_encrypted_integration(encrypted_writer, random_data, tmp
         time.sleep(0.05)
 
     # The installation path is one directory up from the package path.
-    installation_path = os.path.split(watchtower_path)[0]
     private_key_path = os.path.join(tmp_path, 'private.pem')
     python_exec_path = os.path.join(installation_path, 'venv', 'bin', 'python')
     decrypt_script_path = os.path.join(installation_path, 'ancillary', 'decryption', 'decrypt.py')
@@ -100,10 +92,6 @@ def test_dropbox_writer_encrypted_integration(encrypted_writer, random_data, tmp
     assert(written_data == random_data)
 
 # ---- Fixtures
-
-@pytest.fixture
-def random_data():
-    return os.urandom(1024*1024*10) # 10 megabytes
 
 @pytest.fixture
 def writer(tmp_path):

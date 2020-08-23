@@ -60,7 +60,7 @@ Motion is detected using background subtraction in [watchtower/motion/motion_det
 All motion properties are prefixed with `MOTION_` in the config file:
 - `MAX_EVENT_TIME` is the maximum number of seconds for a single recording before a new base frame is selected. This is a failsafe to avoid infinitely recording in the event that the scene is permanently altered.
 - `MIN_TRIGGER_AREA` the minimum percentage (represented as a float between 0 and 1) of the image that must be detected as motion before a motion event is triggered.
-- `MIN_PIXEL_DELTA_TRIGGER` the minimum delta value between the base frame and current frame that marks the pixel as a motion area. This is on a scale of 0-255.
+- `SENSITIVITY` the sensitivty between 0 and 1 when detecting motion. This affects the comparision between the base frame and the current frame when detecting pixel color deltas that are over a threshold. The closer to 1, the more sensitive motion detection will be and the more motion events you will have.
 - `RECORDING_PADDING` the number of seconds to record before and after motion occurs.
 </details>
 

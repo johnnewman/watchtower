@@ -41,10 +41,10 @@ class RunLoop(Thread):
         
         motion_config = app.config.get_namespace('MOTION_')
         area = motion_config['min_trigger_area']
-        delta = motion_config['pixel_delta_trigger']
+        sensitivity = motion_config['sensitivity']
         self.__padding = motion_config['recording_padding']
         self.__max_event_time = motion_config['max_event_time']
-        self.__motion_detector = MotionDetector(self.camera, delta, area)
+        self.__motion_detector = MotionDetector(self.camera, sensitivity, area)
         self.__stream = picamera.PiCameraCircularIO(self.camera, seconds=(self.__padding))
 
         self.__start_time = None

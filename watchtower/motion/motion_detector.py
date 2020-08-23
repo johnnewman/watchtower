@@ -9,6 +9,7 @@ BLUR_SIZE = (21, 21)
 DOWNSCALE_FACTOR = 0.25 # 25 percent of the normal resolution.
 MOTION_COLOR = (0, 0, 255)
 MOTION_BORDER = 2
+MAX_THRESHOLD = 255
 
 
 class MotionDetector:
@@ -20,20 +21,21 @@ class MotionDetector:
     https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/
     """
 
-    def __init__(self, camera, min_delta, min_area_perc):
+    def __init__(self, camera, sensitivity, min_area_perc):
         """
         Initializes the motion detector, but does not set the base frame.
 
         :param camera: The ``PiCamera`` instance setup for video recording.
-        :param min_delta: The minimum difference in grayscale values from the
-        reference frame and the current frame that will be detected as a motion
-        pixel.
+        :param sensitivity: The sensitivity from 0 to 1. This affects the
+        grayscale threshold calculation when determining the minimum difference
+        between the reference frame and the current frame that will be detected
+        as a motion pixel.
         :param min_area_perc: The percent of the total video resolution that
         must be detected as changed for a motion event to trigger.
         """
         self.__camera = camera
-        self.min_delta = min_delta
-        self.min_area = camera.resolution[0] * camera.resolution[1] * min_area_perc * DOWNSCALE_FACTOR
+        self.min_delta = MAX_THRESHOLD - (sensitivity * MAX_THRESHOLD)
+        self.min_area = camera.resolution[0] * camera.resolution[1] * (DOWNSCALE_FACTOR ** 2) * min_area_perc
         self.__base_frame = None
         self.__base_frame_date = dt.datetime.now()
 
@@ -79,7 +81,7 @@ class MotionDetector:
         frame_delta = cv2.absdiff(self.__base_frame, gray_frame)
 
         # Now filter the delta to only show high levels of change
-        threshold = cv2.threshold(frame_delta, self.min_delta, 255, cv2.THRESH_BINARY)[1]
+        threshold = cv2.threshold(frame_delta, self.min_delta, MAX_THRESHOLD, cv2.THRESH_BINARY)[1]
 
         # Dilate the white threshold areas to bubble them together
         dilated = cv2.dilate(threshold, None, iterations=2)
