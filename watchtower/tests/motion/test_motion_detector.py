@@ -10,7 +10,7 @@ TEST_RESOLUTION = (1640, 1232)
 def test_detect_area_within_threshold(detector, tmp_path):
     """
     Uses some sample images to ensure motion is detected when the triggered
-    area is within the threshold.
+    area is within the size and sensitivity threshold.
     """
 
     # Set up the base frame
@@ -47,6 +47,25 @@ def test_detect_area_too_small(detector):
     assert(motion == False)
     assert(frame_jpg is not None)
 
+def test_detect_low_sensitivity(detector, tmp_path):
+    """
+    Sets the sensitivity to a very low value that will not trigger motion using
+    the test images.
+    """
+
+    sensitivity = 0.1
+    detector.min_delta = motion_detector.MAX_THRESHOLD - (sensitivity * motion_detector.MAX_THRESHOLD)
+
+    # Set up the base frame
+    motion, frame_jpg = detector.detect()
+    assert(motion == False)
+    assert(frame_jpg is None)
+
+    # Check for motion on the next frame and ensure nothing was detected.
+    motion, frame_jpg = detector.detect() 
+    assert(motion == False)
+    assert(frame_jpg is not None)
+
 
 # ---- Fixtures
 
@@ -55,7 +74,7 @@ def detector(test_data_path):
     base_image = cv2.imread(os.path.join(test_data_path, 'test_scene.jpg'))
     motion_image = cv2.imread(os.path.join(test_data_path, 'test_motion.jpg'))
     camera = MockCamera(TEST_RESOLUTION, base_image, motion_image)
-    return motion_detector.MotionDetector(camera, min_delta=50, min_area_perc=0.02)
+    return motion_detector.MotionDetector(camera, sensitivity=0.8, min_area_perc=0.02)
 
 # ---- Mock Objects
 
@@ -88,10 +107,8 @@ class MockCamera:
         new_resolution = picamera.array.raw_resolution(new_resolution)
 
         if not self.__base_image_output:
-            print("returning base image")
             output.write(cv2.resize(self.base_image, new_resolution))
             self.__base_image_output = True
         else:
-            print("returning motion image")
             output.write(cv2.resize(self.motion_image, new_resolution))
         output.flush()
