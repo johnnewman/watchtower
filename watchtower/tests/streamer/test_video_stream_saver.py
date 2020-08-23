@@ -2,17 +2,11 @@ import io
 import os
 import picamera
 import pytest
-import sys
 import time
 from threading import Lock
 
-# Add watchtower to the path, which is needed by the fixtures.
-watchtower_path = os.path.dirname(os.path.realpath(__file__))
-for i in range(3):
-    watchtower_path = os.path.split(watchtower_path)[0]
-sys.path.insert(0, watchtower_path)
-
 simulated_time = time.time()
+
 
 def test_simulation(stream_saver):
     """
