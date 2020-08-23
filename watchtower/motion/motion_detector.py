@@ -33,7 +33,7 @@ class MotionDetector:
         """
         self.__camera = camera
         self.min_delta = min_delta
-        self.min_area = camera.resolution[0] * camera.resolution[1] * min_area_perc * DOWNSCALE_FACTOR
+        self.min_area = camera.resolution[0] * camera.resolution[1] * (DOWNSCALE_FACTOR ** 2) * min_area_perc
         self.__base_frame = None
         self.__base_frame_date = dt.datetime.now()
 
