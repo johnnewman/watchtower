@@ -12,7 +12,6 @@ def test_detect_area_within_threshold(detector, tmp_path):
     Uses some sample images to ensure motion is detected when the triggered
     area is within the size and sensitivity threshold.
     """
-
     # Set up the base frame
     motion, frame_jpg = detector.detect()
     assert(motion == False)
@@ -32,7 +31,6 @@ def test_detect_area_too_small(detector):
     Sets the minimum area required for motion detection to a much larger value
     than the motion area in the test images. This should pass as no motion.
     """
-
     # Set the detector to trigger motion at 25% of the viewport
     min_area_perc = 0.25
     detector.min_area = TEST_RESOLUTION[0] * TEST_RESOLUTION[1] * (motion_detector.DOWNSCALE_FACTOR ** 2) * min_area_perc
@@ -52,7 +50,6 @@ def test_detect_low_sensitivity(detector, tmp_path):
     Sets the sensitivity to a very low value that will not trigger motion using
     the test images.
     """
-
     sensitivity = 0.1
     detector.min_delta = motion_detector.MAX_THRESHOLD - (sensitivity * motion_detector.MAX_THRESHOLD)
 
