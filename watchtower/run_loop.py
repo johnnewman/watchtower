@@ -86,7 +86,8 @@ class RunLoop(Thread):
     def setup_camera(self, app):
         camera = SafeCamera(name = app.config["CAMERA_NAME"],
                             resolution=tuple(app.config['VIDEO_SIZE']),
-                            framerate=app.config['VIDEO_FRAMERATE'])
+                            framerate=app.config['VIDEO_FRAMERATE'],
+                            config_path=os.path.join(app.instance_path, 'camera_config.json'))
         camera.rotation = app.config.get('VIDEO_ROTATION')
         camera.annotate_background = picamera.Color('black')
         camera.annotate_text_size = 14
