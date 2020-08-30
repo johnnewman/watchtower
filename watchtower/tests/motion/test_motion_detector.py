@@ -45,7 +45,7 @@ def test_detect_area_too_small(detector):
     assert(motion == False)
     assert(frame_jpg is not None)
 
-def test_detect_low_sensitivity(detector, tmp_path):
+def test_detect_low_sensitivity(detector):
     """
     Sets the sensitivity to a very low value that will not trigger motion using
     the test images.
