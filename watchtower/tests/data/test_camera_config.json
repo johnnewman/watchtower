@@ -1,0 +1,14 @@
+{
+  "awb_mode": "shade",
+  "brightness": 75,
+  "contrast": -60,
+  "exposure_compensation": 5,
+  "exposure_mode": "night",
+  "image_effect": "solarize",
+  "iso": 0,
+  "meter_mode": "average",
+  "rotation": 90,
+  "saturation": 50,
+  "sharpness": 25,
+  "video_denoise": true
+}
