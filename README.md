@@ -9,7 +9,7 @@
 
 Watchtower turns your Raspberry Pi into a DIY security camera. Put as many cameras as you want on your network and each instance will independently scan for motion and, when triggered, will save a recording to disk in the h264 format and upload an encrypted copy to Dropbox.
 
-The central package that runs on each Raspberry Pi is named [watchtower](watchtower). It's a Python 3 Flask app with API endpoints that allow you to start and stop monitoring, stream via MJPEG, manually record, and request the status of the Watchtower instance.
+The central package that runs on each Raspberry Pi is named [watchtower](watchtower). It's a Python 3 Flask app with API endpoints that allow you to start and stop monitoring, stream via MJPEG, manually record, request the status of the Watchtower instance, and tweak camera settings. See [api.md](./api.md) for API documentation.
 
 Watchtower was designed to take advantage of the capabilities of the Pi NoIR camera. An optional program for a microcontroller is included to read analog room brightness, control infrared LED intensity for night vision, move an optional servo, and communicate with Watchtower over the Raspberry Pi's GPIO ports.
 
@@ -35,7 +35,7 @@ Both the reverse proxy and the upstream app gateway configurations encrypt all t
 There is an included [install script](install.sh) for Raspbian Buster that will set up a simple Watchtower instance and place it behind a firewall. The final steps outside of the script's scope are creating your SSL certificates for the web API, configuring the public-facing nginx reverse proxy, and fine-tuning your Watchtower config file for Dropbox and microcontroller support.
 
 The rest of this readme breaks down each Watchtower component and describes its configuration located in [watchtower_config.json](watchtower/config/watchtower_config_example.json).
- 1. [API endpoints](#1-api-endpoints)
+ 1. [API endpoints](./api.md)
  2. [Motion detection](#2-motion-detection)
  3. [Optional Dropbox file upload](#3-optional-dropbox-file-upload)
  4. [Optional microcontroller](#4-optional-microcontroller-infrared-and-servos)
@@ -44,11 +44,7 @@ The rest of this readme breaks down each Watchtower component and describes its 
 
  ### 1. API Endpoints
 
-- `/status` will send back `{"monitoring":true/false}`. 
-- `/start` will start monitoring and return the same payload as `/status`.
-- `/stop` will stop monitoring and return the same payload as `/status`.
-- `/stream` will start an MJPEG stream.
-- `/record` will start recording if the camera is not already recording.
+ Moved to [api.md](./api.md).
 
 ### 2. Motion Detection
 
