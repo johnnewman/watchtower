@@ -78,8 +78,11 @@ class SafeCamera (picamera.PiCamera):
 
     def save_config(self):
         params = self.config_params()
-        with open(self.__config_path, 'w') as f:
-            f.write(json.dumps(params, indent=2, sort_keys=True))
+        try:
+            with open(self.__config_path, 'w') as f:
+                f.write(json.dumps(params, indent=2, sort_keys=True))
+        except Exception as e:
+                logging.getLogger(__name__).exception('Exception saving %s file: %s' % (self.__config_path, e))
 
     def update_config_params(self, params):
         self.should_monitor = False
