@@ -5,7 +5,7 @@ All supported API endpoints are defined in this module. One instance of the
 RunLoop thread is started when the app is initialized.
 """
 
-from flask import Flask, Response, stream_with_context
+from flask import Flask, Response, request, stream_with_context
 import json
 import logging.config
 import os
@@ -63,6 +63,13 @@ def create_app(test_config=None):
     def record():
         main.camera.should_record = True
         return '', 204
+
+    @app.route('/config', methods=['GET', 'POST'])
+    def config():
+        if request.method == 'POST':
+            return main.camera.update_config_params(request.json)
+        else:
+            return main.camera.config_params()
 
     @app.route('/stream')
     def stream():
