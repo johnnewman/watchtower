@@ -91,10 +91,6 @@ class SafeCamera (picamera.PiCamera):
             self.brightness = int(params['brightness'])
         if 'contrast' in params:
             self.contrast = int(params['contrast'])
-        if 'drc_strength' in params:
-            drc_strength = params['drc_strength']
-            if drc_strength in picamera.PiCamera.DRC_STRENGTHS:
-                self.drc_strength = drc_strength
         if 'exposure_compensation' in params:
             self.exposure_compensation = int(params['exposure_compensation'])
         if 'exposure_mode' in params:
@@ -124,22 +120,16 @@ class SafeCamera (picamera.PiCamera):
         self.should_monitor = True
         return self.config_params()
         
-
     def config_params(self):
         return dict(
-            analog_gain=float(self.analog_gain),
             awb_mode=self.awb_mode,
             brightness=self.brightness,
             contrast=self.contrast,
-            digital_gain=float(self.digital_gain),
-            drc_strength=self.drc_strength,
             exposure_compensation=self.exposure_compensation,
             exposure_mode=self.exposure_mode,
-            famerate=float(self.framerate),
             image_effect=self.image_effect,
             iso=self.iso,
             meter_mode=self.meter_mode,
-            resolution=self.resolution,
             rotation=self.rotation,
             saturation=self.saturation,
             sharpness=self.sharpness,
