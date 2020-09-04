@@ -13,13 +13,14 @@ from .motion.motion_detector import MotionDetector
 from .remote.servo import Servo
 from .streamer import video_stream_saver as streamer
 from .streamer.writer import dropbox_writer, disk_writer
+from .util.shutdown import TerminableThread
 
 WAIT_TIME = 0.1
 INITIALIZATION_TIME = 3  # In Seconds
 MOTION_INTERVAL_WHILE_SAVING = 1.0  # In Seconds
 
 
-class RunLoop(Thread):
+class RunLoop(TerminableThread):
     """
     This is the central threaded class for Watchtower that is started when the
     Flask app is initialized. It starts a continuous camera stream and waits
@@ -159,7 +160,7 @@ class RunLoop(Thread):
 
         try:
             was_not_running = True
-            while True:
+            while self.should_run:
                 if not camera.should_monitor:
                     if self.__micro_comm is not None:
                         self.__micro_comm.infrared_running = False
@@ -226,5 +227,10 @@ class RunLoop(Thread):
         except Exception as e:
             logger.exception('An exception occurred: %s' % e)
         finally:
-            camera.stop_recording()
-            camera.close()
+            try:
+                logger.info('Closing camera.')
+                camera.stop_recording()
+                camera.close()
+            except Exception as e:
+                pass
+        logger.debug('Thread stopped.')
