@@ -3,6 +3,7 @@ import serial
 from threading import Thread, Lock
 import time
 import queue
+from ..util.shutdown import TerminableThread
 
 # Transmitted commands
 INFRARED_ON_COMMAND = "ir_on"
@@ -15,7 +16,7 @@ REBOOT_MESSAGE = "reboot"
 BRIGHTNESS_PREFIX = "bright: "
 
 
-class MicrocontrollerComm(Thread):
+class MicrocontrollerComm(TerminableThread):
     """
     A thread class that can communicate with a microcontroller to move a servo
     and enable or disable infrared lighting. Serial commands are transmitted
@@ -144,7 +145,7 @@ class MicrocontrollerComm(Thread):
         Infinitely loops, checking for new commands to transmit over the serial
         connection while also processing any input data from the connection.
         """
-        while True:
+        while self.should_run:
             wait_for_success_message = False
 
             # Only transmit at the transmission interval so that the receiving
@@ -170,3 +171,6 @@ class MicrocontrollerComm(Thread):
                     self.__enqueue_command(command)
             
             time.sleep(1.0/self.__transmission_interval/2.0)
+        self.__write_command(INFRARED_OFF_COMMAND)
+        self.__controller.close()
+        self.__logger.debug('Thread stopped.')

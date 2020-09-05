@@ -1,4 +1,4 @@
-import cv2
+import cv2 as cv
 import datetime as dt
 import logging
 import time
@@ -78,26 +78,24 @@ class MotionDetector:
         gray_frame = self.post_process_image(bgr_frame.array)
 
         # Compute the difference of the base frame and the current
-        frame_delta = cv2.absdiff(self.__base_frame, gray_frame)
-
+        frame_delta = cv.absdiff(self.__base_frame, gray_frame)
+        
         # Now filter the delta to only show high levels of change
-        threshold = cv2.threshold(frame_delta, self.min_delta, MAX_THRESHOLD, cv2.THRESH_BINARY)[1]
-
+        threshold = cv.threshold(frame_delta, self.min_delta, MAX_THRESHOLD, cv.THRESH_BINARY)[1]
+        
         # Dilate the white threshold areas to bubble them together
-        dilated = cv2.dilate(threshold, None, iterations=2)
-
+        dilated = cv.dilate(threshold, None, iterations=2)
+        
         # Find and separate all the dilated areas
-        contours = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
-
-        # Filter out small contours.
-        contours = list(filter(lambda c: cv2.contourArea(c) >= self.min_area, contours))
+        contours, _ = cv.findContours(dilated, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+        contours = list(filter(lambda contour: cv.contourArea(contour) >= self.min_area, contours))
 
         # Draw the large countours onto the original image.
         for contour in contours:
-            (x, y, w, h) = cv2.boundingRect(contour)
-            cv2.rectangle(bgr_frame.array, (x, y), (x + w, y + h), color=MOTION_COLOR, thickness=MOTION_BORDER)
+            (x, y, w, h) = cv.boundingRect(contour)
+            cv.rectangle(bgr_frame.array, (x, y), (x + w, y + h), color=MOTION_COLOR, thickness=MOTION_BORDER)
         
-        jpg_bytes = cv2.imencode('.jpg', bgr_frame.array)[1]
+        jpg_bytes = cv.imencode('.jpg', bgr_frame.array)[1]
         logging.getLogger(__name__).debug('Time to process motion %.2f' % (time.time() - start_time))
         return len(contours) > 0, jpg_bytes
 
@@ -105,5 +103,5 @@ class MotionDetector:
         """
         Will gray and blur the bgr image data.
         """
-        gray_array = cv2.cvtColor(bgr_array, cv2.COLOR_BGR2GRAY)
-        return cv2.GaussianBlur(gray_array, BLUR_SIZE, 0)
+        gray_array = cv.cvtColor(bgr_array, cv.COLOR_BGR2GRAY)
+        return cv.GaussianBlur(gray_array, BLUR_SIZE, 0)

@@ -1,13 +1,15 @@
-from threading import Thread, Lock
+from ..util.shutdown import TerminableThread
+from threading import Lock
 import time
 import logging
+
 
 MAX_READ_BYTES = int(1024*1024*2.5)  # 2.5 MB
 READ_DATA_WAIT_TIME = 0.2  # Wait time for the next upload if data was read
 EMPTY_WAIT_TIME = 0.5  # Wait time for next read if no data found
 
 
-class StreamSaver(Thread):
+class StreamSaver(TerminableThread):
     """
     A threaded class that loops over its stream in chunks and uploads read
     bytes into its ``byte_writer`` instances.
@@ -37,7 +39,7 @@ class StreamSaver(Thread):
         self.logger = logging.getLogger(__name__ + '.' + self.name)
         self.read_wait_time = READ_DATA_WAIT_TIME
 
-    def __should_stop(self):
+    def __stop_called(self):
         self.__lock.acquire()
         should_stop = self.__stop
         self.__lock.release()
@@ -80,8 +82,12 @@ class StreamSaver(Thread):
         Loops over the stream and calls ``read()`` to read bytes in chunks. All
         bytes are sent to the ``byte_writer`` instances.
 
-        Reading stops when either ``stop()`` is called or ``__stop_when_empty``
-        is ``True`` and no bytes were read in the call to ``read()``.
+        Reading stops when one of these conditions is met:
+        1) ``stop()`` is called
+        2) ``__stop_when_empty`` is ``True`` and no bytes were read in the call
+           to ``read()``.
+        3) The program was terminated, flipping the ``should_run`` flag in
+           the TerminableThread superclass.
         """
         try:
             stream_pos = self.start_pos()
@@ -90,7 +96,11 @@ class StreamSaver(Thread):
             while not stopped:
                 read_bytes, stream_pos = self.read(stream_pos)
                 total_bytes += len(read_bytes)
-                stopped = self.__should_stop() or (self.__stop_when_empty and len(read_bytes) == 0)
+
+                stopped = self.__stop_called() or \
+                    (self.__stop_when_empty and len(read_bytes) == 0) or \
+                    not self.should_run
+
                 for writer in self.__byte_writers:
                     writer.append_bytes(read_bytes, stopped)
                 self.logger.debug('Read %d bytes.' % len(read_bytes)) if len(read_bytes) > 0 else None
@@ -99,6 +109,8 @@ class StreamSaver(Thread):
                 else:
                     time.sleep(self.read_wait_time)  # Avoid consuming the CPU
             self.logger.debug('Processed %d total bytes.' % total_bytes)
+            if not self.should_run:
+                self.logger.debug('Thread stopped.')
 
         except Exception as e:
             self.logger.exception('An exception occurred: %s' % e)
