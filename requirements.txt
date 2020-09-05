@@ -6,4 +6,4 @@ opencv-python-headless==4.3.0.38
 picamera==1.13
 pyserial==3.4
 pytest==6.0.1
-uWSGI==2.0.18
+uWSGI==2.0.19.1
