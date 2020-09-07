@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+    <title>{{ camera.name }}</title>
+  </head>
+  <body>
+
+    {% macro form_select(id, fields, selected_field) -%}
+      <select class="custom-select" id="{{ id }}">
+        {% for field in fields -%}
+          {%- if field == selected_field %}
+            <option value="{{ field }}" selected>{{ field.capitalize() }}</option>
+          {%- else %}
+            <option value="{{ field }}">{{ field.capitalize() }}</option>
+          {%- endif %}
+        {%- endfor %}
+      </select>
+    {%- endmacro %}
+
+    {% macro form_dropdown_row(id, label, fields, selected_field) -%}
+      <div class="form-group row">
+        <label for="{{ id }}" class="col-sm-4 col-form-label">{{ label }}</label>
+        <div class="col-sm-8">
+          {{ form_select(id=id, fields=fields, selected_field=selected_field) }}
+        </div>
+      </div>
+    {%- endmacro %}
+
+    {% macro form_number_row(id, label, value) -%}
+      <div class="form-group row">
+        <label for="{{ id }}" class="col-sm-4 col-form-label">{{ label }}</label>
+        <div class="col-sm-8">
+          <input type="number" class="form-control" id="{{ id }}" value="{{ value }}">
+        </div>
+      </div>
+    {%- endmacro %}
+
+    <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="static/icon.png" width="30" height="30" class="d-inline-block align-top" alt="" loading="lazy">
+            Watchtower - {{ camera.name }}
+        </a>
+    </nav>
+
+      <div class="row m-3">
+        <div class="col-2">
+          <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+            <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill" href="#home" role="tab" aria-controls="v-pills-home" aria-selected="true">Home</a>
+            <a class="nav-link" id="v-pills-stream-tab" data-toggle="pill" href="#stream" role="tab" aria-controls="v-pills-stream" aria-selected="false">Stream</a>
+            <a class="nav-link" id="v-pills-settings-tab" data-toggle="pill" href="#settings" role="tab" aria-controls="v-pills-settings" aria-selected="false">Settings</a>
+          </div>
+        </div>
+        <div class="col-9">
+          <div class="tab-content" id="v-pills-tabContent">
+
+            <!-- HOME -->
+            <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="v-pills-home-tab">
+
+              <div class="row">
+                <div class="col-4">
+                  <button type="button" id="start" class="btn btn-outline-primary btn-block">
+                    <span class="spinner-border spinner-border-sm" id="start-spinner" style="display:none" role="status" aria-hidden="true"></span>
+                    Start
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button type="button" id="stop" class="btn btn-outline-danger btn-block">
+                    <span class="spinner-border spinner-border-sm" id="stop-spinner" style="display:none" role="status" aria-hidden="true"></span>
+                    Stop
+                  </button>
+                </div>
+              </div>
+
+              <div class="row pl-3">
+                Status:&nbsp;
+                <span id="status">
+                  {% if camera.should_record %}
+                    running
+                  {% else %}
+                    stopped
+                  {% endif %}
+                </span>
+              </div>
+
+            </div>
+
+            <!-- STREAM -->
+            <div class="tab-pane fade" id="stream" role="tabpanel" aria-labelledby="v-pills-stream-tab">
+              <div class="row">
+              <img src="" id="mjpeg-stream" width="400">
+              </div>
+              <div class="row">
+                <div class="col-3">
+                  <button type="button" id="play-mjpeg" class="btn btn-outline-primary btn-block">Play</button>
+                </div>
+                <div class="col-3">
+                  <button type="button" id="pause-mjpeg" class="btn btn-outline-primary btn-block">Pause</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
+              
+              <form>
+                {{ form_number_row(id='brightness-field', label='Brightness', value=camera.brightness) }}
+                {{ form_number_row(id='contrast-field', label='Contrast', value=camera.contrast) }}
+                {{ form_dropdown_row(id='exposure-mode-field',
+                                     label='Exposure',
+                                     fields=config_params['exposure_modes'],
+                                     selected_field=camera.exposure_mode) }}
+                {{ form_number_row(id='exposure-compensation-field', label='Exposure compensation', value=camera.exposure_compensation) }}
+                {{ form_dropdown_row(id='image-effects-field',
+                                     label='Image effect',
+                                     fields=config_params['image_effects'],
+                                     selected_field=camera.image_effect) }}
+                {{ form_number_row(id='iso-field', label='ISO', value=camera.iso) }}
+                {{ form_dropdown_row(id='meter-modes-field',
+                                     label='Meter modes',
+                                     fields=config_params['meter_modes'],
+                                     selected_field=camera.meter_mode) }}
+                {{ form_dropdown_row(id='rotation-field',
+                                     label='Rotation',
+                                     fields=['0', '90', '180', '270'],
+                                     selected_field=camera.rotation|string) }}
+                {{ form_number_row(id='saturation-field', label='Saturation', value=camera.saturation) }}
+                {{ form_number_row(id='sharpness-field', label='Sharpness', value=camera.sharpness) }}
+                <div class="form-group row">
+                  <div class="col-sm-4">Video denoise</div>
+                  <div class="col-sm-8">
+                    <div class="form-check">
+                      <input class="form-check-input position-static" type="checkbox" id="denoise-field" value="denoise" aria-label="Video denoise">
+                    </div>
+                  </div>
+                </div>
+                {{ form_dropdown_row(id='awb-field',
+                                     label='White balance',
+                                     fields=config_params['awb_modes'],
+                                     selected_field=camera.awb_mode) }}
+                <div class="form-group row">
+                  <div class="col-sm-10">
+                    <button type="button" id="apply-settings" class="btn btn-primary">Apply</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Required for Bootstrap: jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+
+    <!-- Required for API calls -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> 
+
+<script>
+$(document).ready(function () {
+
+  $('#apply-settings').click(function (e) {
+    console.log('Field value: ' + $('#brightness-field').val())
+    var bright = parseInt($('#brightness-field').val())
+    var params = {
+      brightness: parseInt($('#brightness-field').val()),
+      contrast: parseInt($('#contrast-field').val()),
+      exposure_mode: $('#exposure-mode-field').val()
+    }
+    apply_settings(params)
+  });
+ 
+  $('#play-mjpeg').click(function (e) {
+    $('#mjpeg-stream').attr('src', 'mjpeg');
+  });
+
+  $('#pause-mjpeg').click(function (e) {
+    $('#mjpeg-stream').attr('src', '');
+  });
+
+  $('#start').click(function (e) {
+    $('#start-spinner').show();
+    change_status('start')
+  });
+
+  $('#stop').click(function (e) {
+    $('#stop-spinner').show();
+    change_status('stop')
+  });
+
+  function apply_settings(params) {
+    console.log('posting ' + JSON.stringify(params))
+    $.ajax({
+      type: 'POST',
+      url: 'api/config',
+      data: JSON.stringify(params),
+      dataType: 'json',
+      contentType: 'application/json',
+      success: function (result, status, xhr) {
+        console.log(result)
+      },
+      error: function (xhr, status, error) {
+        alert('Result: ' + status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText)
+      }
+    });
+  }
+
+  function change_status(endpoint) {
+    $.ajax({
+      type: 'GET',
+      url: "api/" + endpoint,
+      dataType: 'json',
+      success: function (result, status, xhr) {
+        parse_status_response(result)
+        $('#stop-spinner').hide();
+        $('#start-spinner').hide();
+      },
+      error: function (xhr, status, error) {
+        alert('Result: ' + status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText)
+        $('#stop-spinner').hide();
+        $('#start-spinner').hide();
+      }
+    });
+  }
+
+  function parse_status_response(result) {
+    console.log(result)
+    if (result['monitoring'] == true) {
+      console.log('Monitoring')
+      $('#status').text('running');
+    } else {
+      console.log('Not monitoring')
+      $('#status').text('stopped');
+    }
+  }
+});
+</script>
+
+  </body>
+</html>

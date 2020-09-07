@@ -43,35 +43,51 @@ def create_app(test_config=None):
     main = RunLoop(app)
     main.start()
 
-    @app.route('/status')
+    @app.route('/')
+    def index():
+        camera_path = request.url_root.rsplit('/', 2)[-2]
+        print('Camera path %s' %  camera_path)
+        config_params = dict(
+            awb_modes=picamera.PiCamera.AWB_MODES,
+            exposure_modes=picamera.PiCamera.EXPOSURE_MODES,
+            image_effects=picamera.PiCamera.IMAGE_EFFECTS,
+            meter_modes=picamera.PiCamera.METER_MODES
+        )
+
+        return render_template('base.html',
+                               camera=main.camera,
+                               api_path=camera_path,
+                               config_params=config_params)
+
+    @app.route('/api/status')
     def status():
         return dict(monitoring=main.camera.should_monitor)
 
-    @app.route('/stop')
+    @app.route('/api/stop')
     def stop():
         main.camera.should_monitor = False
         hide_camera()
         return status()
 
-    @app.route('/start')
+    @app.route('/api/start')
     def start():
         main.camera.should_monitor = True
         expose_camera()
         return status()
 
-    @app.route('/record')
+    @app.route('/api/record')
     def record():
         main.camera.should_record = True
         return '', 204
 
-    @app.route('/config', methods=['GET', 'POST'])
+    @app.route('/api/config', methods=['GET', 'POST'])
     def config():
         if request.method == 'POST':
             return main.camera.update_config_params(request.json)
         else:
             return main.camera.config_params()
 
-    @app.route('/stream')
+    @app.route('/mjpeg')
     def stream():
         """
         Starts an MJPEG stream using an HTTPMultipartWriter fed to an instance
