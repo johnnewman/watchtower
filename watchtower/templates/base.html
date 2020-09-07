@@ -12,33 +12,25 @@
   </head>
   <body>
 
-    {% macro form_select(id, fields, selected_field) -%}
-      <select class="custom-select" id="{{ id }}">
-        {% for field in fields -%}
-          {%- if field == selected_field %}
-            <option value="{{ field }}" selected>{{ field.capitalize() }}</option>
-          {%- else %}
-            <option value="{{ field }}">{{ field.capitalize() }}</option>
-          {%- endif %}
-        {%- endfor %}
-      </select>
-    {%- endmacro %}
-
     {% macro form_dropdown_row(id, label, fields, selected_field) -%}
-      <div class="form-group row">
-        <label for="{{ id }}" class="col-sm-3 col-form-label">{{ label }}</label>
-        <div class="col-sm-9">
-          {{ form_select(id=id, fields=fields, selected_field=selected_field) }}
-        </div>
+      <div class="form-group col">
+        <label for="{{ id }}" class="col-form-label">{{ label }}</label>
+        <select class="custom-select" id="{{ id }}">
+          {% for field in fields -%}
+            {%- if field == selected_field %}
+              <option value="{{ field }}" selected>{{ field.capitalize() }}</option>
+            {%- else %}
+              <option value="{{ field }}">{{ field.capitalize() }}</option>
+            {%- endif %}
+          {%- endfor %}
+        </select>
       </div>
     {%- endmacro %}
 
     {% macro form_number_row(id, label, value) -%}
-      <div class="form-group row">
-        <label for="{{ id }}" class="col-sm-3 col-form-label">{{ label }}</label>
-        <div class="col-sm-9">
-          <input type="number" class="form-control" id="{{ id }}" value="{{ value }}">
-        </div>
+      <div class="form-group col">
+        <label for="{{ id }}" class="col-form-label">{{ label }}</label>
+        <input type="number" class="form-control" id="{{ id }}" value="{{ value }}">
       </div>
     {%- endmacro %}
 
@@ -49,28 +41,27 @@
         </a>
     </nav>
 
-      <div class="row m-3">
-        <div class="col-2">
+      <div class="row p-3">
+        <div class="col-sm-3">
           <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
             <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill" href="#home" role="tab" aria-controls="v-pills-home" aria-selected="true">Home</a>
             <a class="nav-link" id="v-pills-stream-tab" data-toggle="pill" href="#stream" role="tab" aria-controls="v-pills-stream" aria-selected="false">Stream</a>
             <a class="nav-link" id="v-pills-settings-tab" data-toggle="pill" href="#settings" role="tab" aria-controls="v-pills-settings" aria-selected="false">Settings</a>
           </div>
         </div>
-        <div class="col-9">
+        <div class="col-sm-9">
           <div class="tab-content" id="v-pills-tabContent">
 
             <!-- HOME -->
             <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="v-pills-home-tab">
-
-              <div class="row">
-                <div class="col-4">
+              <div class="row row cols-2">
+                <div class="col-6 col-md-4">
                   <button type="button" id="start" class="btn btn-outline-primary btn-block">
                     <span class="spinner-border spinner-border-sm" id="start-spinner" style="display:none" role="status" aria-hidden="true"></span>
                     Start
                   </button>
                 </div>
-                <div class="col-4">
+                <div class="col-6 col-md-4">
                   <button type="button" id="stop" class="btn btn-outline-danger btn-block">
                     <span class="spinner-border spinner-border-sm" id="stop-spinner" style="display:none" role="status" aria-hidden="true"></span>
                     Stop
@@ -110,49 +101,51 @@
             <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
               
               <form>
-                {{ form_number_row(id='brightness-field', label='Brightness', value=camera.brightness) }}
-                {{ form_number_row(id='contrast-field', label='Contrast', value=camera.contrast) }}
-                {{ form_dropdown_row(id='exposure-mode-field',
-                                     label='Exposure',
-                                     fields=config_params['exposure_modes'],
-                                     selected_field=camera.exposure_mode) }}
-                {{ form_number_row(id='exposure-compensation-field', label='Exposure compensation', value=camera.exposure_compensation) }}
-                {{ form_dropdown_row(id='image-effects-field',
-                                     label='Image effect',
-                                     fields=config_params['image_effects'],
-                                     selected_field=camera.image_effect) }}
-                {{ form_number_row(id='iso-field', label='ISO', value=camera.iso) }}
-                {{ form_dropdown_row(id='meter-mode-field',
-                                     label='Meter mode',
-                                     fields=config_params['meter_modes'],
-                                     selected_field=camera.meter_mode) }}
-                {{ form_dropdown_row(id='rotation-field',
-                                     label='Rotation',
-                                     fields=['0', '90', '180', '270'],
-                                     selected_field=camera.rotation|string) }}
-                {{ form_number_row(id='saturation-field', label='Saturation', value=camera.saturation) }}
-                {{ form_number_row(id='sharpness-field', label='Sharpness', value=camera.sharpness) }}
-                <div class="form-group row">
-                  <div class="col-sm-3">Video denoise</div>
-                  <div class="col-sm-9">
-                    <div class="form-check">
-                      <input class="form-check-input position-static" type="checkbox" id="denoise-field" value="denoise" aria-label="Video denoise">
+                <div class="container">
+                  <div class="row row-cols-1 row-cols-sm-2">
+                    {{ form_number_row(id='brightness-field', label='Brightness', value=camera.brightness) }}
+                    {{ form_number_row(id='contrast-field', label='Contrast', value=camera.contrast) }}
+                    {{ form_dropdown_row(id='exposure-mode-field',
+                                        label='Exposure',
+                                        fields=config_params['exposure_modes'],
+                                        selected_field=camera.exposure_mode) }}
+                    {{ form_number_row(id='exposure-compensation-field', label='Exposure compensation', value=camera.exposure_compensation) }}
+                    {{ form_dropdown_row(id='image-effects-field',
+                                        label='Image effect',
+                                        fields=config_params['image_effects'],
+                                        selected_field=camera.image_effect) }}
+                    {{ form_number_row(id='iso-field', label='ISO', value=camera.iso) }}
+                    {{ form_dropdown_row(id='meter-mode-field',
+                                        label='Meter mode',
+                                        fields=config_params['meter_modes'],
+                                        selected_field=camera.meter_mode) }}
+                    {{ form_dropdown_row(id='rotation-field',
+                                        label='Rotation',
+                                        fields=['0', '90', '180', '270'],
+                                        selected_field=camera.rotation|string) }}
+                    {{ form_number_row(id='saturation-field', label='Saturation', value=camera.saturation) }}
+                    {{ form_number_row(id='sharpness-field', label='Sharpness', value=camera.sharpness) }}
+                    <div class="form-group col">
+                      <div class="col">Video denoise</div>
+                      <div class="col">
+                        <div class="form-check">
+                          <input class="form-check-input position-static" type="checkbox" id="denoise-field" value="denoise" aria-label="Video denoise">
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                {{ form_dropdown_row(id='awb-field',
-                                     label='White balance',
-                                     fields=config_params['awb_modes'],
-                                     selected_field=camera.awb_mode) }}
-                <div class="form-group row">
-                  <div class="col-sm-3">
-                    <button type="button" id="apply-settings" class="btn btn-primary">Apply</button>
-                  </div>
-                  <div class="alert alert-success alert-dismissible fade show" style="display:none;" role="alert" id="settings-success-alert">
-                    <strong>Success!</strong> Settings saved.
-                  </div>
-                  <div class="alert alert-danger alert-dismissible fade show" style="display:none;" role="alert" id="settings-error-alert">
-                    Error saving settings.
+                    {{ form_dropdown_row(id='awb-field',
+                                        label='White balance',
+                                        fields=config_params['awb_modes'],
+                                        selected_field=camera.awb_mode) }}
+                    <div class="form-group col pt-3">
+                      <button type="button" id="apply-settings" class="btn btn-primary btn-block">Apply</button>
+                    </div>
+                    <div class="alert alert-success alert-dismissible fade show col" style="display:none;" role="alert" id="settings-success-alert">
+                      <strong>Success!</strong> Settings saved.
+                    </div>
+                    <div class="alert alert-danger alert-dismissible fade show col" style="display:none;" role="alert" id="settings-error-alert">
+                      Error saving settings.
+                    </div>
                   </div>
                 </div>
               </form>
