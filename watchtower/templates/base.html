@@ -26,8 +26,8 @@
 
     {% macro form_dropdown_row(id, label, fields, selected_field) -%}
       <div class="form-group row">
-        <label for="{{ id }}" class="col-sm-4 col-form-label">{{ label }}</label>
-        <div class="col-sm-8">
+        <label for="{{ id }}" class="col-sm-3 col-form-label">{{ label }}</label>
+        <div class="col-sm-9">
           {{ form_select(id=id, fields=fields, selected_field=selected_field) }}
         </div>
       </div>
@@ -35,8 +35,8 @@
 
     {% macro form_number_row(id, label, value) -%}
       <div class="form-group row">
-        <label for="{{ id }}" class="col-sm-4 col-form-label">{{ label }}</label>
-        <div class="col-sm-8">
+        <label for="{{ id }}" class="col-sm-3 col-form-label">{{ label }}</label>
+        <div class="col-sm-9">
           <input type="number" class="form-control" id="{{ id }}" value="{{ value }}">
         </div>
       </div>
@@ -122,8 +122,8 @@
                                      fields=config_params['image_effects'],
                                      selected_field=camera.image_effect) }}
                 {{ form_number_row(id='iso-field', label='ISO', value=camera.iso) }}
-                {{ form_dropdown_row(id='meter-modes-field',
-                                     label='Meter modes',
+                {{ form_dropdown_row(id='meter-mode-field',
+                                     label='Meter mode',
                                      fields=config_params['meter_modes'],
                                      selected_field=camera.meter_mode) }}
                 {{ form_dropdown_row(id='rotation-field',
@@ -133,8 +133,8 @@
                 {{ form_number_row(id='saturation-field', label='Saturation', value=camera.saturation) }}
                 {{ form_number_row(id='sharpness-field', label='Sharpness', value=camera.sharpness) }}
                 <div class="form-group row">
-                  <div class="col-sm-4">Video denoise</div>
-                  <div class="col-sm-8">
+                  <div class="col-sm-3">Video denoise</div>
+                  <div class="col-sm-9">
                     <div class="form-check">
                       <input class="form-check-input position-static" type="checkbox" id="denoise-field" value="denoise" aria-label="Video denoise">
                     </div>
@@ -145,8 +145,14 @@
                                      fields=config_params['awb_modes'],
                                      selected_field=camera.awb_mode) }}
                 <div class="form-group row">
-                  <div class="col-sm-10">
+                  <div class="col-sm-3">
                     <button type="button" id="apply-settings" class="btn btn-primary">Apply</button>
+                  </div>
+                  <div class="alert alert-success alert-dismissible fade show" style="display:none;" role="alert" id="settings-success-alert">
+                    <strong>Success!</strong> Settings saved.
+                  </div>
+                  <div class="alert alert-danger alert-dismissible fade show" style="display:none;" role="alert" id="settings-error-alert">
+                    Error saving settings.
                   </div>
                 </div>
               </form>
@@ -167,12 +173,19 @@
 $(document).ready(function () {
 
   $('#apply-settings').click(function (e) {
-    console.log('Field value: ' + $('#brightness-field').val())
-    var bright = parseInt($('#brightness-field').val())
     var params = {
+      awb_mode: $('#awb-field').val(),
       brightness: parseInt($('#brightness-field').val()),
       contrast: parseInt($('#contrast-field').val()),
-      exposure_mode: $('#exposure-mode-field').val()
+      exposure_mode: $('#exposure-mode-field').val(),
+      exposure_compensation: parseInt($('#exposure-compensation-field').val()),
+      image_effect: $('#image-effects-field').val(),
+      iso: parseInt($('#iso-field').val()),
+      meter_mode: $('#meter-mode-field').val(),
+      rotation: parseInt($('#rotation-field').val()),
+      saturation: parseInt($('#saturation-field').val()),
+      sharpness: parseInt($('#sharpness-field').val()),
+      video_denoise: $('#denoise-field').is(":checked")
     }
     apply_settings(params)
   });
@@ -205,9 +218,17 @@ $(document).ready(function () {
       contentType: 'application/json',
       success: function (result, status, xhr) {
         console.log(result)
+        $('#settings-success-alert').show()
+        setTimeout(function() {
+          $('#settings-success-alert').hide();
+        }, 3000);
       },
       error: function (xhr, status, error) {
-        alert('Result: ' + status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText)
+        console.log(status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText)
+        $('#settings-error-alert').show()
+        setTimeout(function() {
+          $('#settings-error-alert').hide();
+        }, 3000); 
       }
     });
   }
