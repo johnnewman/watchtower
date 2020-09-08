@@ -5,15 +5,18 @@ All supported API endpoints are defined in this module. One instance of the
 RunLoop thread is started when the app is initialized.
 """
 
-from flask import Flask, Response, request, stream_with_context
+from datetime import datetime
+from flask import Flask, Response, jsonify, request, stream_with_context, render_template
 import json
 import logging.config
 import os
+import picamera
 import time
 from .remote.servo import Servo
 from .run_loop import RunLoop
 from .streamer.mjpeg_streamer import MJPEGStreamer
 from .streamer.writer import http_writer
+from .util import file_system as fs
 
 __author__ = "John Newman"
 __copyright__ = "Copyright 2020, John Newman"
@@ -79,6 +82,33 @@ def create_app(test_config=None):
     def record():
         main.camera.should_record = True
         return '', 204
+
+    @app.route('/api/recordings')
+    def recordings():
+        days = fs.all_recording_days(path=os.path.join(app.instance_path, 'recordings'),
+                                     day_format=app.config['DIR_DAY_FORMAT'])
+        return jsonify(days), 200
+
+    @app.route('/api/recordings/<day>', methods=['GET', 'DELETE'])
+    def recordings_for_day(day):
+        try:
+            if datetime.strptime(day, app.config['DIR_DAY_FORMAT']) is not None:
+
+                if request.method == 'GET':
+                    times = fs.recording_times(path=os.path.join(app.instance_path, 'recordings'),
+                                               day_dirname=day,
+                                               time_format=app.config['DIR_TIME_FORMAT'])
+                    return jsonify(times), 200
+                else:
+                    successful = fs.delete_recording_day(path=os.path.join(app.instance_path, 'recordings'),
+                                                         day_dirname=day,
+                                                         day_format=app.config['DIR_TIME_FORMAT'])
+                    if successful:
+                        return '', 204
+                    return '', 422
+        except ValueError:
+            pass
+        return '', 422
 
     @app.route('/api/config', methods=['GET', 'POST'])
     def config():
