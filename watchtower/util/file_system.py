@@ -14,6 +14,16 @@ def __dirnames_matching_format(dirnames, format):
     matching_dates.sort()
     return [datetime.strftime(dt, format) for dt in matching_dates]
 
+def all_recordings(path, day_format, time_format):
+    recordings = []
+    days = all_recording_days(path, day_format)
+    for day in days:
+        recordings.append({
+            'day': day,
+            'times': recording_times(path, day, time_format)
+        })
+    return recordings
+
 def all_recording_days(path, day_format):
     dirpath, dirnames, filenames = next(os.walk(path))
     return __dirnames_matching_format(dirnames, day_format)

@@ -6,7 +6,7 @@ RunLoop thread is started when the app is initialized.
 """
 
 from datetime import datetime
-from flask import Flask, Response, jsonify, request, stream_with_context, render_template
+from flask import Flask, Response, jsonify, request, stream_with_context, render_template, send_from_directory
 import json
 import logging.config
 import os
@@ -41,25 +41,27 @@ def create_app(test_config=None):
         app.config.from_json('watchtower_config.json', silent=False)
     else:
         app.config.from_mapping(test_config)
-    
     setup_logging(app)
     main = RunLoop(app)
     main.start()
 
+    day_format = app.config['DIR_DAY_FORMAT']
+    time_format = app.config['DIR_TIME_FORMAT']
+
     @app.route('/')
     def index():
-        camera_path = request.url_root.rsplit('/', 2)[-2]
-        print('Camera path %s' %  camera_path)
         config_params = dict(
             awb_modes=picamera.PiCamera.AWB_MODES,
             exposure_modes=picamera.PiCamera.EXPOSURE_MODES,
             image_effects=picamera.PiCamera.IMAGE_EFFECTS,
             meter_modes=picamera.PiCamera.METER_MODES
         )
-
+        recordings = fs.all_recordings(path=os.path.join(app.instance_path, 'recordings'),
+                                       day_format=day_format,
+                                       time_format=time_format)
         return render_template('base.html',
                                camera=main.camera,
-                               api_path=camera_path,
+                               recordings=recordings,
                                config_params=config_params)
 
     @app.route('/api/status')
@@ -85,27 +87,51 @@ def create_app(test_config=None):
 
     @app.route('/api/recordings')
     def recordings():
-        days = fs.all_recording_days(path=os.path.join(app.instance_path, 'recordings'),
-                                     day_format=app.config['DIR_DAY_FORMAT'])
-        return jsonify(days), 200
+        recordings = fs.all_recordings(path=os.path.join(app.instance_path, 'recordings'),
+                                       day_format=day_format,
+                                       time_format=time_format)
+        return jsonify(recordings), 200
 
     @app.route('/api/recordings/<day>', methods=['GET', 'DELETE'])
     def recordings_for_day(day):
         try:
-            if datetime.strptime(day, app.config['DIR_DAY_FORMAT']) is not None:
-
+            if datetime.strptime(day, day_format) is not None:
                 if request.method == 'GET':
                     times = fs.recording_times(path=os.path.join(app.instance_path, 'recordings'),
                                                day_dirname=day,
-                                               time_format=app.config['DIR_TIME_FORMAT'])
+                                               time_format=time_format)
                     return jsonify(times), 200
                 else:
                     successful = fs.delete_recording_day(path=os.path.join(app.instance_path, 'recordings'),
                                                          day_dirname=day,
-                                                         day_format=app.config['DIR_TIME_FORMAT'])
+                                                         day_format=day_format)
                     if successful:
                         return '', 204
                     return '', 422
+        except ValueError:
+            pass
+        return '', 422
+
+    @app.route('/api/recordings/<path:path>/trigger')
+    def video_recording(path):
+        return serve_recording('trigger.jpg', path)
+
+    @app.route('/api/recordings/<path:path>/video')
+    def recording_video(path):
+        return serve_recording('video.h264', path)
+
+    def serve_recording(name, path):
+        elements = path.split('/')
+        if not len(elements) == 2:
+            return '', 422
+        try:
+            if datetime.strptime(elements[0], day_format) is not None:
+                if datetime.strptime(elements[1], time_format) is not None:
+                    directory = os.path.join(app.instance_path, 'recordings', elements[0], elements[1])
+                    return send_from_directory(os.path.abspath(directory),
+                                               name,
+                                               as_attachment=True,
+                                               attachment_filename=name)
         except ValueError:
             pass
         return '', 422
