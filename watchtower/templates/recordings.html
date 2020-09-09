@@ -1,0 +1,37 @@
+{% macro recording_accordion_div(day, times) -%}
+    <div class="card">
+        <div class="card-header" id="day-heading-{{ day|e }}">
+        <h2 class="mb-0">
+            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#day-{{ day|e }}">
+            {{ day|e }}
+            </button>
+        </h2>
+        </div>
+
+        <div id="day-{{ day|e }}" class="collapse show" data-parent="#recording-accordion">
+            <div class="card-body">
+
+                <div class="list-group">
+                    {% for time in times -%}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ time|e }}</h6>
+                            <div>
+                                <button type="button" id="recording-download-button-{{ day|e }} {{ time|e }}" class="btn btn-secondary btn-sm">Download</button>
+                                <button type="button" id="recording-delete-button-{{ day|e }} {{ time|e }}" class="btn btn-danger btn-sm ml-1">Delete</button>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    {%- endfor %}
+                  </div>
+            </div>
+        </div>
+    </div>
+{%- endmacro %}
+
+<div class="accordion" id="recording-accordion">
+    {% for day_dict in recordings -%}
+    {{ recording_accordion_div(day=day_dict['day'], times=day_dict['times']) }}
+    {%- endfor %}
+</div>

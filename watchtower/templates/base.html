@@ -45,7 +45,7 @@
         <div class="col-sm-3">
           <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
             <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill" href="#home" role="tab" aria-controls="v-pills-home" aria-selected="true">Home</a>
-            <a class="nav-link" id="v-pills-stream-tab" data-toggle="pill" href="#stream" role="tab" aria-controls="v-pills-stream" aria-selected="false">Stream</a>
+            <a class="nav-link" id="v-pills-recordings-tab" data-toggle="pill" href="#recordings" role="tab" aria-controls="v-pills-recordings" aria-selected="false">Recordings</a>
             <a class="nav-link" id="v-pills-settings-tab" data-toggle="pill" href="#settings" role="tab" aria-controls="v-pills-settings" aria-selected="false">Settings</a>
           </div>
         </div>
@@ -80,21 +80,26 @@
                 </span>
               </div>
 
+
+
+              <div class="col pl-3 pt-3">
+                <div class="row">
+                    <img src="" id="mjpeg-stream" width="640" height="480" class="rounded border border-dark" alt="MJPEG stream">
+                </div>
+                <div class="row">
+                  <div>
+                    <button type="button" id="play-mjpeg" class="btn btn-outline-secondary">Play stream</button>
+                  </div>
+                  <div class="ml-2">
+                    <button type="button" id="pause-mjpeg" class="btn btn-outline-secondary">Pause</button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <!-- STREAM -->
-            <div class="tab-pane fade" id="stream" role="tabpanel" aria-labelledby="v-pills-stream-tab">
-              <div class="row">
-              <img src="" id="mjpeg-stream" width="400">
-              </div>
-              <div class="row">
-                <div class="col-3">
-                  <button type="button" id="play-mjpeg" class="btn btn-outline-primary btn-block">Play</button>
-                </div>
-                <div class="col-3">
-                  <button type="button" id="pause-mjpeg" class="btn btn-outline-primary btn-block">Pause</button>
-                </div>
-              </div>
+            <!-- RECORDINGS -->
+            <div class="tab-pane fade" id="recordings" role="tabpanel" aria-labelledby="v-pills-recordings-tab">
+              {% include 'recordings.html' %}
             </div>
 
             <!-- SETTINGS -->
@@ -255,6 +260,37 @@ $(document).ready(function () {
     }
   }
 });
+
+function downloadRecording(button) {
+  var datetime = button.id.substring('recording-download-button-'.length)
+  var elements = datetime.split(" ")
+  console.log('NEED TO DOWNLOAD ' + elements)
+}
+
+function deleteRecording(button) {
+  var datetime = button.id.substring('recording-delete-button-'.length)
+  var elements = datetime.split(" ")
+  console.log('NEED TO DELETE ' + elements)
+}
+
+$(document).ready(function(){
+  var buttons = $("button")
+  for (i = 0; i < buttons.length; i++) { 
+    button = buttons[i];
+    if (button.id.startsWith('recording-download-button-')) {
+      console.log('found button ' + button.id)
+      button.click(function (e) {
+        downloadRecording(button)
+      })
+    } else if (button.id.startsWith('recording-delete-button-')) {
+      console.log('found button ' + button.id)
+      button.click(function (e) {
+        deleteRecording(button)
+      })
+    }
+  }
+})
+
 </script>
 
   </body>
