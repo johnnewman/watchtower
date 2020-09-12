@@ -11,29 +11,7 @@
     <title>{{ camera.name }}</title>
   </head>
   <body>
-
-    {% macro form_dropdown_row(id, label, fields, selected_field) -%}
-      <div class="form-group col">
-        <label for="{{ id }}" class="col-form-label">{{ label }}</label>
-        <select class="custom-select" id="{{ id }}">
-          {% for field in fields -%}
-            {%- if field == selected_field %}
-              <option value="{{ field }}" selected>{{ field.capitalize() }}</option>
-            {%- else %}
-              <option value="{{ field }}">{{ field.capitalize() }}</option>
-            {%- endif %}
-          {%- endfor %}
-        </select>
-      </div>
-    {%- endmacro %}
-
-    {% macro form_number_row(id, label, value) -%}
-      <div class="form-group col">
-        <label for="{{ id }}" class="col-form-label">{{ label }}</label>
-        <input type="number" class="form-control" id="{{ id }}" value="{{ value }}">
-      </div>
-    {%- endmacro %}
-
+    
     <nav class="navbar navbar-light bg-light">
         <a class="navbar-brand" href="#">
             <img src="static/icon.png" width="30" height="30" class="d-inline-block align-top" alt="" loading="lazy">
