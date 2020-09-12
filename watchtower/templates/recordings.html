@@ -2,28 +2,27 @@
     <div class="card">
         <div class="card-header" id="day-heading-{{ day|e }}">
         <h2 class="mb-0">
-            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#day-{{ day|e }}">
+            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#day-{{ day|e }}" aria-expanded="false" aria-controls="day-{{ day|e }}">
             {{ day|e }}
             </button>
         </h2>
         </div>
 
-        <div id="day-{{ day|e }}" class="collapse show" data-parent="#recording-accordion">
+        <div id="day-{{ day|e }}" class="collapse" aria-labelledby="day-heading-{{ day|e }}" data-parent="#recording-accordion">
             <div class="card-body">
-
-                <div class="list-group">
+                <ul class="list-group list-group-flush">
                     {% for time in times -%}
-                    <div class="list-group-item" id="list-group-{{ day|e }} {{ time|e }}">
-                        <div class="d-flex w-100 justify-content-between">
+                    <li class="list-group-item" id="list-group-{{ day|e }} {{ time|e }}">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
                             <h6 class="mb-1">{{ time|e }}</h6>
-                            <div>
+                            <div class="row row-eq-height">
                                 <button type="button" id="recording-download-button-{{ day|e }} {{ time|e }}" class="btn btn-secondary btn-sm">Download</button>
                                 <button type="button" id="recording-delete-button-{{ day|e }} {{ time|e }}" class="btn btn-danger btn-sm ml-1">Delete</button>
                             </div>
                         </div>
-                    </div>
+                    </li>
                     {%- endfor %}
-                  </div>
+                </ul>
             </div>
         </div>
     </div>
