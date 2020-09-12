@@ -13,14 +13,13 @@
 
                 <div class="list-group">
                     {% for time in times -%}
-                    <div class="list-group-item">
+                    <div class="list-group-item" id="list-group-{{ day|e }} {{ time|e }}">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">{{ time|e }}</h6>
                             <div>
                                 <button type="button" id="recording-download-button-{{ day|e }} {{ time|e }}" class="btn btn-secondary btn-sm">Download</button>
                                 <button type="button" id="recording-delete-button-{{ day|e }} {{ time|e }}" class="btn btn-danger btn-sm ml-1">Delete</button>
                             </div>
-                        </div>
                         </div>
                     </div>
                     {%- endfor %}

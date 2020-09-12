@@ -54,47 +54,7 @@
 
             <!-- HOME -->
             <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="v-pills-home-tab">
-              <div class="row row cols-2">
-                <div class="col-6 col-md-4">
-                  <button type="button" id="start" class="btn btn-outline-primary btn-block">
-                    <span class="spinner-border spinner-border-sm" id="start-spinner" style="display:none" role="status" aria-hidden="true"></span>
-                    Start
-                  </button>
-                </div>
-                <div class="col-6 col-md-4">
-                  <button type="button" id="stop" class="btn btn-outline-danger btn-block">
-                    <span class="spinner-border spinner-border-sm" id="stop-spinner" style="display:none" role="status" aria-hidden="true"></span>
-                    Stop
-                  </button>
-                </div>
-              </div>
-
-              <div class="row pl-3">
-                Status:&nbsp;
-                <span id="status">
-                  {% if camera.should_record %}
-                    running
-                  {% else %}
-                    stopped
-                  {% endif %}
-                </span>
-              </div>
-
-
-
-              <div class="col pl-3 pt-3">
-                <div class="row">
-                    <img src="" id="mjpeg-stream" width="640" height="480" class="rounded border border-dark" alt="MJPEG stream">
-                </div>
-                <div class="row">
-                  <div>
-                    <button type="button" id="play-mjpeg" class="btn btn-outline-secondary">Play stream</button>
-                  </div>
-                  <div class="ml-2">
-                    <button type="button" id="pause-mjpeg" class="btn btn-outline-secondary">Pause</button>
-                  </div>
-                </div>
-              </div>
+              {% include 'home.html' %}
             </div>
 
             <!-- RECORDINGS -->
@@ -104,57 +64,9 @@
 
             <!-- SETTINGS -->
             <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
-              
-              <form>
-                <div class="container">
-                  <div class="row row-cols-1 row-cols-sm-2">
-                    {{ form_number_row(id='brightness-field', label='Brightness', value=camera.brightness) }}
-                    {{ form_number_row(id='contrast-field', label='Contrast', value=camera.contrast) }}
-                    {{ form_dropdown_row(id='exposure-mode-field',
-                                        label='Exposure',
-                                        fields=config_params['exposure_modes'],
-                                        selected_field=camera.exposure_mode) }}
-                    {{ form_number_row(id='exposure-compensation-field', label='Exposure compensation', value=camera.exposure_compensation) }}
-                    {{ form_dropdown_row(id='image-effects-field',
-                                        label='Image effect',
-                                        fields=config_params['image_effects'],
-                                        selected_field=camera.image_effect) }}
-                    {{ form_number_row(id='iso-field', label='ISO', value=camera.iso) }}
-                    {{ form_dropdown_row(id='meter-mode-field',
-                                        label='Meter mode',
-                                        fields=config_params['meter_modes'],
-                                        selected_field=camera.meter_mode) }}
-                    {{ form_dropdown_row(id='rotation-field',
-                                        label='Rotation',
-                                        fields=['0', '90', '180', '270'],
-                                        selected_field=camera.rotation|string) }}
-                    {{ form_number_row(id='saturation-field', label='Saturation', value=camera.saturation) }}
-                    {{ form_number_row(id='sharpness-field', label='Sharpness', value=camera.sharpness) }}
-                    <div class="form-group col">
-                      <div class="col">Video denoise</div>
-                      <div class="col">
-                        <div class="form-check">
-                          <input class="form-check-input position-static" type="checkbox" id="denoise-field" value="denoise" aria-label="Video denoise">
-                        </div>
-                      </div>
-                    </div>
-                    {{ form_dropdown_row(id='awb-field',
-                                        label='White balance',
-                                        fields=config_params['awb_modes'],
-                                        selected_field=camera.awb_mode) }}
-                    <div class="form-group col pt-3">
-                      <button type="button" id="apply-settings" class="btn btn-primary btn-block">Apply</button>
-                    </div>
-                    <div class="alert alert-success alert-dismissible fade show col" style="display:none;" role="alert" id="settings-success-alert">
-                      <strong>Success!</strong> Settings saved.
-                    </div>
-                    <div class="alert alert-danger alert-dismissible fade show col" style="display:none;" role="alert" id="settings-error-alert">
-                      Error saving settings.
-                    </div>
-                  </div>
-                </div>
-              </form>
+              {% include 'settings.html' %}
             </div>
+            
           </div>
         </div>
       </div>
@@ -165,133 +77,10 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
 
     <!-- Required for API calls -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-<script>
-$(document).ready(function () {
-
-  $('#apply-settings').click(function (e) {
-    var params = {
-      awb_mode: $('#awb-field').val(),
-      brightness: parseInt($('#brightness-field').val()),
-      contrast: parseInt($('#contrast-field').val()),
-      exposure_mode: $('#exposure-mode-field').val(),
-      exposure_compensation: parseInt($('#exposure-compensation-field').val()),
-      image_effect: $('#image-effects-field').val(),
-      iso: parseInt($('#iso-field').val()),
-      meter_mode: $('#meter-mode-field').val(),
-      rotation: parseInt($('#rotation-field').val()),
-      saturation: parseInt($('#saturation-field').val()),
-      sharpness: parseInt($('#sharpness-field').val()),
-      video_denoise: $('#denoise-field').is(":checked")
-    }
-    apply_settings(params)
-  });
- 
-  $('#play-mjpeg').click(function (e) {
-    $('#mjpeg-stream').attr('src', 'mjpeg');
-  });
-
-  $('#pause-mjpeg').click(function (e) {
-    $('#mjpeg-stream').attr('src', '');
-  });
-
-  $('#start').click(function (e) {
-    $('#start-spinner').show();
-    change_status('start')
-  });
-
-  $('#stop').click(function (e) {
-    $('#stop-spinner').show();
-    change_status('stop')
-  });
-
-  function apply_settings(params) {
-    console.log('posting ' + JSON.stringify(params))
-    $.ajax({
-      type: 'POST',
-      url: 'api/config',
-      data: JSON.stringify(params),
-      dataType: 'json',
-      contentType: 'application/json',
-      success: function (result, status, xhr) {
-        console.log(result)
-        $('#settings-success-alert').show()
-        setTimeout(function() {
-          $('#settings-success-alert').hide();
-        }, 3000);
-      },
-      error: function (xhr, status, error) {
-        console.log(status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText)
-        $('#settings-error-alert').show()
-        setTimeout(function() {
-          $('#settings-error-alert').hide();
-        }, 3000); 
-      }
-    });
-  }
-
-  function change_status(endpoint) {
-    $.ajax({
-      type: 'GET',
-      url: "api/" + endpoint,
-      dataType: 'json',
-      success: function (result, status, xhr) {
-        parse_status_response(result)
-        $('#stop-spinner').hide();
-        $('#start-spinner').hide();
-      },
-      error: function (xhr, status, error) {
-        alert('Result: ' + status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText)
-        $('#stop-spinner').hide();
-        $('#start-spinner').hide();
-      }
-    });
-  }
-
-  function parse_status_response(result) {
-    console.log(result)
-    if (result['monitoring'] == true) {
-      console.log('Monitoring')
-      $('#status').text('running');
-    } else {
-      console.log('Not monitoring')
-      $('#status').text('stopped');
-    }
-  }
-});
-
-function downloadRecording(button) {
-  var datetime = button.id.substring('recording-download-button-'.length)
-  var elements = datetime.split(" ")
-  console.log('NEED TO DOWNLOAD ' + elements)
-}
-
-function deleteRecording(button) {
-  var datetime = button.id.substring('recording-delete-button-'.length)
-  var elements = datetime.split(" ")
-  console.log('NEED TO DELETE ' + elements)
-}
-
-$(document).ready(function(){
-  var buttons = $("button")
-  for (i = 0; i < buttons.length; i++) { 
-    button = buttons[i];
-    if (button.id.startsWith('recording-download-button-')) {
-      console.log('found button ' + button.id)
-      button.click(function (e) {
-        downloadRecording(button)
-      })
-    } else if (button.id.startsWith('recording-delete-button-')) {
-      console.log('found button ' + button.id)
-      button.click(function (e) {
-        deleteRecording(button)
-      })
-    }
-  }
-})
-
-</script>
-
+    <script src="static/scripts/settings.js"></script>
+    <script src="static/scripts/recordings.js"></script>
+    <script src="static/scripts/home.js"></script>
   </body>
 </html>

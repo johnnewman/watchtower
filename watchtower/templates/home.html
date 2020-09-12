@@ -1,0 +1,41 @@
+<div class="row row cols-2">
+    <div class="col-6 col-md-4">
+      <button type="button" id="start" class="btn btn-outline-primary btn-block">
+        <span class="spinner-border spinner-border-sm" id="start-spinner" style="display:none" role="status" aria-hidden="true"></span>
+        Start
+      </button>
+    </div>
+    <div class="col-6 col-md-4">
+      <button type="button" id="stop" class="btn btn-outline-danger btn-block">
+        <span class="spinner-border spinner-border-sm" id="stop-spinner" style="display:none" role="status" aria-hidden="true"></span>
+        Stop
+      </button>
+    </div>
+  </div>
+
+  <div class="row pl-3">
+    Status:&nbsp;
+    <span id="status">
+      {% if camera.should_record %}
+        running
+      {% else %}
+        stopped
+      {% endif %}
+    </span>
+  </div>
+
+
+
+  <div class="col pl-3 pt-3">
+    <div class="row">
+        <img src="" id="mjpeg-stream" width="640" height="480" class="rounded border border-dark" alt="MJPEG stream">
+    </div>
+    <div class="row">
+      <div>
+        <button type="button" id="play-mjpeg" class="btn btn-outline-secondary">Play stream</button>
+      </div>
+      <div class="ml-2">
+        <button type="button" id="pause-mjpeg" class="btn btn-outline-secondary">Pause</button>
+      </div>
+    </div>
+</div>
