@@ -1,4 +1,5 @@
 $(document).ready(function () { 
+    
     $('#play-mjpeg').click(function (e) {
         $('#mjpeg-stream').attr('src', 'mjpeg');
     });
