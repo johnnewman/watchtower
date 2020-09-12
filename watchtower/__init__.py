@@ -172,8 +172,9 @@ def create_app(test_config=None):
         a signal from the writer when a new frame is ready for output to the
         client.
         """
+        encoding = request.args.get('encoding', type=str)
         fps = 0.5
-        writer = http_writer.HTTPMultipartWriter()
+        writer = http_writer.HTTPMultipartWriter(use_base64=(encoding == 'base64'))
         streamer = MJPEGStreamer(main.camera,
                                  byte_writers=[writer],
                                  name='MJPEG',
