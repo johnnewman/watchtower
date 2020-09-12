@@ -102,12 +102,31 @@ def create_app(test_config=None):
                                                time_format=time_format)
                     return jsonify(times), 200
                 else:
-                    successful = fs.delete_recording_day(path=os.path.join(app.instance_path, 'recordings'),
-                                                         day_dirname=day,
-                                                         day_format=day_format)
+                    successful = fs.delete_recording(path=os.path.join(app.instance_path, 'recordings'),
+                                                     day_dirname=day)
                     if successful:
                         return '', 204
-                    return '', 422
+                    return '', 404
+        except ValueError:
+            pass
+        return '', 422
+    
+    @app.route('/api/recordings/<path:path>', methods=['DELETE'])
+    def delete_recording(path):
+        elements = path.split('/')
+        if not len(elements) == 2:
+            return '', 422
+        try:
+            day = elements[0]
+            time = elements[1]
+            if datetime.strptime(day, day_format) is not None:
+                if datetime.strptime(time, time_format) is not None:
+                    successful = fs.delete_recording(path=os.path.join(app.instance_path, 'recordings'),
+                                                     day_dirname=day,
+                                                     time_dirname=time)
+                    if successful:
+                        return '', 204
+                    return '', 404
         except ValueError:
             pass
         return '', 422
@@ -125,13 +144,15 @@ def create_app(test_config=None):
         if not len(elements) == 2:
             return '', 422
         try:
-            if datetime.strptime(elements[0], day_format) is not None:
-                if datetime.strptime(elements[1], time_format) is not None:
-                    directory = os.path.join(app.instance_path, 'recordings', elements[0], elements[1])
+            day = elements[0]
+            time = elements[1]
+            if datetime.strptime(day, day_format) is not None:
+                if datetime.strptime(time, time_format) is not None:
+                    directory = os.path.join(app.instance_path, 'recordings', day, time)
                     return send_from_directory(os.path.abspath(directory),
                                                name,
                                                as_attachment=True,
-                                               attachment_filename=name)
+                                               attachment_filename=('%s;%s;%s' % (day, time, name)))
         except ValueError:
             pass
         return '', 422

@@ -33,8 +33,10 @@ def recording_times(path, day_dirname, time_format):
     dirpath, dirnames, filenames = next(os.walk(path))
     return __dirnames_matching_format(dirnames, time_format)
 
-def delete_recording_day(path, day_dirname, day_format):
+def delete_recording(path, day_dirname, time_dirname=None):
     path = os.path.join(path, day_dirname)
+    if time_dirname is not None:
+        path = os.path.join(path, time_dirname)
     if os.path.exists(os.path.dirname(path)):
         try:
             shutil.rmtree(path)
