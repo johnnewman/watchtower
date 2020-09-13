@@ -204,9 +204,7 @@ def add_web_routes(app, main_loop):
                                camera=main_loop.camera,
                                recordings=recordings,
                                config_params=config_params)
-
     
-
     @app.route('/mjpeg')
     def stream():
         """
