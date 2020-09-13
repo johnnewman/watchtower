@@ -10,7 +10,13 @@ server {
     # allow <reverse proxy ip>;
     # deny all;
 
-    location ~^/(status|start|stop|stream|record|config) {
+    location ~ ^/api/(status|start|stop|record|recordings|config) {
+        include uwsgi_params;
+        uwsgi_pass unix:/tmp/watchtower.sock;
+        uwsgi_buffering off;
+    }
+
+    location ~ ^(/$|/mjpeg|/static) {
         include uwsgi_params;
         uwsgi_pass unix:/tmp/watchtower.sock;
         uwsgi_buffering off;
