@@ -52,9 +52,9 @@ The rest of this readme breaks down each Watchtower component and describes its 
 An optional web app for each Watchtower instance can be enabled. You can access it in a browser through the reverse proxy by going to `https://proxy_address/camera0/`. This provides a simple interface for Watchtower built with [Bootstrap](https://getbootstrap.com/). 
 
 The web app is broken into sections:
-- The Home section lets you view the camera stream and start and stop monitoring.
+- The Home section lets you view the camera stream and toggle the monitoring status.
 - The Recordings section displays a listing of all recordings that the Watchtower instance has saved. It allows you to delete and download individual recordings.
-- Settings lets you tweak and save various settings of the Pi camera hardware.
+- The Settings section lets you tweak and save various settings of the Pi camera hardware.
 
 | Home | Recordings | Settings |
 | --- | --- | --- |
@@ -68,7 +68,7 @@ There is only a single configuration option for the web app in the config file. 
 
 ### 3. Motion Detection
 
-Motion is detected using background subtraction in [watchtower/motion/motion_detector.py](watchtower/motion/motion_detector.py). The implementation is based heavily on this article: https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/. A blurred grayscale image of the current camera frame is generated and subtracted from a static image of the scene. If a large enough area of pixels has significantly changed, it triggers a motion event and the area is outlined in a JPEG. This image will be saved along with the video.
+Motion is detected using background subtraction in [watchtower/motion/motion_detector.py](watchtower/motion/motion_detector.py). The implementation is based heavily on [this article](https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/). A blurred grayscale image of the current camera frame is generated and subtracted from a static image of the scene. If a large enough area of pixels has significantly changed, it triggers a motion event and the area is outlined in a JPEG. This image will be saved along with the video.
 
 <details>
   <summary><b>Configuration</b></summary>

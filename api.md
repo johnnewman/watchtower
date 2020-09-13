@@ -163,7 +163,7 @@ Returns the h264 video file containing the entire recording that occurred at the
 
 The response will be a 200 containing the h264 file data.
 
-### GET `/stream`
+### GET `/mjpeg`
 
 _This one is treated as part of the web app, but listing it here for completeness._
 
