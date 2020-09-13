@@ -1,5 +1,8 @@
 $(document).ready(function () {
     
+    /**
+     * Collects the update parameters and passes them to applySettings().
+     */
     $('#apply-settings').click(function (e) {
         var params = {
             awb_mode: $('#awb-field').val(),
@@ -15,10 +18,15 @@ $(document).ready(function () {
             sharpness: parseInt($('#sharpness-field').val()),
             video_denoise: $('#denoise-field').is(":checked")
         }
-        apply_settings(params)
+        applySettings(params)
     });
 
-    function apply_settings(params) {
+    /**
+     * Converts the supplied params into JSON and supplies this in an ajax call
+     * to update the settings.
+     * @param {Object} params The parameters to turn into a JSON string.
+     */
+    function applySettings(params) {
         console.log('posting ' + JSON.stringify(params))
         $.ajax({
             type: 'POST',
