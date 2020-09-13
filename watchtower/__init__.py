@@ -94,19 +94,14 @@ def create_app(test_config=None):
 
     @app.route('/api/recordings/<day>', methods=['GET', 'DELETE'])
     def recordings_for_day(day):
+        if request.method == 'DELETE':
+            return delete_recording(day)
         try:
             if datetime.strptime(day, day_format) is not None:
-                if request.method == 'GET':
-                    times = fs.recording_times(path=os.path.join(app.instance_path, 'recordings'),
-                                               day_dirname=day,
-                                               time_format=time_format)
-                    return jsonify(times), 200
-                else:
-                    successful = fs.delete_recording(path=os.path.join(app.instance_path, 'recordings'),
-                                                     day_dirname=day)
-                    if successful:
-                        return '', 204
-                    return '', 404
+                times = fs.recording_times(path=os.path.join(app.instance_path, 'recordings'),
+                                            day_dirname=day,
+                                            time_format=time_format)
+                return jsonify(times), 200
         except ValueError:
             pass
         return '', 422
@@ -114,13 +109,13 @@ def create_app(test_config=None):
     @app.route('/api/recordings/<path:path>', methods=['DELETE'])
     def delete_recording(path):
         elements = path.split('/')
-        if not len(elements) == 2:
+        if len(elements) != 1 and len(elements) != 2:
             return '', 422
         try:
             day = elements[0]
-            time = elements[1]
+            time = elements[1] if len(elements) == 2 else None
             if datetime.strptime(day, day_format) is not None:
-                if datetime.strptime(time, time_format) is not None:
+                if time is None or datetime.strptime(time, time_format) is not None:
                     successful = fs.delete_recording(path=os.path.join(app.instance_path, 'recordings'),
                                                      day_dirname=day,
                                                      time_dirname=time)
@@ -171,6 +166,9 @@ def create_app(test_config=None):
         of MJPEGStreamer. A generator is used to continuously block, waiting on
         a signal from the writer when a new frame is ready for output to the
         client.
+
+        An optional encoding=base64 parameter can be supplied to encode the raw
+        image data in the response.
         """
         encoding = request.args.get('encoding', type=str)
         fps = 0.5
