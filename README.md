@@ -9,11 +9,11 @@
 
 Watchtower turns your Raspberry Pi into a DIY security camera. Put as many cameras as you want on your network and each instance will independently scan for motion and, when triggered, will save a recording to disk in the h264 format and upload an encrypted copy to Dropbox.
 
-The central package that runs on each Raspberry Pi is named [watchtower](watchtower). It's a Python 3 Flask app with API endpoints that allow you to start and stop monitoring, stream via MJPEG, manually record, request the status of the Watchtower instance, and tweak camera settings. See [api.md](./api.md) for API documentation.
+The central package that runs on each Raspberry Pi is named [watchtower](watchtower). It's a Python 3 Flask app with API endpoints that allow you to start and stop monitoring, stream via MJPEG, record, download and delete recordings, and tweak camera settings. See [api.md](./api.md) for API documentation. There is also an optional web app that provides a graphical interface for these APIs.
 
 Watchtower was designed to take advantage of the capabilities of the Pi NoIR camera. An optional program for a microcontroller is included to read analog room brightness, control infrared LED intensity for night vision, move an optional servo, and communicate with Watchtower over the Raspberry Pi's GPIO ports.
 
-A 3D case for the system is located in [ancillary/case/](ancillary/case/). This case houses the Raspberry Pi, camera, microcontroller, servo, array of IR LEDs, photoresistor, status LED, and cooling fan. A Fritzing diagram of the case's internal hardware is included in [ancillary/hardware/](ancillary/hardware).
+A 3D case for the system is located in [ancillary/case/](ancillary/case/). This case houses the Raspberry Pi, camera, microcontroller, servo, IR LEDs, fan, and more. A Fritzing diagram of the case's internal hardware is included in [ancillary/hardware/](ancillary/hardware).
 <p align="center">
     <img src="ancillary/case/v2/v2_xray.png" width="350" />
 </p>
@@ -36,19 +36,39 @@ There is an included [install script](install.sh) for Raspbian Buster that will 
 
 The rest of this readme breaks down each Watchtower component and describes its configuration located in [watchtower_config.json](watchtower/config/watchtower_config_example.json).
  1. [API endpoints](./api.md)
- 2. [Motion detection](#2-motion-detection)
- 3. [Optional Dropbox file upload](#3-optional-dropbox-file-upload)
- 4. [Optional microcontroller](#4-optional-microcontroller-infrared-and-servos)
+ 2. [Front-end web app](#2-front-end-web-app)
+ 3. [Motion detection](#3-motion-detection)
+ 4. [Optional Dropbox file upload](#4-optional-dropbox-file-upload)
+ 5. [Optional microcontroller](#5-optional-microcontroller-infrared-and-servos)
  
  ---
 
- ### 1. API Endpoints
+### 1. API Endpoints
 
  Moved to [api.md](./api.md).
 
-### 2. Motion Detection
+### 2. Front-end web app
 
-Motion is detected using background subtraction in [watchtower/motion/motion_detector.py](watchtower/motion/motion_detector.py). The implementation is based heavily on this article: https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/. A blurred grayscale image of the current camera frame is generated and subtracted from a static image of the scene. If a large enough area of pixels has significantly changed, it triggers a motion event and the area is outlined in a JPEG. This image will be saved along with the video.
+An optional web app for each Watchtower instance can be enabled. You can access it in a browser through the reverse proxy by going to `https://proxy_address/camera0/`. This provides a simple interface for Watchtower built with [Bootstrap](https://getbootstrap.com/). 
+
+The web app is broken into sections:
+- The Home section lets you view the camera stream and toggle the monitoring status.
+- The Recordings section displays a listing of all recordings that the Watchtower instance has saved. It allows you to delete and download individual recordings.
+- The Settings section lets you tweak and save various settings of the Pi camera hardware.
+
+| Home | Recordings | Settings |
+| --- | --- | --- |
+| <img src="ancillary/screenshots/home.jpg" width="235"/> | <img src="ancillary/screenshots/recordings.jpg" width="235"/> | <img src="ancillary/screenshots/settings.jpg" width="235"/>|
+
+<details>
+  <summary><b>Configuration</b></summary>
+  
+There is only a single configuration option for the web app in the config file. Omit or set `WEB_APP_ENABLED` to false to turn off the web app. When disabled, requests to load the app will 404.
+</details>
+
+### 3. Motion Detection
+
+Motion is detected using background subtraction in [watchtower/motion/motion_detector.py](watchtower/motion/motion_detector.py). The implementation is based heavily on [this article](https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/). A blurred grayscale image of the current camera frame is generated and subtracted from a static image of the scene. If a large enough area of pixels has significantly changed, it triggers a motion event and the area is outlined in a JPEG. This image will be saved along with the video.
 
 <details>
   <summary><b>Configuration</b></summary>
@@ -61,7 +81,7 @@ All motion properties are prefixed with `MOTION_` in the config file:
 </details>
 
 
-### 3. Optional Dropbox File Upload
+### 4. Optional Dropbox File Upload
 
 Video files are sent to Dropbox in small chunks as soon as motion is detected. Because the bytes of the stream are broken into files, the files are not cleanly separated by header frames. For smooth playback, the data will need to be concatenated into a single file. To help with this, a shell script located at [ancillary/mp4_wrapper.sh](ancillary/mp4_wrapper.sh) will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/). MP4Box only needs to be installed on the machine that opens recordings from Dropbox; no need to install it alongside any Watchtower instance.
 
@@ -76,7 +96,7 @@ All Dropbox properties are prefixed with `DROPBOX_` in the config file. Dropbox 
 - `PUBLIC_KEY_PATH` the path to the public asymmetric key. If `null` is supplied, the Dropbox files are not encrypted.
 </details>
 
-### 4. Optional Microcontroller, Infrared, and Servos
+### 5. Optional Microcontroller, Infrared, and Servos
 
 The project can be optionally configured to work with a microcontroller to enable and disable infrared lighting for night vision. The controller also reads the analog room brightness and uses PWM to fine-tune the infrared brightness. In the event that the camera should rotate or be covered when not in use, this controller can also move an attached servo. A diagram for the microcontroller circuit [is included](/ancillary/hardware).
 
