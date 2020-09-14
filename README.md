@@ -58,7 +58,7 @@ The web app is broken into sections:
 
 | Home | Recordings | Settings |
 | --- | --- | --- |
-| ![Home tab](ancillary/screenshots/home.jpg) | ![Recordings tab](ancillary/screenshots/settings.jpg) | ![Home](ancillary/screenshots/settings.jpg)|
+| <img src="ancillary/screenshots/home.jpg" width="225"/> | <img src="ancillary/screenshots/recordings.jpg" width="225"/> | <img src="ancillary/screenshots/settings.jpg" width="225"/>|
 
 <details>
   <summary><b>Configuration</b></summary>
