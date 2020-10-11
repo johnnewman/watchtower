@@ -15,28 +15,29 @@ The Perma-Proto HAT sits on top of the Raspberry Pi and contains ports to run th
 
 _I'm not an electrical engineer, but this setup has worked well for me._
 
-<img src="./images/HAT.png" width="350"> <img src="./images/assembled.jpg" width="350">
+<img src="./images/HAT.png" width="350"> <img src="./images/assembled.jpg" width="500">
 
-Extra connectors are included in the diagram for reprogramming over ISP once the board is installed onto the Pi. These connectors are on pins 1, 4, 7, 8, 9, and 14. The pins for the ATTiny84 are broken down [here](https://github.com/SpenceKonde/ATTinyCore/blob/master/avr/extras/ATtiny_x4.md). In this setup, there is a jumper that connects the ATTiny84 to the 3V rail of the Pi. For ISP, this jumper must be removed to connect the positive ISP cable to pin 1, which will power the microcontroller. This avoids backpowering or damaging the Pi when programming with a 5V Arduino.
+Lines to the Raspberry Pi's GPIO pins 17, 27, 22, and 23 are included for ICSP reprogramming of the ATTiny84. This way you don't need to take apart the case to update the microcontroller's software. The pins for the ATTiny84 are broken down [here](https://github.com/SpenceKonde/ATTinyCore/blob/master/avr/extras/ATtiny_x4.md).
 
-The microcontroller and photoresistor are powered from the 3V rail. The LEDs, case fan, and servo are powered off of the Pi's 5V rail. For the LEDs, I used a 2N2222 NPN transistor to power from 5V. For the case fan, I used a C1815 NPN transistor. You could use two 2N2222 transistors if you swap the collector and base pins for the fan. Anything will work here as long as the transistor can handle the power requirements of the fan and the power & PWM frequency requirements of the front IR panel.
+The microcontroller, photoresistor, and status LED are all powered from the 3V rail. The IR LEDs, case fan, and servo are powered from Pi's 5V rail. There are two transistors on the board that are both used as "full on" switches. One transistor can turn the fan on and off from the Pi's GPIO pin 5. The other transistor is connected to the ground line for all of the LEDs. Its base pin is connected to PWM pin 6 on the ATTiny84. This allows the microcontroller to adjust the brightness of all the LEDs. Both transistors are NPN S8050's which can handle the high power requirements of the front panel. Anything can work here as long as the transistors can handle the power requirements.
 
-The fan's circuit is the only component on the board directly controlled by the Pi. Watchtower uses [Icebox](https://github.com/johnnewman/icebox/) to control the fan. This is automatically installed using Watchtower's install script.
+Watchtower uses [Icebox](https://github.com/johnnewman/icebox/) to control the fan. This is automatically installed using Watchtower's install script. Icebox will power on the fan only when the SoC temperature reaches a certain threshold. Once the SoC cools back down, the fan will be powered off.
 
-A decoupling capacitor is on the 3V line to help mitigate noise or voltage drop that might occur while the device is running. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) recommends a 0.1uF capacitor. A ceramic capacitor is best since it has the fastest response to voltage changes.
+All lines between the Pi and the Microcontroller (serial and ICSP) are connected to a 10kΩ resistor. This keeps the lines from pulling more than 0.33mA.
+
+A decoupling capacitor is located on the 3V line to help mitigate noise or voltage drop that might occur while the device is running. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) recommends a 0.1uF capacitor. A ceramic capacitor is best since it has the fastest response to voltage changes.
 
 #### Power Requirements
 
-- The front IR panel consumes 120mA of power when using 20mA LEDs.
-   - There are 14 infrared LEDs total. Of those, there are 4 parallel circuits that contain 3 LEDs in series. With 20mA LEDS, those 4 parallel circuits pull 80mA. The remaining two LEDs pull 40mA.
+- The front IR panel consumes around 400mA of power when using 100mA IR LEDs.
+   - There are 12 infrared LEDs total. Of those, there are 4 parallel circuits that contain 3 LEDs in series. With 100mA LEDS, those 4 parallel circuits pull 400mA. The status LED only pulls 3mA.
 - The 30x30mm fan I am using has a current draw of 120mA.
-- The status LED draws 20mA of power.
 - A Pi 3B+ [typical draw is 500mA](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md). Under stress, [this can average 850mA](https://www.raspberrypi.org/documentation/faqs/#power).
 - The Pi Camera pulls 250mA.
 
-120mA IR + 120mA fan + 20mA LED + 850mA Pi 3B + 250mA Camera = **1360mA total**.
+400mA IR + 120mA fan + 850mA Pi 3B + 250mA Camera = **1620mA total**.
 
-This isn't factoring in the ATTiny84's current needs at 3V, but this should be negligible (5-10mA). A 2500mA power supply will have plenty of headroom for the micro servo, which will be running in short bursts and will have very little physical resistance when it moves.
+This isn't factoring in the ATTiny84's current draw at 3V, but this should be negligible. A 2500mA power supply will have plenty of headroom for the micro servo, which will be running in short bursts and will have very little physical resistance when it moves.
 
 #### Full diagram:
 ![Full diagram](./images/full_assembly.png)
