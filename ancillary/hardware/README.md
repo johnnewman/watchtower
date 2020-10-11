@@ -15,7 +15,7 @@ The Perma-Proto HAT sits on top of the Raspberry Pi and contains ports to run th
 
 _I'm not an electrical engineer, but this setup has worked well for me._
 
-<img src="./images/HAT.png" width="350"> <img src="./images/assembled.jpg" width="500">
+<img src="./images/HAT.png" width="350"> <img src="./images/assembled.jpg" width="500"> <img src="./images/assembled_2.jpg" width="350">
 
 Lines to the Raspberry Pi's GPIO pins 17, 27, 22, and 23 are included for ICSP reprogramming of the ATTiny84. This way you don't need to take apart the case to update the microcontroller's software. The pins for the ATTiny84 are broken down [here](https://github.com/SpenceKonde/ATTinyCore/blob/master/avr/extras/ATtiny_x4.md).
 
