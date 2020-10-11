@@ -23,8 +23,8 @@
 #include "TinyServo.h"
 
 const unsigned int BAUD_RATE = 19200;
-const unsigned int RX_PIN = 9;
-const unsigned int TX_PIN = 10;
+const unsigned int RX_PIN = 2;
+const unsigned int TX_PIN = 1;
 
 const unsigned int LED_PWM_PIN = 7;  // For large number of LED's, use a transistor.
 const unsigned int LIGHT_SENSOR_PIN = A3;
