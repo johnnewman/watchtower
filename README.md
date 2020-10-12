@@ -15,7 +15,7 @@ Watchtower was designed to take advantage of the capabilities of the Pi NoIR cam
 
 A 3D case for the system is located in [ancillary/case/](ancillary/case/). This case houses the Raspberry Pi, camera, microcontroller, servo, IR LEDs, fan, and more. A Fritzing diagram of the case's internal hardware is included in [ancillary/hardware/](ancillary/hardware).
 <p align="center">
-    <img src="ancillary/case/v2/v2_xray.png" width="350" />
+    <img src="ancillary/case/v3/v3_xray.png" width="350" />
 </p>
 
 ### Server setup
