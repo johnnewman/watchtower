@@ -86,7 +86,7 @@ With verbose logging enabled, you will see the above command in the Arduino cons
 
 #### Installing `controller.ino`
 
-To flash the microcontroller with the `controller.ino` program, you'll need to compile it with the Arduino IDE on any computer. Enable verbose logging in Arduino and attempt to upload the program. You will see a command similar to the following in the console:
+To flash the microcontroller with the [`controller.ino`](./controller/controller.ino) program, you'll need to compile it with the Arduino IDE on any computer. Enable verbose logging in Arduino and attempt to upload the program. You will see a command similar to the following in the console:
 ```
 avrdude ... -Uflash:w:/var/folders/wd/.../controller.ino.hex:i 
 ```
