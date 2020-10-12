@@ -15,31 +15,90 @@ The Perma-Proto HAT sits on top of the Raspberry Pi and contains ports to run th
 
 _I'm not an electrical engineer, but this setup has worked well for me._
 
-<img src="./images/HAT.png" width="350"> <img src="./images/assembled.jpg" width="350">
+<img src="./images/HAT.png" width="350"> <img src="./images/assembled.jpg" width="500"> <img src="./images/assembled_2.jpg" width="350">
 
-Extra connectors are included in the diagram for reprogramming over ISP once the board is installed onto the Pi. These connectors are on pins 1, 4, 7, 8, 9, and 14. The pins for the ATTiny84 are broken down [here](https://github.com/SpenceKonde/ATTinyCore/blob/master/avr/extras/ATtiny_x4.md). In this setup, there is a jumper that connects the ATTiny84 to the 3V rail of the Pi. For ISP, this jumper must be removed to connect the positive ISP cable to pin 1, which will power the microcontroller. This avoids backpowering or damaging the Pi when programming with a 5V Arduino.
+The microcontroller, photoresistor, and status LED are all powered from the 3V rail. The IR LEDs, case fan, and servo are powered from Pi's 5V rail. There are two transistors on the board that are both used as "full on" switches. One transistor can turn the fan on and off from the Pi's GPIO pin 5. The other transistor is connected to the ground line for all of the LEDs. Its base pin is connected to PWM pin 6 on the ATTiny84. This allows the microcontroller to adjust the brightness of all the LEDs. Both transistors are NPN S8050's which can handle the high power requirements of the front panel. Anything can work here as long as the transistors can handle the power requirements.
 
-The microcontroller and photoresistor are powered from the 3V rail. The LEDs, case fan, and servo are powered off of the Pi's 5V rail. For the LEDs, I used a 2N2222 NPN transistor to power from 5V. For the case fan, I used a C1815 NPN transistor. You could use two 2N2222 transistors if you swap the collector and base pins for the fan. Anything will work here as long as the transistor can handle the power requirements of the fan and the power & PWM frequency requirements of the front IR panel.
+Watchtower uses [Icebox](https://github.com/johnnewman/icebox/) to control the fan. This is automatically installed using Watchtower's install script. Icebox will power on the fan only when the SoC temperature reaches a certain threshold. Once the SoC cools back down, the fan will be powered off.
 
-The fan's circuit is the only component on the board directly controlled by the Pi. Watchtower uses [Icebox](https://github.com/johnnewman/icebox/) to control the fan. This is automatically installed using Watchtower's install script.
+Lines to the Raspberry Pi's GPIO pins 17, 27, 22, and 23 are included for ICSP reprogramming of the ATTiny84. This way you don't need to take apart the case to update the microcontroller's software. The pins for the ATTiny84 are broken down [here](https://github.com/SpenceKonde/ATTinyCore/blob/master/avr/extras/ATtiny_x4.md) in ATTinyCore.
 
-A decoupling capacitor is on the 3V line to help mitigate noise or voltage drop that might occur while the device is running. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) recommends a 0.1uF capacitor. A ceramic capacitor is best since it has the fastest response to voltage changes.
+All lines between the Pi and the Microcontroller (serial and ICSP) are connected to a 10kΩ resistor. This keeps the lines from pulling more than 0.33mA.
 
-#### Power Requirements
+A decoupling capacitor is located on the 3V line to help mitigate noise or voltage drop that might occur while the device is running. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) recommends a 0.1uF capacitor. A ceramic capacitor is best since it has the fastest response to voltage changes.
 
-- The front IR panel consumes 120mA of power when using 20mA LEDs.
-   - There are 14 infrared LEDs total. Of those, there are 4 parallel circuits that contain 3 LEDs in series. With 20mA LEDS, those 4 parallel circuits pull 80mA. The remaining two LEDs pull 40mA.
+### Power Requirements
+
+- The front IR panel consumes around 400mA of power when using 100mA IR LEDs.
+   - There are 12 infrared LEDs total. Of those, there are 4 parallel circuits that contain 3 LEDs in series. With 100mA LEDS, those 4 parallel circuits pull 400mA. The status LED only pulls 3mA.
 - The 30x30mm fan I am using has a current draw of 120mA.
-- The status LED draws 20mA of power.
-- A Pi 3B+ [typical draw is 500mA](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md). Under stress, [this can average 850mA](https://www.raspberrypi.org/documentation/faqs/#power).
+- A Pi 3B+ [typical bare-board draw is 500mA](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md). Under stress, [this can average 850mA](https://www.raspberrypi.org/documentation/faqs/#power).
 - The Pi Camera pulls 250mA.
 
-120mA IR + 120mA fan + 20mA LED + 850mA Pi 3B + 250mA Camera = **1360mA total**.
+400mA IR + 120mA fan + 850mA Pi 3A/B + 250mA Camera = **1620mA total**.
 
-This isn't factoring in the ATTiny84's current needs at 3V, but this should be negligible (5-10mA). A 2500mA power supply will have plenty of headroom for the micro servo, which will be running in short bursts and will have very little physical resistance when it moves.
+This isn't factoring in the ATTiny84's current draw at 3V, but this should be negligible. A 2500mA power supply will have plenty of headroom for the micro servo, which will be running in short bursts and will have very little physical resistance when it moves.
 
-#### Full diagram:
+### ICSP Instructions (optional)
+
+To program the ATTiny84 using the Raspberry Pi, you will need to compile AVRDUDE with linuxgpio support. This allows AVRDUDE to flash the microcontroller using the Raspberry Pi's GPIO ports. AVRDUDE 6.3 has a bug with linuxgpio, so I am using 6.2.
+
+Commands to install AVRDUDE:
+```Bash
+sudo apt install bison flex
+wget http://download.savannah.gnu.org/releases/avrdude/avrdude-6.2.tar.gz
+tar xfv avrdude-6.2.tar.gz 
+cd avrdude-6.2/
+./configure --enable-linuxgpio
+make
+sudo make install
+sudo nano /usr/local/etc/avrdude.conf 
+```
+When editing `avrdude.conf`, find the commented out linuxgpio programmer, uncomment it, and update the pin numbers to match the Watchtower setup:
+```
+programmer
+  id    = "linuxgpio";
+  desc  = "Use the Linux sysfs interface to bitbang GPIO lines";
+  type  = "linuxgpio";
+  reset = 17;
+  sck   = 27;
+  mosi  = 23;
+  miso  = 22;
+;
+```
+
+Now run `sudo avrdude -c linuxgpio -p t84 -v` and you should see output indicating a successful connection to the ATTiny84.
+
+#### Initial setup
+
+To set the clock to 8MHz and enable brown out detection at 2.7 volts:
+```Bash
+wget https://github.com/SpenceKonde/ATTinyCore/archive/1.4,1_manual.zip
+unzip 1.4,1_manual.zip
+sudo avrdude -c linuxgpio -p t84 -v -b19200 -e -Uefuse:w:0xFF:m -Uhfuse:w:0b11010101:m -Ulfuse:w:0xE2:m -Uflash:w:ATTinyCore-1.4-1_manual/avr/bootloaders/empty/empty_all.hex:i 
+```
+
+You can view this command within the Arduino IDE if you have the [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) boards installed. Go to Tools > Burn Bootloader with the ATTiny84 board selected:
+
+<img src="./images/arduino_ide.png" width="250">
+
+With verbose logging enabled, you will see the above command in the Arduino console.
+
+#### Installing `controller.ino`
+
+To flash the microcontroller with the [`controller.ino`](./controller/controller.ino) program, you'll need to compile it with the Arduino IDE on any computer. Enable verbose logging in Arduino and attempt to upload the program. You will see a command similar to the following in the console:
+```
+avrdude ... -Uflash:w:/var/folders/wd/.../controller.ino.hex:i 
+```
+You can copy the `controller.ino.hex` file from that directory and transfer it to your Raspberry Pi. From there, flash the ATTiny84 with the command:
+```Bash
+sudo avrdude -c linuxgpio -p t84 -v -b19200 -Uflash:w:controller.ino.hex:i
+```
+
+You should see output from AVRDUDE indicating that the program was successfully uploaded and verified. At this point, you are finished!
+
+### Full diagram:
 ![Full diagram](./images/full_assembly.png)
 
-#### HAT connections:
+### HAT connections:
 ![Board Connections](./images/connections.png)
