@@ -35,7 +35,7 @@ A decoupling capacitor is located on the 3V line to help mitigate noise or volta
 - A Pi 3B+ [typical bare-board draw is 500mA](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md). Under stress, [this can average 850mA](https://www.raspberrypi.org/documentation/faqs/#power).
 - The Pi Camera pulls 250mA.
 
-400mA IR + 120mA fan + 850mA Pi 3B + 250mA Camera = **1620mA total**.
+400mA IR + 120mA fan + 850mA Pi 3A/B + 250mA Camera = **1620mA total**.
 
 This isn't factoring in the ATTiny84's current draw at 3V, but this should be negligible. A 2500mA power supply will have plenty of headroom for the micro servo, which will be running in short bursts and will have very little physical resistance when it moves.
 
