@@ -27,6 +27,18 @@ All lines between the Pi and the Microcontroller (serial and ICSP) are connected
 
 A decoupling capacitor is located on the 3V line to help mitigate noise or voltage drop that might occur while the device is running. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) recommends a 0.1uF capacitor. A ceramic capacitor is best since it has the fastest response to voltage changes.
 
+### Power Requirements
+
+- The front IR panel consumes around 400mA of power when using 100mA IR LEDs.
+   - There are 12 infrared LEDs total. Of those, there are 4 parallel circuits that contain 3 LEDs in series. With 100mA LEDS, those 4 parallel circuits pull 400mA. The status LED only pulls 3mA.
+- The 30x30mm fan I am using has a current draw of 120mA.
+- A Pi 3B+ [typical bare-board draw is 500mA](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md). Under stress, [this can average 850mA](https://www.raspberrypi.org/documentation/faqs/#power).
+- The Pi Camera pulls 250mA.
+
+400mA IR + 120mA fan + 850mA Pi 3B + 250mA Camera = **1620mA total**.
+
+This isn't factoring in the ATTiny84's current draw at 3V, but this should be negligible. A 2500mA power supply will have plenty of headroom for the micro servo, which will be running in short bursts and will have very little physical resistance when it moves.
+
 ### ICSP Instructions (optional)
 
 To program the ATTiny84 using the Raspberry Pi, you will need to compile AVRDUDE with linuxgpio support. This allows AVRDUDE to flash the microcontroller using the Raspberry Pi's GPIO ports. AVRDUDE 6.3 has a bug with linuxgpio, so I am using 6.2.
@@ -84,18 +96,6 @@ sudo avrdude -c linuxgpio -p t84 -v -b19200 -Uflash:w:controller.ino.hex:i
 ```
 
 You should see output from AVRDUDE indicating that the program was successfully uploaded and verified. At this point, you are finished!
-
-### Power Requirements
-
-- The front IR panel consumes around 400mA of power when using 100mA IR LEDs.
-   - There are 12 infrared LEDs total. Of those, there are 4 parallel circuits that contain 3 LEDs in series. With 100mA LEDS, those 4 parallel circuits pull 400mA. The status LED only pulls 3mA.
-- The 30x30mm fan I am using has a current draw of 120mA.
-- A Pi 3B+ [typical draw is 500mA](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md). Under stress, [this can average 850mA](https://www.raspberrypi.org/documentation/faqs/#power).
-- The Pi Camera pulls 250mA.
-
-400mA IR + 120mA fan + 850mA Pi 3B + 250mA Camera = **1620mA total**.
-
-This isn't factoring in the ATTiny84's current draw at 3V, but this should be negligible. A 2500mA power supply will have plenty of headroom for the micro servo, which will be running in short bursts and will have very little physical resistance when it moves.
 
 ### Full diagram:
 ![Full diagram](./images/full_assembly.png)
