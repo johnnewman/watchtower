@@ -3,11 +3,25 @@
 
     "VIDEO_FRAMERATE": 30,
     "VIDEO_ROTATION": 0,
-    "VIDEO_SIZE": [
-        1640,
-        1232
-    ],
     "VIDEO_DATE_FORMAT": "%Y-%m-%d %H:%M:%S",
+
+    "DESTINATIONS": {
+        "disk": {
+            "size": [
+                1640,
+                1232
+            ]
+        },
+        "dropbox": {
+            "token": "ACCOUNT TOKEN HERE",
+            "file_chunk_kb": 1024,
+            "public_key_path": "/etc/watchtower/certs/dropbox.crt",
+            "size": [
+                820,
+                616
+            ]
+        }
+    },
 
     "DIR_DAY_FORMAT": "%Y-%m-%d",
     "DIR_TIME_FORMAT": "%H.%M.%S",
@@ -16,10 +30,6 @@
     "MOTION_MIN_TRIGGER_AREA": 0.02,
     "MOTION_SENSITIVITY": 0.8,
     "MOTION_RECORDING_PADDING": 8,
-
-    "DROPBOX_API_TOKEN": "ACCOUNT TOKEN HERE",
-    "DROPBOX_FILE_CHUNK_MB": 3,
-    "DROPBOX_PUBLIC_KEY_PATH": "/etc/watchtower/certs/dropbox.crt",
 
     "MICRO_ENABLED": false,
     "MICRO_BAUDRATE": 19200,
