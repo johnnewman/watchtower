@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from threading import Thread, Lock
 
 THREAD_COUNT = 2
-DEFAULT_FILE_CHUNK_SIZE = 3*1024*1024
+DEFAULT_FILE_CHUNK_SIZE = 512*1024 # 512 KB
 NumberedFile = namedtuple('NumberedFile', 'number bytes')
 
 
