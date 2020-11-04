@@ -106,7 +106,8 @@ class RunLoop(TerminableThread):
             options = destinations['dropbox']
             dropbox_dest = Destination.dropbox
             dropbox_dest.token = options['token']
-            dropbox_dest.pem_path = options['public_key_path']
+            if 'public_key_path' in options:
+                dropbox_dest.pem_path = options['public_key_path']
             dropbox_dest.file_chunk_size = options['file_chunk_kb']*1024
             add_destination(options, dropbox_dest)
         # Future destinations can be set up here.
