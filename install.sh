@@ -50,8 +50,7 @@ $ICEBOX_PATH/install.sh
 # Create instance folder and move example configs over
 mkdir -p "$WATCHTOWER_PATH/instance"
 cp "$WATCHTOWER_PATH/watchtower/config/log_config_example.json" "$WATCHTOWER_PATH/instance/log_config.json"
-# Remove Dropbox for a basic setup.
-egrep -v "(DROPBOX_)" "$WATCHTOWER_PATH/watchtower/config/watchtower_config_example.json" > "$WATCHTOWER_PATH/instance/watchtower_config.json"
+cp "$WATCHTOWER_PATH/watchtower/config/watchtower_config_example_simple.json" "$WATCHTOWER_PATH/instance/watchtower_config.json"
 echo "Created $WATCHTOWER_PATH/instance directory and added config files."
 
 # Create the logs directory with write permission.

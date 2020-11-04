@@ -1,0 +1,28 @@
+{
+    "CAMERA_NAME": "room0",
+
+    "VIDEO_FRAMERATE": 30,
+    "VIDEO_ROTATION": 0,
+    "VIDEO_DATE_FORMAT": "%Y-%m-%d %H:%M:%S",
+
+    "DESTINATIONS": {
+        "disk": {
+            "size": [
+                1640,
+                1232
+            ]
+        }
+    },
+
+    "DIR_DAY_FORMAT": "%Y-%m-%d",
+    "DIR_TIME_FORMAT": "%H.%M.%S",
+
+    "MOTION_MAX_EVENT_TIME": 60,
+    "MOTION_MIN_TRIGGER_AREA": 0.02,
+    "MOTION_SENSITIVITY": 0.8,
+    "MOTION_RECORDING_PADDING": 8,
+
+    "MICRO_ENABLED": false,
+    
+    "WEB_APP_ENABLED": true
+}
