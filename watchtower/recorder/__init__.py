@@ -56,7 +56,7 @@ class Recorder:
         :param destinations: all Destination instances to use when persisting.
         :param splitter_port: the splitter port for the current recording. 1 is
         the primary port used. 0-4 are valid.
-        :param resize_resolution: the resolution to reize from the camera's
+        :param resize_resolution: the resolution to resize from the camera's
         resolution. If used, this should be smaller than the camera resolution.
         """
 
