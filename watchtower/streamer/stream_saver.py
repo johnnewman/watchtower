@@ -5,7 +5,7 @@ import logging
 
 
 MAX_READ_BYTES = int(1024*1024*2.5)  # 2.5 MB
-READ_DATA_WAIT_TIME = 0.2  # Wait time for the next upload if data was read
+READ_DATA_WAIT_TIME = 0.3  # Wait time for the next upload if data was read
 EMPTY_WAIT_TIME = 0.5  # Wait time for next read if no data found
 
 

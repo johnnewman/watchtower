@@ -1,5 +1,4 @@
 
-from collections import namedtuple
 from flask import Flask
 from threading import Thread
 import datetime as dt
@@ -10,9 +9,8 @@ import picamera
 import time
 from .camera import SafeCamera
 from .motion.motion_detector import MotionDetector
+from .recorder import Recorder, Destination
 from .remote.servo import Servo
-from .streamer import video_stream_saver as streamer
-from .streamer.writer import dropbox_writer, disk_writer
 from .util.shutdown import TerminableThread
 
 WAIT_TIME = 0.1
@@ -38,22 +36,19 @@ class RunLoop(TerminableThread):
             self.__micro_comm = None
             self.servo = None
 
-        self.camera = self.setup_camera(app)
-        
         motion_config = app.config.get_namespace('MOTION_')
         area = motion_config['min_trigger_area']
         sensitivity = motion_config['sensitivity']
         self.__padding = motion_config['recording_padding']
         self.__max_event_time = motion_config['max_event_time']
-        self.__motion_detector = MotionDetector(self.camera, sensitivity, area)
-        self.__stream = picamera.PiCameraCircularIO(self.camera, seconds=(self.__padding))
 
+        self.__instance_path = app.instance_path
+        self.__recorders, self.camera = self.setup_destinations(app)
+        self.__motion_detector = MotionDetector(self.camera, sensitivity, area)
         self.__start_time = None
         self.__day_format = app.config['DIR_DAY_FORMAT']
         self.__time_format = app.config['DIR_TIME_FORMAT']
         self.__video_date_format = app.config['VIDEO_DATE_FORMAT']
-        self.__dropbox_config  = app.config.get_namespace('DROPBOX_')
-        self.__instance_path = app.instance_path
 
     @property
     def servo(self) -> Servo:
@@ -62,10 +57,6 @@ class RunLoop(TerminableThread):
     @servo.setter
     def servo(self, value):
         self.__servo = value
-
-    @property
-    def start_time(self):
-        return self.__start_time
 
     def setup_microcontroller_comm(self, app):
         from .remote.microcontroller_comm import MicrocontrollerComm
@@ -84,80 +75,103 @@ class RunLoop(TerminableThread):
          
         return controller
 
-    def setup_camera(self, app):
+    def setup_destinations(self, app):
+        """
+        Parses all destinations out of the app's config data. The camera will
+        also be initialized using the largest resolution from all destinations.
+        """
+
+        sizes = {}
+        def add_destination(options, destination):
+            """
+            Adds the destination to the sizes dictionary with the key being the
+            resolution. Multiple destinations can share the same resolution.
+            """
+            size_tuple = tuple(options['size'])
+            if size_tuple not in sizes:
+                sizes[size_tuple] = []
+            sizes[size_tuple].append(destination)
+
+        destinations = app.config.get('DESTINATIONS')
+        if destinations is None:
+            logging.getLogger(__name__).error('DESTINATIONS key does not exist in config file.')
+            raise Exception('Invalid config file')
+        
+        if 'disk' in destinations:
+            options = destinations['disk']
+            disk_dest = Destination.disk
+            disk_dest.instance_path = self.__instance_path
+            add_destination(options, disk_dest)
+        if 'dropbox' in destinations:
+            options = destinations['dropbox']
+            dropbox_dest = Destination.dropbox
+            dropbox_dest.token = options['token']
+            if 'public_key_path' in options:
+                dropbox_dest.pem_path = options['public_key_path']
+            dropbox_dest.file_chunk_size = options['file_chunk_kb']*1024
+            add_destination(options, dropbox_dest)
+        # Future destinations can be set up here.
+            
+        # Sort with the biggest resolution first.
+        sorted_sizes = sorted(sizes.keys(), key=lambda size: size[0], reverse=True)
+        splitter_port = 1
+        recorders = []
+        camera = None
+        for size in sorted_sizes:
+            logging.getLogger(__name__).info('Creating recorder for %s with splitter port %d.' % (sizes[size], splitter_port))
+            resize_resolution = size
+            if size == sorted_sizes[0]:
+                # The camera's resolution will be set to the largest size. It
+                # will use splitter port 1. 
+                camera = self.setup_camera(app, size)
+                # The largest recorder will not resize the resolution because
+                # it will match the camera resolution.
+                resize_resolution = None
+
+            recorders.append(
+                Recorder(
+                    camera=camera,
+                    padding_sec=self.__padding,
+                    destinations=sizes[size],
+                    splitter_port=splitter_port,
+                    resize_resolution=resize_resolution
+                )
+            )
+            splitter_port += 1
+        return recorders, camera
+
+    def setup_camera(self, app, resolution):
         camera = SafeCamera(name = app.config["CAMERA_NAME"],
-                            resolution=tuple(app.config['VIDEO_SIZE']),
+                            resolution=resolution,
                             framerate=app.config['VIDEO_FRAMERATE'],
                             config_path=os.path.join(app.instance_path, 'camera_config.json'))
         camera.rotation = app.config.get('VIDEO_ROTATION')
         camera.annotate_background = picamera.Color('black')
-        camera.annotate_text_size = 14
+        camera.annotate_text_size = 18
         return camera
 
     def wait(self):
-        """Briefly waits on the camera and updates the annotation on the feed."""
-
+        """
+        Briefly waits on each of the camera's splitter ports and updates the
+        annotation on the feed.
+        """
         date_string = dt.datetime.now().strftime(self.__video_date_format)
         text = '{} | {}'.format(self.camera.name, date_string)
         if self.__micro_comm is not None:
             text = text + ' | Brightness: ' + str(self.__micro_comm.room_brightness)
         self.camera.annotate_text = text
-        self.camera.wait_recording(WAIT_TIME)
-
-    def save_stream(self, stream, path, debug_name, stop_when_empty=False):
-        """Saves the ``stream`` to disk and optionally to Dropbox, if Dropbox
-        configurations were supplied in the config file."""
-                                                
-        streamers = []
-        disk_path = os.path.join(self.__instance_path, 'recordings', path)
-        writers = [disk_writer.DiskWriter(disk_path)] # There will always be a disk writer.
-
-        def create_dropbox_writer(_pem_path=None, _file_chunk_size=-1):
-            """
-            Initializes and returns a Dropbox writer. By default the files are
-            not encrypted and only 1 thread is used for uploading.
-
-            :param _pem_path: Path to a public key used for encrypting the
-            uploaded data. A None value will mean data is not encrypted.
-            :param _file_chunk_size: the file size used to split up the stream.
-            """
-            return dropbox_writer.DropboxWriter(full_path='/'+os.path.join(self.camera.name, path),
-                                                dropbox_token=self.__dropbox_config['api_token'],
-                                                file_chunk_size=_file_chunk_size,
-                                                public_pem_path=_pem_path)
-
-        if isinstance(stream, picamera.PiCameraCircularIO): # Video
-            if len(self.__dropbox_config) != 0:
-                key_path = None
-                if 'public_key_path' in self.__dropbox_config:
-                    key_path = self.__dropbox_config['public_key_path']
-                
-                writers.append(create_dropbox_writer(_pem_path=key_path,
-                                                     _file_chunk_size=self.__dropbox_config['file_chunk_mb'] * 1024 * 1024))
-            streamers.append(streamer.VideoStreamSaver(stream=stream,
-                                                       byte_writers=writers,
-                                                       name=debug_name,
-                                                       start_time=max(0, int(time.time() - self.start_time - self.__padding)),
-                                                       stop_when_empty=stop_when_empty))
-        else: # JPG
-            if len(self.__dropbox_config) != 0:
-                writers.append(create_dropbox_writer())
-            streamers.append(streamer.StreamSaver(stream=stream,
-                                                  byte_writers=writers,
-                                                  name=debug_name,
-                                                  stop_when_empty=stop_when_empty))
-
-        list(map(lambda x: x.start(), streamers))
-        return streamers
+        for recorder in self.__recorders:
+            self.camera.wait_recording(
+                timeout=WAIT_TIME/len(self.__recorders),
+                splitter_port=recorder.splitter_port)
 
     def run(self):
-        
         camera = self.camera
         logger = logging.getLogger(__name__)
         logger.info('Starting main loop.')
-        camera.start_recording(self.__stream, format='h264')
+        for recorder in self.__recorders:
+            recorder.start_recording()
         self.__start_time = time.time()
-
         try:
             was_not_running = True
             while self.should_run:
@@ -193,18 +207,14 @@ class RunLoop(TerminableThread):
                     full_dir = os.path.join(day_str, time_str)
                     logger.info(full_dir)
 
-                    # Save the JPG
-                    self.save_stream(io.BytesIO(frame_bytes),
-                                        path=os.path.join(full_dir, 'trigger.jpg'),
-                                        debug_name=time_str + '.jpg',
-                                        stop_when_empty=True)
-                    self.wait() # Update the annotation area after the heavy save_stream() call.
-
-                    # Save the video
-                    video_streamers = self.save_stream(self.__stream,
-                                                       path=os.path.join(full_dir, 'video.h264'),
-                                                       debug_name=time_str+'.vid')
-                    self.wait() # Update the annotation area after the heavy save_stream() call.
+                    start_frame_time = max(0, int(time.time() - self.__start_time - self.__padding))
+                    for recorder in self.__recorders:
+                        recorder.persist(
+                            directory=full_dir,
+                            start_time=start_frame_time,
+                            frame=io.BytesIO(frame_bytes)
+                        )
+                    self.wait() # Update the annotation area after the heavy persist() call.
 
                     # Wait for motion to stop
                     last_motion_trigger = time.time()
@@ -220,7 +230,8 @@ class RunLoop(TerminableThread):
                             self.wait()
 
                     # Now that motion is done, stop uploading
-                    list(map(lambda x: x.stop(), video_streamers))
+                    for recorder in self.__recorders:
+                        recorder.stop_persisting()
                     camera.should_record = False
                     elapsed_time = (dt.datetime.now() - event_date).seconds
                     logger.info('Ending recording. Elapsed time %ds' % elapsed_time)
@@ -229,7 +240,8 @@ class RunLoop(TerminableThread):
         finally:
             try:
                 logger.info('Closing camera.')
-                camera.stop_recording()
+                for recorder in self.__recorders:
+                    recorder.stop_recording()
                 camera.close()
             except Exception as e:
                 pass
