@@ -93,7 +93,7 @@ The video files uploaded to Dropbox can be encrypted using symmetric key encrypt
 All Dropbox properties are contained inside the `dropbox` key of the `DESTINATIONS` object in the config file. Dropbox can be disabled by deleting the `dropbox` entry.
 - `file_chunk_kb` determines the maximum file size in kilobytes that will be uploaded to Dropbox. Files are saved in series using the name `video#.h264` like `video0.h264`, `video1.h264`, etc.
 - `token` is the Dropbox API token for your account.
-- `public_key_path` the path to the public asymmetric key. If `null` is supplied, the Dropbox files are not encrypted.
+- `public_key_path` the path to the public asymmetric key. If `null` is supplied or this field is omitted, the Dropbox files are not encrypted.
 - `size` is an array containing the width and height of the videos saved to Dropbox. This is useful for specifying a smaller size for Dropbox, saving storage and network resources. 
 </details>
 
