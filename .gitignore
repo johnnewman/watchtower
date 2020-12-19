@@ -9,3 +9,5 @@ certs/*
 instance/*
 .vscode/*
 *.bak
+nginx/certs/*
+!nginx/certs/.gitkeep

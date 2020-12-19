@@ -1,0 +1,27 @@
+
+server {
+    listen       ${NGINX_SSL_PORT} ssl;
+    listen  [::]:${NGINX_SSL_PORT} ssl;
+    server_name  _;
+
+    ssl_certificate        ${CERT_DIR}/${SSL_CERT};
+    ssl_certificate_key    ${CERT_DIR}/${SSL_CERT_KEY};
+    ssl_client_certificate ${CERT_DIR}/${SSL_CLIENT_CERT};
+    ssl_verify_client      on;
+
+    location ~ ^/api/(${API_ENDPOINTS}) {
+        include uwsgi_params;
+        uwsgi_pass unix:${UWSGI_SOCKET};
+        uwsgi_buffering off;
+    }
+
+    location ~ ^(${FRONTEND_ENDPOINTS}) {
+        include uwsgi_params;
+        uwsgi_pass unix:${UWSGI_SOCKET};
+        uwsgi_buffering off;
+    }
+
+    location / {
+        deny all;
+    }
+}
