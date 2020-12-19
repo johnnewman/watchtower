@@ -31,7 +31,7 @@
     "MOTION_SENSITIVITY": 0.8,
     "MOTION_RECORDING_PADDING": 8,
 
-    "MICRO_ENABLED": false,
+    "MICRO_ENABLED": true,
     "MICRO_BAUDRATE": 19200,
     "MICRO_PORT": "/dev/serial0",
     "MICRO_TRANSMISSION_FREQ": 2,
