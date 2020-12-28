@@ -1,6 +1,7 @@
 
 from flask import Flask
 from threading import Thread
+import asyncio
 import datetime as dt
 import io
 import logging
@@ -10,6 +11,7 @@ import time
 from .camera import SafeCamera
 from .motion.motion_detector import MotionDetector
 from .recorder import Recorder, Destination
+from .remote import micro
 from .remote.servo import Servo
 from .util.shutdown import TerminableThread
 
@@ -30,10 +32,9 @@ class RunLoop(TerminableThread):
     def __init__(self, app):
         super(RunLoop, self).__init__()
 
-        if app.config.get('MICRO_ENABLED') == True:
-            self.__micro_comm = self.setup_microcontroller_comm(app)
+        if int(os.environ['SERIAL_ENABLED']):
+            self.setup_microcontroller_comm(app)
         else:
-            self.__micro_comm = None
             self.servo = None
 
         motion_config = app.config.get_namespace('MOTION_')
@@ -59,21 +60,11 @@ class RunLoop(TerminableThread):
         self.__servo = value
 
     def setup_microcontroller_comm(self, app):
-        from .remote.microcontroller_comm import MicrocontrollerComm
         controller_config = app.config.get_namespace('MICRO_')
-        controller = MicrocontrollerComm(port=controller_config['port'],
-                                         baudrate=controller_config['baudrate'],
-                                         transmission_interval=controller_config['transmission_freq'])
-        controller.start()
-
         angle_on = controller_config['servo_angle_on']
         angle_off = controller_config['servo_angle_off']
         if angle_on is not None and angle_off is not None:
-            self.servo = Servo(angle_on,
-                               angle_off,
-                               controller)
-         
-        return controller
+            self.servo = Servo(angle_on, angle_off)
 
     def setup_destinations(self, app):
         """
@@ -157,8 +148,9 @@ class RunLoop(TerminableThread):
         """
         date_string = dt.datetime.now().strftime(self.__video_date_format)
         text = '{} | {}'.format(self.camera.name, date_string)
-        if self.__micro_comm is not None:
-            text = text + ' | Brightness: ' + str(self.__micro_comm.room_brightness)
+
+        if int(os.environ['SERIAL_ENABLED']):
+            text = text + ' | Brightness: ' + asyncio.run(micro.get_brightness())
         self.camera.annotate_text = text
         for recorder in self.__recorders:
             self.camera.wait_recording(
@@ -176,8 +168,7 @@ class RunLoop(TerminableThread):
             was_not_running = True
             while self.should_run:
                 if not camera.should_monitor:
-                    if self.__micro_comm is not None:
-                        self.__micro_comm.infrared_running = False
+                    micro.set_running(False)
                     was_not_running = True
                     self.wait()
                     continue
@@ -190,8 +181,7 @@ class RunLoop(TerminableThread):
                     self.__motion_detector.reset_base_frame()
                     was_not_running = False
 
-                if self.__micro_comm is not None:                        
-                    self.__micro_comm.infrared_running = True
+                micro.set_running(True)
 
                 self.wait()
                 motion_detected, frame_bytes = self.__motion_detector.detect()

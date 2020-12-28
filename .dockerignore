@@ -2,5 +2,8 @@ ancillary/
 icebox/
 instance/
 nginx/
+microcontroller/
 venv/
-watchtower/config/
+docker-compose.yml
+Dockerfile
+.env

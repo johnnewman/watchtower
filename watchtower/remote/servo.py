@@ -1,4 +1,4 @@
-from .microcontroller_comm import MicrocontrollerComm
+from . import micro
 
 class Servo:
     """
@@ -9,17 +9,14 @@ class Servo:
 
     def __init__(self,
                  angle_on: int,
-                 angle_off: int,
-                 controller: MicrocontrollerComm):
+                 angle_off: int):
         
         super(Servo, self).__init__()
         self.__angle_on = angle_on
         self.__angle_off = angle_off
-        self.__controller = controller
 
     def enable(self):
-        self.__controller.set_servo_angle(self.__angle_on)
+        micro.set_angle(self.__angle_off)
 
     def disable(self):
-        self.__controller.set_servo_angle(self.__angle_off)
-        
+        micro.set_angle(self.__angle_on)
