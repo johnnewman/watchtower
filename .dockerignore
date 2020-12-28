@@ -2,7 +2,6 @@ ancillary/
 icebox/
 instance/
 nginx/
-microcontroller/
 venv/
 docker-compose.yml
 Dockerfile

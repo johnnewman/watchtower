@@ -22,7 +22,9 @@ services:
       - SSL_CERT_KEY
       - SSL_CLIENT_CERT
   mc_server:
-    build: ./microcontroller/
+    build: 
+      dockerfile: ./microcontroller/Dockerfile
+      context: .
     devices: 
       - "${SERIAL_DEVICE}:${SERIAL_DEVICE}"
     ports:

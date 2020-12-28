@@ -1,5 +1,6 @@
 FROM python:3.7.9-buster
 
+# Install all dependencies for opencv-python-headless
 RUN apt-get update && apt-get install -y \
   libaom0 \
   libatlas3-base \
@@ -70,12 +71,12 @@ WORKDIR /watchtower
 
 # Speed up install time by using precompiled packages at piwheels.
 COPY pip.conf /etc/
-
 COPY requirements.txt ./
-
 RUN pip install -r requirements.txt
 
-COPY . .
+COPY ./watchtower ./watchtower
+COPY ./config ./config
+COPY ./uwsgi.ini .
 
 ARG SERVER_UID
 ARG VIDEO_GID
