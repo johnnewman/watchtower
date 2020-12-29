@@ -29,7 +29,7 @@ class MicrocontrollerComm:
         Sets up the serial connection but does not start data transmission.
 
         :param port: The port of the serial connection, like "/dev/serial0".
-        :param baudrate: The baudrate of the serial connection.
+        :param baudrate: The baud rate of the serial connection.
         :param transmission_interval: The interval at which commands are sent
         over the serial line.
         """
@@ -156,6 +156,3 @@ class MicrocontrollerComm:
                     self.__enqueue_command(command)
             
             await asyncio.sleep(1.0/self.__transmission_interval/2.0)
-        # self.__write_command(INFRARED_OFF_COMMAND)
-        # self.__controller.close()
-        print('Stopped.')

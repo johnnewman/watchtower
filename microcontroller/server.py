@@ -1,9 +1,31 @@
+"""Server for microcontroller communication.
+
+Required environment variables:
+- SERIAL_ENABLED - 0 will abort the program on startup. Set to 1 to use this
+  module.
+- SERIAL_DEVICE - The device for serial communication, like "/dev/serial0".
+- SERIAL_BAUD - The baud rate for the serial connection. Must match the
+  microcontroller's baud rate.
+- SERVER_PORT - The port number used to listen for requests.
+
+This module starts two coroutines, one that listens for network connections
+and another that communicates serially with a microcontroller via
+microcontroller_comm.py. Requests are interpreted here and passed to the
+microcontroller using a MicrocontrollerComm instance.
+
+Valid requests:
+"start" - Tells the microcontroller to start monitoring room brightness.
+"stop" - Tells the microcontroller to stop monitoring room brightness.
+"brightness" - Returns the room's current brightness.
+"angle ###" - Tells the microcontroller to move a servo from 0 and 180 degrees.
+"""
+
 import asyncio
 import os
 import re
 from microcontroller_comm import MicrocontrollerComm
 
-# Server config
+# Server endpoints
 START = 'start'
 STOP = 'stop'
 BRIGHTNESS = 'brightness'
@@ -76,7 +98,7 @@ async def main():
     Starts a socket server and serial comms.
     """
     await asyncio.gather(
-        wait_for_commands('0.0.0.0', int(os.environ['MC_SERVER_PORT'])),
+        wait_for_commands('0.0.0.0', int(os.environ['SERVER_PORT'])),
         controller.loop()
     )
 
