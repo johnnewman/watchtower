@@ -9,6 +9,9 @@ server {
     ssl_client_certificate ${CERT_DIR}/${SSL_CLIENT_CERT};
     ssl_verify_client      on;
 
+    allow ${ALLOWED_CLIENT_IP};
+    deny all;
+
     location ~ ^/api/(${API_ENDPOINTS}) {
         include uwsgi_params;
         uwsgi_pass unix:${UWSGI_SOCKET};

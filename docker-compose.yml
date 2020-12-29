@@ -2,7 +2,7 @@ services:
   server:
     build:
       context: ./nginx/
-      args: # Used in the nginx Dockerfile
+      args:
         - SERVER_UID
         - SERVER_GID
     volumes:
@@ -15,6 +15,7 @@ services:
     environment:
       - API_ENDPOINTS
       - FRONTEND_ENDPOINTS
+      - ALLOWED_CLIENT_IP
       - NGINX_SSL_PORT
       - UWSGI_SOCKET
       - CERT_DIR
@@ -37,7 +38,7 @@ services:
   app:
     build:
       context: .
-      args: # Used in the Watchtower Dockerfile
+      args:
         - SERVER_UID
         - VIDEO_GID
     devices:
