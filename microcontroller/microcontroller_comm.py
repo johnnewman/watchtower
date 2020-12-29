@@ -118,7 +118,6 @@ class MicrocontrollerComm:
             elif response == REBOOT_MESSAGE:
                 print('Microcontroller has rebooted.')
             elif response.startswith(BRIGHTNESS_PREFIX):
-                print(f'Received {response}')
                 try:
                     self.__infrared_running = True
                     self.brightness = int(response[len(BRIGHTNESS_PREFIX):])

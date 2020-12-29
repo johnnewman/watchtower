@@ -1,14 +1,12 @@
 import asyncio
 import os
 import re
-import time
 from microcontroller_comm import MicrocontrollerComm
 
 # Server config
 START = 'start'
 STOP = 'stop'
 BRIGHTNESS = 'brightness'
-RUNNING = 'running'
 ANGLE = 'angle'
 
 enabled = int(os.environ['SERIAL_ENABLED'])
@@ -21,8 +19,8 @@ if enabled:
 async def handle_command(reader, writer):
     data = await reader.read(100)
     message = data.decode()
-    supported_endpoints = [START, STOP, BRIGHTNESS, RUNNING, ANGLE]
-    re_result = re.match('^(?P<message>({}|{}|{}|{}|{}))(?P<param> \d+)?'.format(*supported_endpoints), message)
+    supported_endpoints = [START, STOP, BRIGHTNESS, ANGLE]
+    re_result = re.match('^(?P<message>({}|{}|{}|{}))(?P<param> \d+)?'.format(*supported_endpoints), message)
 
     async def send_response(message):
         writer.write(message.encode())
@@ -36,7 +34,6 @@ async def handle_command(reader, writer):
     
     addr = writer.get_extra_info('peername')
     message = re_result.group('message')
-    print(f'{addr} hit {message}\t{time.time()}')
 
     if message == START:
         controller.infrared_running = True
@@ -61,6 +58,7 @@ async def handle_command(reader, writer):
         await send_response('ok')
         return
         
+    print(f'{addr} hit unrecognized endpoint.')
     await send_response('error')
 
 async def wait_for_commands(addr, port):
