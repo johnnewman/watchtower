@@ -86,7 +86,7 @@ Final steps to take:\n\
             - 'SSL_CERT=wt.crt'\n\
             - 'SSL_CERT_KEY=wt.key'\n\
             - 'SSL_CLIENT_CERT=ca.crt'\n\
-    2.2) Enter the IP address (typically the reverse proxy address) allowed to access this machine by editing 'ALLOWED_CLIENT_IP=x.x.x.x' in \"$WATCHTOWER_PATH/.env\"\n\
+    2.2) Enter the IP address (typically the reverse proxy address) allowed to access this machine by editing 'ALLOWED_CLIENT_IP=' in \"$WATCHTOWER_PATH/.env\"\n\
 3) Optional: To use a microcontroller, you will need to:\n\
     3.1) Enable serial access via 'sudo raspiconfig'\n\
     3.2) Set 'SERIAL_ENABLED=1' in \"$WATCHTOWER_PATH/.env\"\n\
