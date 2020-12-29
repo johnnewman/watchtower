@@ -16,7 +16,7 @@ class Servo:
         self.__angle_off = angle_off
 
     def enable(self):
-        micro.set_angle(self.__angle_off)
+        micro.set_angle(self.__angle_on)
 
     def disable(self):
-        micro.set_angle(self.__angle_on)
+        micro.set_angle(self.__angle_off)
