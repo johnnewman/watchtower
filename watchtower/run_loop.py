@@ -1,7 +1,6 @@
 
 from flask import Flask
 from threading import Thread
-import asyncio
 import datetime as dt
 import io
 import logging
@@ -149,8 +148,10 @@ class RunLoop(TerminableThread):
         date_string = dt.datetime.now().strftime(self.__video_date_format)
         text = '{} | {}'.format(self.camera.name, date_string)
 
-        if int(os.environ['SERIAL_ENABLED']):
-            text = text + ' | Brightness: ' + asyncio.run(micro.get_brightness())
+        # Only show brightness if the microcontroller is on and we're monitoring.
+        if int(os.environ['SERIAL_ENABLED']) and self.camera.should_monitor:
+            text = text + ' | Brightness: ' + micro.get_brightness()
+
         self.camera.annotate_text = text
         for recorder in self.__recorders:
             self.camera.wait_recording(
@@ -168,7 +169,8 @@ class RunLoop(TerminableThread):
             was_not_running = True
             while self.should_run:
                 if not camera.should_monitor:
-                    micro.set_running(False)
+                    if not was_not_running:
+                        micro.set_running(False)
                     was_not_running = True
                     self.wait()
                     continue
@@ -179,9 +181,10 @@ class RunLoop(TerminableThread):
                         self.wait()
                     # Reset the base frame after coming online.
                     self.__motion_detector.reset_base_frame()
-                    was_not_running = False
+                    # Start microcontroller.
+                    micro.set_running(True)
 
-                micro.set_running(True)
+                    was_not_running = False
 
                 self.wait()
                 motion_detected, frame_bytes = self.__motion_detector.detect()
