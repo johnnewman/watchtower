@@ -34,7 +34,7 @@ services:
       - SERIAL_ENABLED
       - SERIAL_BAUD
       - SERIAL_DEVICE
-      - MC_SERVER_PORT
+      - SERVER_PORT=${MC_SERVER_PORT}
   app:
     build:
       context: .
