@@ -59,9 +59,9 @@ class RunLoop(TerminableThread):
         self.__servo = value
 
     def setup_microcontroller_comm(self, app):
-        controller_config = app.config.get_namespace('MICRO_')
-        angle_on = controller_config['servo_angle_on']
-        angle_off = controller_config['servo_angle_off']
+        controller_config = app.config.get_namespace('SERVO_')
+        angle_on = controller_config['angle_on']
+        angle_off = controller_config['angle_off']
         if angle_on is not None and angle_off is not None:
             self.servo = Servo(angle_on, angle_off)
 
