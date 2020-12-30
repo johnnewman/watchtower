@@ -30,6 +30,7 @@ services:
       args:
         - WATCHTOWER_UID
         - SERIAL_GID
+    restart: on-failure
     devices: 
       - ${SERIAL_DEVICE}:${SERIAL_DEVICE}
     ports:
@@ -43,6 +44,7 @@ services:
   icebox: # Container controlling case fan
     build:
       context: ./icebox/
+    restart: on-failure
     user: "${WATCHTOWER_UID}:${WATCHTOWER_GID}"
     group_add:
       - ${GPIO_GID}
@@ -63,6 +65,7 @@ services:
       args:
         - WATCHTOWER_UID
         - VIDEO_GID
+    restart: on-failure
     depends_on:
       - mc_server
     devices:
