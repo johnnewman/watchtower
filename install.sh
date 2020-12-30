@@ -6,15 +6,14 @@
 # This script only needs to be run once. This will set up everything Watchtower
 # needs so that you simply need to run `docker-compose build` and `docker-compose up`.
 # In summary, this script:
-# - Updates all system packages.
 # - Configures a Firewall to only allow HTTPS and SSH traffic.
-# - Installs docker and docker-compose.
-# - Adds the current user to the docker group.
+# - Installs docker/docker-compose and builds the docker containers.
 # - Creates a new "watchtower" user to run containers with unprivileged access.
 # - Adds necessary GID and UID parameters to the .env file.
 # - Downloads Icebox for cooling the system.
-# - Creates the recording and log directory.
 # - Schedules a cron job to manage disk usage.
+# - Enables a systemd service for starting all Watchtower containers.
+
 
 set -e
 
