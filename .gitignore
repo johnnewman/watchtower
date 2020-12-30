@@ -7,6 +7,7 @@ logs/*
 certs/*
 *.h264
 instance/*
+icebox/*
 .vscode/*
 *.bak
 nginx/certs/*
