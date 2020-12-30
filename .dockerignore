@@ -1,4 +1,5 @@
 ancillary/
+!ancillary/pip.conf
 icebox/
 instance/
 nginx/

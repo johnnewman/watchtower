@@ -70,17 +70,16 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /watchtower
 
 # Speed up install time by using precompiled packages at piwheels.
-COPY pip.conf /etc/
-COPY requirements.txt ./
+COPY ./ancillary/pip.conf /etc/
+COPY ./watchtower/requirements.txt ./
 RUN pip install -r requirements.txt
 
 COPY ./watchtower ./watchtower
 COPY ./config ./config
-COPY ./uwsgi.ini .
 
 ARG SERVER_UID
 ARG VIDEO_GID
 
 USER $SERVER_UID:$VIDEO_GID
 
-CMD [ "uwsgi", "--ini", "/watchtower/uwsgi.ini" ]
+CMD [ "uwsgi", "--ini", "/watchtower/watchtower/uwsgi.ini" ]

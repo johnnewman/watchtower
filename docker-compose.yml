@@ -1,5 +1,5 @@
 services:
-  server:
+  server: # Container running nginx
     build:
       context: ./nginx/
       args:
@@ -22,7 +22,7 @@ services:
       - SSL_CERT
       - SSL_CERT_KEY
       - SSL_CLIENT_CERT
-  mc_server:
+  mc_server: # Container that communicates with microcontroller
     build: 
       dockerfile: ./microcontroller/Dockerfile
       context: .
@@ -35,18 +35,19 @@ services:
       - SERIAL_BAUD
       - SERIAL_DEVICE
       - SERVER_PORT=${MC_SERVER_PORT}
-  app:
+  app: # Container running Watchtower & uWSGI
     build:
+      dockerfile: ./watchtower/Dockerfile
       context: .
       args:
         - SERVER_UID
         - VIDEO_GID
     devices:
-      - /dev/vchiq:/dev/vchiq
-      - /dev/vcsm:/dev/vcsm
+      - /dev/vchiq:/dev/vchiq # Interface to VideoCore 
+      - /dev/vcsm:/dev/vcsm # VideoCore shared memory
     volumes:
       - /tmp:/tmp # Shared socket directory
-      - /opt/vc:/opt/vc # Video libraries
+      - /opt/vc:/opt/vc # VideoCore libraries
       - ./instance:/watchtower/instance # Recordings & runtime configs
       - /var/log/watchtower:/var/log/watchtower # Logs
     environment:
