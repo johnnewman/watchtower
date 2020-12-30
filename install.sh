@@ -50,9 +50,11 @@ sudo useradd -M watchtower
 echo "Created watchtower user with uid: `id -u watchtower` gid: `id -g watchtower`"
 
 # Add the new UID and GID to the .env file for Docker.
-sed -i "s,<s_uid>,`id -u watchtower`, ; s,<s_gid>,`id -g watchtower`," "$WATCHTOWER_PATH/.env"
-# Add the video group's GID to the .env file.
-sed -i "s,<v_gid>,`getent group video | awk -F: '{printf "%d", $3}'`", "$WATCHTOWER_PATH/.env"
+sed -i "s,<watchtower_uid>,`id -u watchtower`, ; s,<watchtower_gid>,`id -g watchtower`," "$WATCHTOWER_PATH/.env"
+# Add the video group's GID.
+sed -i "s,<video_gid>,`getent group video | awk -F: '{printf "%d", $3}'`", "$WATCHTOWER_PATH/.env"
+# Add the dialout (serial) group's GID.
+sed -i "s,<serial_gid>,`getent group dialout | awk -F: '{printf "%d", $3}'`", "$WATCHTOWER_PATH/.env"
 
 # Create instance and recordings folders.
 mkdir -p "$WATCHTOWER_PATH/instance/recordings"

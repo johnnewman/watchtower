@@ -77,9 +77,9 @@ RUN pip install -r requirements.txt
 COPY ./watchtower ./watchtower
 COPY ./config ./config
 
-ARG SERVER_UID
+ARG WATCHTOWER_UID
 ARG VIDEO_GID
 
-USER $SERVER_UID:$VIDEO_GID
+USER $WATCHTOWER_UID:$VIDEO_GID
 
 CMD [ "uwsgi", "--ini", "/watchtower/watchtower/uwsgi.ini" ]

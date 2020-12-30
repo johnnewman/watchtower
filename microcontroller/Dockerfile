@@ -9,4 +9,9 @@ RUN pip install -r requirements.txt
 
 COPY ./microcontroller .
 
+ARG WATCHTOWER_UID
+ARG SERIAL_GID
+
+USER $WATCHTOWER_UID:$SERIAL_GID
+
 CMD [ "python3", "-u", "server.py" ]
