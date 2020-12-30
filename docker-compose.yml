@@ -22,6 +22,7 @@ services:
       - SSL_CERT
       - SSL_CERT_KEY
       - SSL_CLIENT_CERT
+
   mc_server: # Container that communicates with microcontroller
     build: 
       dockerfile: ./microcontroller/Dockerfile
@@ -30,7 +31,7 @@ services:
         - WATCHTOWER_UID
         - SERIAL_GID
     devices: 
-      - "${SERIAL_DEVICE}:${SERIAL_DEVICE}"
+      - ${SERIAL_DEVICE}:${SERIAL_DEVICE}
     ports:
       - "${MC_SERVER_PORT}"
     environment:
@@ -38,6 +39,23 @@ services:
       - SERIAL_BAUD
       - SERIAL_DEVICE
       - SERVER_PORT=${MC_SERVER_PORT}
+
+  icebox: # Container controlling case fan
+    build:
+      context: ./icebox/
+    user: "${WATCHTOWER_UID}:${WATCHTOWER_GID}"
+    group_add:
+      - ${GPIO_GID}
+      - ${VIDEO_GID}
+    devices:
+      - /dev/gpiomem:/dev/gpiomem
+      - /dev/vchiq:/dev/vchiq
+    volumes:
+      - /opt/vc:/opt/vc
+      - /usr/bin/vcgencmd:/usr/bin/vcgencmd
+    environment:
+      - LD_LIBRARY_PATH=/opt/vc/lib
+
   app: # Container running Watchtower & uWSGI
     build:
       dockerfile: ./watchtower/Dockerfile
@@ -45,6 +63,8 @@ services:
       args:
         - WATCHTOWER_UID
         - VIDEO_GID
+    depends_on:
+      - mc_server
     devices:
       - /dev/vchiq:/dev/vchiq # Interface to VideoCore 
       - /dev/vcsm:/dev/vcsm # VideoCore shared memory

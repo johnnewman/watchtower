@@ -3,19 +3,18 @@
 # John Newman
 # 2020-05-23
 #
-# This script installs all of the necessary dependencies for Watchtower to run.
-# In summary:
-# - Installs all system libs and python dependencies for Watchtower.
-# - Installs Icebox and its dependencies for cooling the system.
-# - Configures a Firewall to only allow HTTP(S) and SSH traffic.
+# This script only needs to be run once. This will set up everything Watchtower
+# needs so that you simply need to run `docker-compose build` and `docker-compose up`.
+# In summary, this script:
+# - Updates all system packages.
+# - Configures a Firewall to only allow HTTPS and SSH traffic.
+# - Installs docker and docker-compose.
+# - Adds the current user to the docker group.
+# - Creates a new "watchtower" user to run containers with unprivileged access.
+# - Adds necessary GID and UID parameters to the .env file.
+# - Downloads Icebox for cooling the system.
+# - Creates the recording and log directory.
 # - Schedules a cron job to manage disk usage.
-# - Creates systemd services for Watchtower and Icebox.
-# - Creates the log directory for Watchtower and the cron job.
-# - Creates a simple Watchtower configuration to only save motion to disk.
-# - Copies the nginx app gateway config file to access Watchtower via uWSGI.
-# 
-# Additional setup to the watchtower_config file is needed to enable Dropbox
-# uploads and microcontroller support, described in the output.
 
 set -e
 
@@ -55,13 +54,19 @@ sed -i "s,<watchtower_uid>,`id -u watchtower`, ; s,<watchtower_gid>,`id -g watch
 sed -i "s,<video_gid>,`getent group video | awk -F: '{printf "%d", $3}'`", "$WATCHTOWER_PATH/.env"
 # Add the dialout (serial) group's GID.
 sed -i "s,<serial_gid>,`getent group dialout | awk -F: '{printf "%d", $3}'`", "$WATCHTOWER_PATH/.env"
+# Add the gpio group's GID.
+sed -i "s,<gpio_gid>,`getent group gpio | awk -F: '{printf "%d", $3}'`", "$WATCHTOWER_PATH/.env"
+
+# Set up Icebox
+echo "Downloading Icebox..."
+git clone https://github.com/johnnewman/icebox.git "$ICEBOX_PATH"
 
 # Create instance and recordings folders.
 mkdir -p "$WATCHTOWER_PATH/instance/recordings"
 sudo chgrp video "$WATCHTOWER_PATH/instance"
-sudo chmod 775 "$WATCHTOWER_PATH/instance"
+sudo chmod 770 "$WATCHTOWER_PATH/instance"
 sudo chgrp video "$WATCHTOWER_PATH/instance/recordings"
-sudo chmod 775 "$WATCHTOWER_PATH/instance/recordings"
+sudo chmod 770 "$WATCHTOWER_PATH/instance/recordings"
 echo "Created \"$WATCHTOWER_PATH/instance/recordings\""
 
 # Create the logs directory. The watchtower instance will be started using the video group.
@@ -94,4 +99,4 @@ Final steps to take:\n\
     3.2) Set 'SERIAL_ENABLED=1' in \"$WATCHTOWER_PATH/.env\"\n\
     3.3) Configure servo angles in \"$WATCHTOWER_PATH/config/watchtower_config.json\"\n\
 4) Optional: Configure the reverse proxy with an upstream location to this machine. See \"$WATCHTOWER_PATH/ancillary/nginx/reverse_proxy\"\n\
-5) Optional: Configure \"$WATCHTOWER_PATH/config/watchtower_config.json\" with Dropbox support."
+5) Optional: Configure \"$WATCHTOWER_PATH/config/watchtower_config.json\" with Dropbox support. See \"$WATCHTOWER_PATH/config/watchtower_config_advanced.json\" for an example."
