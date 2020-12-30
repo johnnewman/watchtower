@@ -81,7 +81,16 @@ CRON_JOB=`(crontab -l 2>/dev/null ; echo "$CRON_JOB")`
 echo "$CRON_JOB" | crontab
 echo "Created disk_purge cron job."
 
-echo -e "\n\nInstallation finished! The camera is configured to record to disk at \"$WATCHTOWER_PATH/instance/recordings\".\n\n\
+# Put the user and working directory into the service file and install it.
+sed -i".bak" "s,<user>,$USER,g ; s,<watchtower_path>,$WATCHTOWER_PATH,g" "$WATCHTOWER_PATH/ancillary/pi/watchtower.service"
+sudo ln -s "$WATCHTOWER_PATH/ancillary/pi/watchtower.service" "/etc/systemd/system/"
+sudo systemctl enable watchtower.service
+echo "Created systemd watchtower.service file and configured it to run on boot."
+echo "   NOTE: This service has not been started."
+
+docker-compose -f "$WATCHTOWER_PATH/docker-compose.yml" --env-file "$WATCHTOWER_PATH/.env" build
+
+echo -e "\n\nInstallation finished! Watchtower is configured to record to disk at \"$WATCHTOWER_PATH/instance/recordings\".\n\n\
 Final steps to take:\n\
 1) REQUIRED: Enable camera access via 'sudo raspiconfig'\n\
 2) Optional: To use the HTTP API and frontend:
@@ -99,4 +108,7 @@ Final steps to take:\n\
     3.2) Set 'SERIAL_ENABLED=1' in \"$WATCHTOWER_PATH/.env\"\n\
     3.3) Configure servo angles in \"$WATCHTOWER_PATH/config/watchtower_config.json\"\n\
 4) Optional: Configure the reverse proxy with an upstream location to this machine. See \"$WATCHTOWER_PATH/ancillary/nginx/reverse_proxy\"\n\
-5) Optional: Configure \"$WATCHTOWER_PATH/config/watchtower_config.json\" with Dropbox support. See \"$WATCHTOWER_PATH/config/watchtower_config_advanced.json\" for an example."
+5) Optional: Configure \"$WATCHTOWER_PATH/config/watchtower_config.json\" with Dropbox support. See \"$WATCHTOWER_PATH/config/watchtower_config_advanced.json\" for an example.\n\n\
+After making changes to watchtower_config.json or uploading certificates, rerun 'docker-compose build'.\n\n\
+To start Watchtower now, run:\n    sudo systemctl start watchtower\n\
+To view logs, run:\n    docker-compose logs
