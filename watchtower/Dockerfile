@@ -70,7 +70,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /watchtower
 
 # Speed up install time by using precompiled packages at piwheels.
-COPY ./ancillary/pip.conf /etc/
+COPY ./ancillary/pi/pip.conf /etc/
 COPY ./watchtower/requirements.txt ./
 RUN pip install -r requirements.txt
 
