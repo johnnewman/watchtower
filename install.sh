@@ -23,7 +23,7 @@ ICEBOX_PATH="$WATCHTOWER_PATH/icebox"
 
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y ufw
+sudo apt install -y ufw python3-pip
 
 # Install docker
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -87,27 +87,36 @@ sudo systemctl enable watchtower.service
 echo "Created systemd watchtower.service file and configured it to run on boot."
 echo "   NOTE: This service has not been started."
 
-docker-compose -f "$WATCHTOWER_PATH/docker-compose.yml" --env-file "$WATCHTOWER_PATH/.env" build
+echo -e "\n\nInstallation finished! Watchtower is configured to record to disk at \"$WATCHTOWER_PATH/instance/recordings\". Final steps to take:
 
-echo -e "\n\nInstallation finished! Watchtower is configured to record to disk at \"$WATCHTOWER_PATH/instance/recordings\".\n\n\
-Final steps to take:\n\
-1) REQUIRED: Enable camera access via 'sudo raspiconfig'\n\
-2) Optional: To use the HTTP API and frontend:
-    2.1) Upload SSL certificates to \"$WATCHTOWER_PATH/nginx/certs\". You will need:\n\
-        - A public SSL certificate.
-        - The corresponding private key. These two used for encrypting traffic.
-        - A certificate authority cert for validating clients. Necessary to restrict access to trusted users.
-        These 3 files must match the names defined in \"$WATCHTOWER_PATH/.env\":\n\
-            - 'SSL_CERT=wt.crt'\n\
-            - 'SSL_CERT_KEY=wt.key'\n\
-            - 'SSL_CLIENT_CERT=ca.crt'\n\
-    2.2) Enter the IP address (typically the reverse proxy address) allowed to access this machine by editing 'ALLOWED_CLIENT_IP=' in \"$WATCHTOWER_PATH/.env\"\n\
-3) Optional: To use a microcontroller, you will need to:\n\
-    3.1) Enable serial access via 'sudo raspiconfig'\n\
-    3.2) Set 'SERIAL_ENABLED=1' in \"$WATCHTOWER_PATH/.env\"\n\
-    3.3) Configure servo angles in \"$WATCHTOWER_PATH/config/watchtower_config.json\"\n\
-4) Optional: Configure the reverse proxy with an upstream location to this machine. See \"$WATCHTOWER_PATH/ancillary/nginx/reverse_proxy\"\n\
-5) Optional: Configure \"$WATCHTOWER_PATH/config/watchtower_config.json\" with Dropbox support. See \"$WATCHTOWER_PATH/config/watchtower_config_advanced.json\" for an example.\n\n\
-After making changes to watchtower_config.json or uploading certificates, rerun 'docker-compose build'.\n\n\
-To start Watchtower now, run:\n    sudo systemctl start watchtower\n\
-To view logs, run:\n    docker-compose logs
+REQUIRED:
+1) In a new shell session, run:
+    docker-compose -f $WATCHTOWER_PATH/docker-compose.yml --env-file $WATCHTOWER_PATH/.env build
+2) Enable camera access via 'sudo raspiconfig'
+
+OPTIONAL:
+3) To use the HTTP API and frontend:
+    3.1) Upload SSL certificates to \"$WATCHTOWER_PATH/nginx/certs\". You will need:
+            a) A public SSL certificate.
+            b) The corresponding private key. These two are used for encrypting traffic.
+            c) A certificate authority cert for validating clients. Necessary to restrict access to trusted users.
+         These 3 files must match the names defined in \"$WATCHTOWER_PATH/.env\":
+            a) 'SSL_CERT=wt.crt'
+            b) 'SSL_CERT_KEY=wt.key'
+            c) 'SSL_CLIENT_CERT=ca.crt'
+    3.2) Enter the IP address (typically the reverse proxy address) allowed to access this machine in \"$WATCHTOWER_PATH/.env\":
+            'ALLOWED_CLIENT_IP=x.x.x.x'
+4) To use a microcontroller, you will need to:
+    4.1) Enable serial access via 'sudo raspiconfig'
+    4.2) Set 'SERIAL_ENABLED=1' in \"$WATCHTOWER_PATH/.env\"
+    4.3) Configure servo angles in \"$WATCHTOWER_PATH/config/watchtower_config.json\"
+5) Configure the reverse proxy with an upstream location to this machine. See \"$WATCHTOWER_PATH/ancillary/nginx/reverse_proxy\"
+6) Configure \"$WATCHTOWER_PATH/config/watchtower_config.json\" with Dropbox support. See watchtower_config_advanced.json for an example.
+
+After making changes to watchtower_config.json or uploading certificates, rerun 'docker-compose build' from step 1 above.
+
+To start Watchtower after building in step 1, run:
+    sudo systemctl start watchtower
+Once running, to view logs from all containers, run:
+    docker-compose logs
+"
