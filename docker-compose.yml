@@ -62,6 +62,7 @@ services:
     build:
       dockerfile: ./watchtower/Dockerfile
       context: .
+      target: wt-run
       args:
         - WATCHTOWER_UID
         - VIDEO_GID
