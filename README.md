@@ -36,10 +36,10 @@ There is an included [install script](install.sh) for Raspbian Buster that will 
 
 The rest of this readme breaks down each Watchtower component and describes its configuration located in [watchtower_config.json](watchtower/config/watchtower_config_example.json).
  1. [API endpoints](./api.md)
- 3. [Front-end web app](#2-motion-detection)
- 3. [Motion detection](#2-motion-detection)
- 4. [Optional Dropbox file upload](#3-optional-dropbox-file-upload)
- 5. [Optional microcontroller](#4-optional-microcontroller-infrared-and-servos)
+ 2. [Front-end web app](#2-front-end-web-app)
+ 3. [Motion detection](#3-motion-detection)
+ 4. [Optional Dropbox file upload](#4-optional-dropbox-file-upload)
+ 5. [Optional microcontroller](#5-optional-microcontroller-infrared-and-servos)
  
  ---
 
@@ -58,7 +58,7 @@ The web app is broken into sections:
 
 | Home | Recordings | Settings |
 | --- | --- | --- |
-| ![Home tab](ancillary/screenshots/home.jpg) | ![Recordings tab](ancillary/screenshots/settings.jpg) | ![Home](ancillary/screenshots/settings.jpg)|
+| <img src="ancillary/screenshots/home.jpg" width="235"/> | <img src="ancillary/screenshots/recordings.jpg" width="235"/> | <img src="ancillary/screenshots/settings.jpg" width="235"/>|
 
 <details>
   <summary><b>Configuration</b></summary>
