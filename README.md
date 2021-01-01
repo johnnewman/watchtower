@@ -9,20 +9,30 @@
 
 Watchtower turns your Raspberry Pi into a DIY security camera. Put as many cameras as you want on your network and each instance will independently scan for motion and, when triggered, will save a recording to disk in the h264 format and upload an encrypted copy to Dropbox. You can record to these destinations using different resolutions, which allows you to simultaneously record the full HD video to disk while recording a lower-resolution version to Dropbox.
 
-The central package that runs on each Raspberry Pi is named [watchtower](watchtower). It's a Python 3 Flask app with API endpoints that allow you to start and stop monitoring, stream via MJPEG, record, download and delete recordings, and tweak camera settings. See [api.md](./api.md) for API documentation. There is also an optional web app that provides a graphical interface for these APIs.
+The Watchtower project is composed of multiple Docker containers that each carry out a specific function:
+- one container runs an nginx server
+- one communicates over a serial connection with an optional microcontroller
+- one monitors the SoC temperature and controls an optional cooling fan
+- one runs the main [watchtower](watchtower) package
 
-Watchtower was designed to take advantage of the capabilities of the Pi NoIR camera. An optional program for a microcontroller is included to read analog room brightness, control infrared LED intensity for night vision, move an optional servo, and communicate with Watchtower over the Raspberry Pi's GPIO ports.
+No container runs privileged as root. Only the minimum required access is provided to each container.
+
+The central [watchtower](watchtower) package is a Python 3 Flask app powered by uWSGI. It has API endpoints (publicly available via the nginx container) that allow you to start and stop monitoring, stream via MJPEG, record, download and delete recordings, and tweak camera settings. See [api.md](./api.md) for API documentation. This package also has an optional web app that provides a graphical interface for these APIs.
+
+Watchtower was designed to take advantage of the Pi NoIR camera. An optional program for a microcontroller is included to read analog room brightness, control infrared LED intensity for night vision, move an optional servo, and communicate with Watchtower's microcontroller container using the Raspberry Pi's GPIO ports.
 
 A 3D case for the system is located in [ancillary/case/](ancillary/case/). This case houses the Raspberry Pi, camera, microcontroller, servo, IR LEDs, fan, and more. A Fritzing diagram of the case's internal hardware is included in [ancillary/hardware/](ancillary/hardware).
 <p align="center">
     <img src="ancillary/case/v3/v3_xray.png" width="350" />
 </p>
 
-### Server setup
+### Setup
 
-A [uWSGI configuration file](wsgi.ini) is included that will start the Watchtower Flask app and allow up to 5 simultaneous network connections. An nginx configuration file is included in [ancillary/nginx/app_gateway](ancillary/nginx/app_gateway) to run uWSGI behind nginx and proxy all requests to the uWSGI instance.
+There is an included [install script](install.sh) for Raspberry Pi OS Lite that will set up the Watchtower application and place it behind a firewall. The install script only needs to be run once. After running, open a new shell session and run `docker-compose build` to build all of the containers. Finally, run `sudo systemctl start watchtower` to start the Watchtower application.
 
-A second nginx configuration file is included in [ancillary/nginx/reverse_proxy](ancillary/nginx/reverse_proxy) for the main server that will handle traffic from the internet. This is deisgned to proxy all requests to one of the upstream nginx servers running Watchtower.
+The final (and optional) steps outside of the script's scope are creating your SSL certificates for the web API, configuring the public-facing nginx reverse proxy, and fine-tuning your Watchtower config file for Dropbox and microcontroller support.
+
+The nginx configuration file included in [ancillary/nginx/reverse_proxy](ancillary/nginx/reverse_proxy) is for the main server that will handle traffic from the internet. This is deisgned to proxy all requests to one of the upstream nginx servers running Watchtower.
 
 <p align="center">
 <img src="ancillary/system_diagram.png"/>
@@ -32,16 +42,13 @@ Both the reverse proxy and the upstream app gateway configurations encrypt all t
 
 ---
 
-There is an included [install script](install.sh) for Raspbian Buster that will set up a simple Watchtower instance and place it behind a firewall. The final steps outside of the script's scope are creating your SSL certificates for the web API, configuring the public-facing nginx reverse proxy, and fine-tuning your Watchtower config file for Dropbox and microcontroller support.
-
-The rest of this readme breaks down each Watchtower component and describes its configuration located in [watchtower_config.json](watchtower/config/watchtower_config_example.json).
+The rest of this readme breaks down each Watchtower component and describes its configuration located in [config/watchtower_config.json](config/watchtower_config_example.json).
  1. [API endpoints](./api.md)
  2. [Front-end web app](#2-front-end-web-app)
  3. [Motion detection](#3-motion-detection)
  4. [Optional Dropbox file upload](#4-optional-dropbox-file-upload)
  5. [Optional microcontroller](#5-optional-microcontroller-infrared-and-servos)
- 
- ---
+
 
 ### 1. API Endpoints
 
@@ -49,7 +56,7 @@ The rest of this readme breaks down each Watchtower component and describes its 
 
 ### 2. Front-end web app
 
-An optional web app for each Watchtower instance can be enabled. You can access it in a browser through the reverse proxy by going to `https://proxy_address/camera0/`. This provides a simple interface for Watchtower built with [Bootstrap](https://getbootstrap.com/). 
+An optional web app for each Pi's Watchtower instance can be enabled. You can access it in a browser through the reverse proxy by going to `https://proxy_address/camera0/`. This provides a simple interface for Watchtower built with [Bootstrap](https://getbootstrap.com/). 
 
 The web app is broken into sections:
 - The Home section lets you view the camera stream and toggle the monitoring status.
@@ -103,19 +110,25 @@ The project can be optionally configured to work with a microcontroller to enabl
 
 I used an AVR ATTiny84 for its small size and low price. This microcontroller has more than enough IO ports for Watchtower and it comes with a second internal timer that can be dedicated for servo usage at 50 Hz.
 
-The ATTiny84 program located in [ancillary/hardware/controller/controller.ino](ancillary/hardware/controller/controller.ino) is configured to communicate serially with Watchtower. This program along with the [TinyServo](ancillary/hardware/controller/TinyServo.h) library consumes about 3.6KB of program space if link time optimization (LTO) is used, and about 4.5KB without LTO. Either approach works fine with the ATTiny84's 8KB of program space. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) is a great project that you can use with the Arduino IDE to program the ATTiny microcontroller. The [hardware section](ancillary/hardware) describes how to program the ATTiny84 with ICSP using the Raspberry Pi. This allows you to reprogram the microcontroller without disassembling the case. The necessary connections for this are included in the circuit diagram.
+The ATTiny84 program located in [microcontroller/arduino/controller.ino](microcontroller/arduino/controller.ino) is configured to communicate serially with the microcontroller Docker container. This program, along with the [TinyServo](microcontroller/arduino/TinyServo.h) library, consumes about 3.6KB of program space if link time optimization (LTO) is used, and about 4.5KB without LTO. Either approach works fine with the ATTiny84's 8KB of program space. [ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) is a great project that you can use with the Arduino IDE to program the ATTiny microcontroller. The [hardware section](ancillary/hardware) describes how to program the ATTiny84 with ICSP using the Raspberry Pi. This allows you to reprogram the microcontroller without disassembling the case. The necessary connections for this are included in the circuit diagram.
 
-The serial connection inside Watchtower is operated by [watchtower/remote/microcontroller_comm.py](watchtower/remote/microcontroller_comm.py). This module is also configured to read the room brightness value from the serial connection, which will be displayed in the camera's annotation area along with the camera name and the current time.
+The container that runs the serial connection is located in the [microcontroller](microcontroller) folder. The serial connection itself is operated by [microcontroller_comm.py](microcontroller_comm.py). This module is also configured to read the room brightness value from the serial connection, which is served to the main Watchtower Docker container using [server.py](server.py). The brightness will be displayed in the camera's annotation area along with the camera name and the current time.
+
+The communication chain is:
+Watchtower container ---> microcontroller container <---> ATTiny84
 
 <details>
   <summary><b>Configuration</b></summary>
 
-All microcontroller properties are prefixed with `MICRO_` in the config file:
-- `ENABLED` - if `false`, the `microcontroller_comm` module will be not be used and the following config fields are ignored.
-- `BAUDRATE` is the baudrate of the serial connection to the microcontroller.
-- `PORT` is the location of the serial connection, like `/dev/serial0` on Raspbian.
-- `TRANSMISSION_FREQ` the frequency as "messages per second" that transmissions can be sent or received to and from the microcontroller. With the default implementation of [controller.ino](ancillary/hardware/controller/controller.ino), a value of 2 is good.
+The two configurations in the config file are:
 - `SERVO_ANGLE_ON` the angle (from 0-180) of the servo for the on state.
 - `SERVO_ANGLE_OFF` the angle (from 0-180) of the servo for the off state.
+
+The rest are configurations are located in the [.env](.env) file:
+
+- `SERIAL_ENABLED` if `0`, the microcontroller Docker container will not be used.
+- `SERIAL_BAUD` is the baud rate of the serial connection with the microcontroller.
+- `SERIAL_DEVICE` is the location of the serial connection, like `/dev/serial0` on Raspberry Pi OS.
+- `MC_SERVER_PORT` is the port number used for the Watchtower container to communicate with the microcontroller container. This should not need to be changed.
 </details>
 
