@@ -21,7 +21,7 @@ from .util import file_system as fs
 __author__ = "John Newman"
 __copyright__ = "Copyright 2020, John Newman"
 __license__ = "MIT"
-__version__ = "1.1.0"
+__version__ = "1.6.0"
 __maintainer__ = "John Newman"
 __status__ = "Production"
 
