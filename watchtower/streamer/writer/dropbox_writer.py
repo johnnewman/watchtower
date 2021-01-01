@@ -95,7 +95,8 @@ class DropboxWriter(byte_writer.ByteWriter):
         
         if close == True:
             # Dump the remaining data.
-            self.__distribute_file_bytes(self.__byte_pool)
+            if len(self.__byte_pool) > 0:
+                self.__distribute_file_bytes(self.__byte_pool)
             # Stop all threads.
             list(map(lambda x: x.stop(), self.__uploader_threads))
 
@@ -108,7 +109,7 @@ class DropboxWriter(byte_writer.ByteWriter):
     def __distribute_file_bytes(self, bts):
         """
         Creates a unique file with the supplied bytes and passes this to an
-        uploader thread in a round robin fasion.
+        uploader thread in a round robin fashion.
         """
         numbered_file = NumberedFile(self.__file_count, bts)
         self.__uploader_threads[self.__thread_index].append_file(numbered_file)
