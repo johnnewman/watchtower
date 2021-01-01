@@ -6,4 +6,5 @@ nginx/
 venv/
 docker-compose.yml
 **/Dockerfile
+microcontroller/arduino
 .env
