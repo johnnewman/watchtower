@@ -9,7 +9,7 @@
 
 Watchtower turns your Raspberry Pi into a DIY security camera. Watchtower scans for motion and, when triggered, will save a recording to disk in the h264 format and upload an encrypted copy to Dropbox. You can record to these destinations using different resolutions, which allows you to simultaneously record the full HD video to disk while recording a lower-resolution version to Dropbox.
 
-The central [watchtower](watchtower) package is a Python 3 Flask app powered by uWSGI. It has API endpoints that allow you to start and stop monitoring, stream via MJPEG, record, download and delete recordings, and tweak camera settings. See [api.md](./api.md) for API documentation. This package also has an optional web app that provides a graphical interface for these APIs.
+The central [watchtower](watchtower) package is a Python 3 Flask app powered by uWSGI. It has API endpoints that allow you to start and stop monitoring, stream via MJPEG, record, download and delete recordings, and tweak camera settings. See [api.md](ancillary/api.md) for API documentation. This package also has an optional web app that provides a graphical interface for these APIs.
 
 Watchtower was designed to take advantage of the Pi NoIR camera. An optional program for a microcontroller is included to read analog room brightness, control infrared LED intensity for night vision, move an optional servo, and communicate with Watchtower's microcontroller process using the Raspberry Pi's GPIO ports.
 
@@ -43,7 +43,7 @@ Both the reverse proxy and the upstream app gateway configurations encrypt all t
 ---
 
 The rest of this readme breaks down each Watchtower component and describes its configuration. The two main configuration files are [config/watchtower_config.json](config/watchtower_config_example.json) and the [.env](.env) file.
- 1. [API endpoints](./api.md)
+ 1. [API endpoints](ancillary/api.md)
  2. [Front-end web app](#2-front-end-web-app)
  3. [Motion detection](#3-motion-detection)
  4. [Optional Dropbox file upload](#4-optional-dropbox-file-upload)
@@ -52,7 +52,7 @@ The rest of this readme breaks down each Watchtower component and describes its 
 
 ### 1. API Endpoints
 
- Moved to [api.md](./api.md).
+ Moved to [api.md](ancillary/api.md).
 
 ### 2. Front-end web app
 
