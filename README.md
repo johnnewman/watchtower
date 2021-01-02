@@ -28,7 +28,7 @@ The Watchtower project is composed of multiple Docker containers that each carry
 
 _No container runs privileged as root. Only the minimum required access is provided to each container._
 
-There is an included [install script](install.sh) for Raspberry Pi OS Lite that will set up the Watchtower application and place it behind a firewall. The install script only needs to be run once. After running, open a new shell session and run `docker-compose build` to build all of the containers. Finally, run `sudo systemctl start watchtower` to start the application.
+There is an included [install script](install.sh) for Raspberry Pi OS Lite that will set up Watchtower and place it behind a firewall. The install script only needs to be run once. After running, open a new shell session and run `docker-compose build` to build all of the containers. Finally, run `sudo systemctl start watchtower` to start the application.
 
 The final (and optional) steps outside of the script's scope are creating your SSL certificates for the web API, configuring the public-facing nginx reverse proxy, and fine-tuning your Watchtower config file for Dropbox and microcontroller support.
 
@@ -42,7 +42,7 @@ Both the reverse proxy and the upstream app gateway configurations encrypt all t
 
 ---
 
-The rest of this readme breaks down each Watchtower component and describes its configuration. The two main configuration files are [config/watchtower_config.json](config/watchtower_config_example.json) and the [.env](.env) file.
+The rest of this readme breaks down each Watchtower component and describes its configuration. The two main configuration files are [config/watchtower_config.json](config/watchtower_config.json) and the [.env](.env) file.
  1. [API endpoints](ancillary/api.md)
  2. [Front-end web app](#2-front-end-web-app)
  3. [Motion detection](#3-motion-detection)
@@ -92,7 +92,7 @@ All motion properties are prefixed with `MOTION_` in the config JSON file:
 
 Video files are sent to Dropbox in small chunks as soon as motion is detected. For playback, the data will need to be concatenated into a single file. To help with this, a shell script located at [ancillary/mp4_wrapper.sh](ancillary/mp4_wrapper.sh) will combine the videos for each motion event into one file and will convert the h264 format into mp4 using [MP4Box](https://gpac.wp.imt.fr/mp4box/). MP4Box only needs to be installed on the machine that opens recordings from Dropbox; no need to install it alongside any Watchtower instance.
 
-The video files uploaded to Dropbox can be encrypted using symmetric key encryption. Simply supply a path in the config JSON file to a public asymmetric encryption key in PEM format. When this path is supplied, a symmetric [Fernet](https://cryptography.io/en/latest/fernet/) key is generated for each file uploaded. This new key will be used to encrypt the contents of its file and then it will itself be encrypted using the supplied public key. This encrypted key is base64 encoded and padded onto the beginning of the Dropbox file. The resulting file data has the format: `{key_length_int} {encoded_and_encrypted_key}{encrypted_data}`. [mp4_wrapper.sh](ancillary/mp4_wrapper.sh) can accept a path to the asymmetric private key and will automatically decrypt the files before stitching them together and converting the final video to an mp4.
+The video files uploaded to Dropbox can be encrypted using symmetric key encryption. Simply supply a path in the config JSON file to a public asymmetric encryption key in PEM format. When this path is supplied, a symmetric [Fernet](https://cryptography.io/en/latest/fernet.html) key is generated for each file uploaded. This new key will be used to encrypt the contents of its file and then it will itself be encrypted using the supplied public key. This encrypted key is base64 encoded and padded onto the beginning of the Dropbox file. The resulting file data has the format: `{key_length_int} {encoded_and_encrypted_key}{encrypted_data}`. [mp4_wrapper.sh](ancillary/mp4_wrapper.sh) can accept a path to the asymmetric private key and will automatically decrypt the files before stitching them together and converting the final video to an mp4.
 
 <details>
   <summary><b>Configuration</b></summary>
