@@ -1,0 +1,19 @@
+services:
+  app_test:
+    build:
+      dockerfile: ./watchtower/Dockerfile
+      context: .
+      target: wt-test
+      args:
+        - WATCHTOWER_UID
+        - VIDEO_GID
+    devices:
+      - /dev/vchiq:/dev/vchiq # Interface to VideoCore 
+      - /dev/vcsm:/dev/vcsm # VideoCore shared memory
+    volumes:
+      - /tmp:/tmp # Shared socket directory
+      - /opt/vc:/opt/vc # VideoCore libraries
+      - ./ancillary/decryption:/watchtower/ancillary/decryption # Logs
+    environment:
+      - LD_LIBRARY_PATH=/opt/vc/lib
+      - WATCHTOWER_CONFIG

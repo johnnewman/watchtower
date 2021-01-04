@@ -1,0 +1,10 @@
+ancillary/
+!ancillary/pi/pip.conf
+icebox/
+instance/
+nginx/
+venv/
+docker-compose.yml
+**/Dockerfile
+microcontroller/arduino
+.env

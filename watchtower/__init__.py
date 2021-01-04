@@ -21,13 +21,12 @@ from .util import file_system as fs
 __author__ = "John Newman"
 __copyright__ = "Copyright 2020, John Newman"
 __license__ = "MIT"
-__version__ = "1.1.0"
+__version__ = "1.6.0"
 __maintainer__ = "John Newman"
 __status__ = "Production"
 
 def setup_logging(app):
-    filename = os.path.join(app.instance_path, 'log_config.json')
-    with open(filename, 'r') as log_config_file:
+    with open(os.environ.get('LOG_CONFIG'), 'r') as log_config_file:
         logging.config.dictConfig(json.load(log_config_file))
 
 def create_app(test_config=None):
@@ -35,9 +34,9 @@ def create_app(test_config=None):
     Initializes the Flask app and starts the main RunLoop thread. This is how
     uWSGI starts the program.
     """
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__)
     if test_config is None:
-        app.config.from_json('watchtower_config.json', silent=False)
+        app.config.from_json(os.environ.get('WATCHTOWER_CONFIG'), silent=False)
     else:
         app.config.from_mapping(test_config)
     setup_logging(app)

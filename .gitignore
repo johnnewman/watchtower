@@ -5,7 +5,11 @@ venv3/*
 launch.json
 logs/*
 certs/*
+!certs/.gitkeep
 *.h264
 instance/*
+icebox/*
 .vscode/*
 *.bak
+nginx/certs/*
+!nginx/certs/.gitkeep

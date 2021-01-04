@@ -28,7 +28,7 @@ def test_dropbox_writer_integration(writer, random_data, tmp_path):
 
     # Read in all of the data that the DropboxWriter output to disk.
     files = os.listdir(tmp_path)
-    files.sort() # Sort them into [test_file0.bin, test_file1.bin, ...]
+    files.sort(key=lambda name: int(name.strip('test_file').strip('.bin'))) # Sort them into [test_file0.bin, test_file1.bin, ...]
     written_data = ''.encode()
     for file_name in files:
         with open(os.path.join(tmp_path, file_name), 'rb') as f:
@@ -64,19 +64,18 @@ def test_dropbox_writer_encrypted_integration(encrypted_writer, random_data, tmp
 
     # The installation path is one directory up from the package path.
     private_key_path = os.path.join(tmp_path, 'private.pem')
-    python_exec_path = os.path.join(installation_path, 'venv', 'bin', 'python')
     decrypt_script_path = os.path.join(installation_path, 'ancillary', 'decryption', 'decrypt.py')
 
     # Read in all of the data that the DropboxWriter output to disk. Ignore the .pem files.
     files = list(filter(lambda name: name.endswith('.bin'), os.listdir(tmp_path)))
-    files.sort() # Sort them into [test_file0.bin, test_file1.bin, ...]
+    files.sort(key=lambda name: int(name.strip('test_file').strip('.bin'))) # Sort them into [test_file0.bin, test_file1.bin, ...]
     written_data = ''.encode()
     for file_name in files:
         in_path = os.path.join(tmp_path, file_name)
         out_path = os.path.join(tmp_path, file_name + '.dec')
 
         # Decrypt each file using the decrypt.py program.
-        subprocess.call([python_exec_path, decrypt_script_path,
+        subprocess.call(['python', decrypt_script_path,
                         '-k', private_key_path,
                         '-i', in_path,
                         '-o', out_path])

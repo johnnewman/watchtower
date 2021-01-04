@@ -11,6 +11,15 @@
                 1640,
                 1232
             ]
+        },
+        "dropbox": {
+            "token": "ACCOUNT TOKEN HERE",
+            "file_chunk_kb": 1024,
+            "public_key_path": "/watchtower/certs/dropbox.crt",
+            "size": [
+                820,
+                616
+            ]
         }
     },
 
@@ -21,8 +30,9 @@
     "MOTION_MIN_TRIGGER_AREA": 0.02,
     "MOTION_SENSITIVITY": 0.8,
     "MOTION_RECORDING_PADDING": 8,
-
-    "MICRO_ENABLED": false,
     
+    "SERVO_ANGLE_ON": 105,
+    "SERVO_ANGLE_OFF": 5,
+
     "WEB_APP_ENABLED": true
 }
