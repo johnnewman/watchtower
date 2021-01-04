@@ -15,7 +15,7 @@
         "dropbox": {
             "token": "ACCOUNT TOKEN HERE",
             "file_chunk_kb": 1024,
-            "public_key_path": "/etc/watchtower/certs/dropbox.crt",
+            "public_key_path": "/watchtower/certs/dropbox.crt",
             "size": [
                 820,
                 616
