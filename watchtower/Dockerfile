@@ -85,7 +85,6 @@ RUN pip install pytest
 FROM wt-build AS wt-run
 
 COPY ./watchtower ./watchtower
-COPY ./config ./config
 
 ARG WATCHTOWER_UID
 ARG VIDEO_GID

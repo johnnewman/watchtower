@@ -1,6 +1,6 @@
 
 from flask import Flask
-from threading import Thread
+from threading import Thread, Lock
 import datetime as dt
 import io
 import logging
@@ -8,14 +8,14 @@ import os
 import picamera
 import time
 from .camera import SafeCamera
-from .motion.motion_detector import MotionDetector
 from .recorder import Recorder, Destination
+from .recorder.mjpeg import MJPEGRecorder
 from .remote import micro
 from .remote.servo import Servo
 from .util.shutdown import TerminableThread
 
 WAIT_TIME = 0.1
-INITIALIZATION_TIME = 3  # In Seconds
+INITIALIZATION_TIME = 20  # In Seconds
 MOTION_INTERVAL_WHILE_SAVING = 1.0  # In Seconds
 
 
@@ -37,14 +37,10 @@ class RunLoop(TerminableThread):
             self.servo = None
 
         motion_config = app.config.get_namespace('MOTION_')
-        area = motion_config['min_trigger_area']
-        sensitivity = motion_config['sensitivity']
         self.__padding = motion_config['recording_padding']
         self.__max_event_time = motion_config['max_event_time']
-
         self.__instance_path = app.instance_path
         self.__recorders, self.camera = self.setup_destinations(app)
-        self.__motion_detector = MotionDetector(self.camera, sensitivity, area)
         self.__start_time = None
         self.__day_format = app.config['DIR_DAY_FORMAT']
         self.__time_format = app.config['DIR_TIME_FORMAT']
@@ -101,14 +97,14 @@ class RunLoop(TerminableThread):
             dropbox_dest.file_chunk_size = options['file_chunk_kb']*1024
             add_destination(options, dropbox_dest)
         # Future destinations can be set up here.
-            
+        
         # Sort with the biggest resolution first.
         sorted_sizes = sorted(sizes.keys(), key=lambda size: size[0], reverse=True)
         splitter_port = 1
         recorders = []
         camera = None
         for size in sorted_sizes:
-            logging.getLogger(__name__).info('Creating recorder for %s with splitter port %d.' % (sizes[size], splitter_port))
+            logging.getLogger(__name__).info('Creating recorder at %s with splitter port %d.' % (sizes[size], splitter_port))
             resize_resolution = size
             if size == sorted_sizes[0]:
                 # The camera's resolution will be set to the largest size. It
@@ -128,6 +124,18 @@ class RunLoop(TerminableThread):
                 )
             )
             splitter_port += 1
+
+        # Always create an MJPEG recorder, regardless of user settings.
+        mjpeg_port = 0
+        mjpeg_size = tuple(app.config['MJPEG_SIZE'])
+        logging.getLogger(__name__).info('Creating mjpeg recorder at %s with splitter port %d.' % (mjpeg_size, mjpeg_port))
+        recorders.append(
+            MJPEGRecorder(
+                camera=camera,
+                splitter_port=mjpeg_port,
+                resize_resolution=mjpeg_size
+            )
+        )
         return recorders, camera
 
     def setup_camera(self, app, resolution):
@@ -164,6 +172,7 @@ class RunLoop(TerminableThread):
         logger.info('Starting main loop.')
         for recorder in self.__recorders:
             recorder.start_recording()
+        
         self.__start_time = time.time()
         try:
             was_not_running = True
@@ -176,22 +185,18 @@ class RunLoop(TerminableThread):
                     continue
 
                 if was_not_running:
+                    # Start microcontroller.
+                    micro.set_running(True)
                     # Allow the camera a few seconds to initialize.
                     for _ in range(int(INITIALIZATION_TIME / WAIT_TIME)):
                         self.wait()
-                    # Reset the base frame after coming online.
-                    self.__motion_detector.reset_base_frame()
-                    # Start microcontroller.
-                    micro.set_running(True)
-
+                    # Reset the motion flag after coming online.
+                    self.camera.motion_detected = False
+                    
                     was_not_running = False
 
                 self.wait()
-                motion_detected, frame_bytes = self.__motion_detector.detect()
-                if motion_detected or camera.should_record:
-                    self.wait() # Update the annotation area after the heavy detect() call.
-
-                    self.__motion_detector.reset_base_frame_date()
+                if camera.should_monitor and (camera.motion_detected or camera.should_record):
                     logger.info('Recording triggered.')
                     event_time = time.time()
                     event_date = dt.datetime.now()
@@ -199,13 +204,14 @@ class RunLoop(TerminableThread):
                     time_str = event_date.strftime(self.__time_format)
                     full_dir = os.path.join(day_str, time_str)
                     logger.info(full_dir)
+                    camera.motion_detected = False
 
                     start_frame_time = max(0, int(time.time() - self.__start_time - self.__padding))
                     for recorder in self.__recorders:
                         recorder.persist(
                             directory=full_dir,
                             start_time=start_frame_time,
-                            frame=io.BytesIO(frame_bytes)
+                            frame=io.BytesIO(camera.jpeg_data)
                         )
                     self.wait() # Update the annotation area after the heavy persist() call.
 
@@ -215,10 +221,10 @@ class RunLoop(TerminableThread):
                             time.time() - last_motion_trigger <= self.__padding and \
                             time.time() - event_time <= self.__max_event_time:
                         
-                        more_motion, _ = self.__motion_detector.detect()
-                        if more_motion:
+                        if camera.motion_detected:
                             logger.debug('More motion detected!')
                             last_motion_trigger = time.time()
+                            camera.motion_detected = False
                         for _ in range(int(MOTION_INTERVAL_WHILE_SAVING / WAIT_TIME)):
                             self.wait()
 
