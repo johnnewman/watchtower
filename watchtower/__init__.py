@@ -228,7 +228,7 @@ def shared_stream(main_loop):
     image data in the response.
     """
     encoding = request.args.get('encoding', type=str)
-    fps = 2
+    fps = 4
     writer = http_writer.HTTPMultipartWriter(use_base64=(encoding == 'base64'))
     streamer = MJPEGStreamer(main_loop.camera,
                             byte_writers=[writer],
