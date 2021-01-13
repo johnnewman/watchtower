@@ -15,7 +15,6 @@ class HTTPMultipartWriter(byte_writer.ByteWriter):
     """
     def __init__(self, use_base64=False):
         super(HTTPMultipartWriter, self).__init__(None)
-        self.__byte_stream = BytesIO()
         self.__bytes = b''
         self.__lock = Lock()
         self.__write_event = Event()
@@ -29,7 +28,6 @@ class HTTPMultipartWriter(byte_writer.ByteWriter):
             'Content-Length: ' + str(len(bts)) + '\r\n\r\n'
         bts = payload.encode() + bts + b'\r\n\r\n'
         with self.__lock:
-            self.__byte_stream.write(bts)
             self.__bytes += bts
         self.__write_event.set()
 
