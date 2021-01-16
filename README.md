@@ -76,7 +76,7 @@ There is only a single configuration option for the web app in the config JSON f
 
 ### 3. Motion Detection
 
-Frames from the camera feed are constantly monitored for changes using the open source [Motion](https://motion-project.github.io/) project. When Watchtower is started, the `motion` container connects to the `app` container using an MJPEG API only exposed to other Watchtower containers. If a large enough area of pixels has significantly changed, the `motion` container notifies the `app` container and an event is triggered. A JPEG capturing the instant that motion was detected will be saved along with the h264 video.
+Frames from the camera feed are constantly monitored for changes using the open source [Motion](https://motion-project.github.io/) project. When Watchtower is started, the `motion` container connects to the `app` container using an MJPEG API only exposed to other Watchtower containers. This data is routed through the `server` container. While reading the MJPEG stream, if a large enough area of pixels has significantly changed, the `motion` container notifies the `app` container and an event is triggered. A JPEG capturing the instant that motion was detected will be saved along with the h264 video.
 
 A nice feature of Motion is that it can learn the areas of the video that are subject to constant movement, like leaves swaying in the wind. It can also handle large changes in light that could have resulted from a light switch being flipped.
 
