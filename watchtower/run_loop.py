@@ -15,7 +15,7 @@ from .remote.servo import Servo
 from .util.shutdown import TerminableThread
 
 WAIT_TIME = 0.1
-INITIALIZATION_TIME = 20  # In Seconds
+INITIALIZATION_TIME = 10  # In Seconds
 MOTION_INTERVAL_WHILE_SAVING = 1.0  # In Seconds
 
 
@@ -35,10 +35,9 @@ class RunLoop(TerminableThread):
             self.setup_microcontroller_comm(app)
         else:
             self.servo = None
-
-        motion_config = app.config.get_namespace('MOTION_')
-        self.__padding = motion_config['recording_padding']
-        self.__max_event_time = motion_config['max_event_time']
+            
+        self.__padding = app.config['RECORDING_PADDING']
+        self.__max_event_time = app.config['MAX_EVENT_TIME']
         self.__instance_path = app.instance_path
         self.__recorders, self.camera = self.setup_destinations(app)
         self.__start_time = None

@@ -69,7 +69,7 @@ services:
     depends_on:
       - app
     volumes:
-      - ./motion/motion.conf:/usr/local/etc/motion/motion.conf # Configuration file
+      - ./config/motion.conf:/usr/local/etc/motion/motion.conf # Configuration file
       - ./instance/motion:/recordings
 
   app: # Container running Watchtower & uWSGI

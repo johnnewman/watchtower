@@ -3,7 +3,6 @@ These tests will require the camera to not be in use. Watchtower must be
 terminated before running these.
 """
 
-import cv2
 import json
 import os
 import pytest
