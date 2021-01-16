@@ -23,6 +23,7 @@ A 3D case for the system is located in [ancillary/case/](ancillary/case/). This 
 The Watchtower project is composed of multiple Docker containers that each carry out a specific function:
 - the `app` container runs the main Watchtower package
 - the `server` container runs an nginx app gateway and proxies requests to the `app` container
+- the `motion` container continuously monitors the camera stream for motion
 - the `mc_server` container communicates over a serial connection with an optional microcontroller
 - the `icebox` container monitors the SoC temperature and controls an optional cooling fan via GPIO
 
@@ -42,7 +43,7 @@ Both the reverse proxy and the upstream app gateway configurations encrypt all t
 
 ---
 
-The rest of this readme breaks down each Watchtower component and describes its configuration. The two main configuration files are [config/watchtower_config.json](config/watchtower_config.json) and the [.env](.env) file.
+The rest of this readme breaks down each Watchtower component and describes its configuration. The three main configuration files are [config/watchtower_config.json](config/watchtower_config.json), [config/motion.conf](config/motion.conf), and the [.env](.env) file.
  1. [API endpoints](ancillary/api.md)
  2. [Front-end web app](#2-front-end-web-app)
  3. [Motion detection](#3-motion-detection)
@@ -75,15 +76,17 @@ There is only a single configuration option for the web app in the config JSON f
 
 ### 3. Motion Detection
 
-Frames from the camera feed are constantly monitored for changes. If a large enough area of pixels has significantly changed, a motion event is triggered and the motion area is outlined in a JPEG. This JPEG will be saved along with the h264 video.
+Frames from the camera feed are constantly monitored for changes using the open source [Motion](https://motion-project.github.io/) project. When Watchtower is started, the `motion` container connects to the `app` container using an MJPEG API only exposed to other Watchtower containers. If a large enough area of pixels has significantly changed, the `motion` container notifies the `app` container and an event is triggered. A JPEG capturing the instant that motion was detected will be saved along with the h264 video.
+
+A nice feature of Motion is that it can learn the areas of the video that are subject to constant movement, like leaves swaying in the wind. It can also handle large changes in light that could have resulted from a light switch being flipped.
 
 <details>
   <summary><b>Configuration</b></summary>
-  
-All motion properties are prefixed with `MOTION_` in the config JSON file:
-- `MAX_EVENT_TIME` is the maximum number of seconds for a single recording before a new base/reference frame is selected. This is a failsafe to avoid infinitely recording in the event that the scene is permanently altered.
-- `MIN_TRIGGER_AREA` the minimum percentage (represented as a float between 0 and 1) of the image that must be detected as motion before a motion event is triggered.
-- `SENSITIVITY` the sensitivty between 0 and 1 when detecting motion. This affects the comparision between the reference frame and the current frame when detecting pixel color deltas that are over a threshold. The closer to 1, the more sensitive motion detection will be.
+
+All motion detection settings are housed inside the `motion.conf` file. The full documentation on Motion's configuration options is listed [here](https://motion-project.github.io/motion_config.html#Configuration_OptionsAlpha). Be sure the width and height specified in `motion.conf` matches the `MJPEG_SIZE` specified in `watchtower_config.json`.
+
+Two useful configurations in `watchtower_config.json` are:
+- `MAX_EVENT_TIME` the maximum number of seconds for a single recording.
 - `RECORDING_PADDING` the number of seconds to record before and after motion occurs.
 </details>
 
