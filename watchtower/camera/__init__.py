@@ -2,20 +2,24 @@ import json
 import logging
 import os
 import picamera
+import time
 from threading import Lock
 
 
 class SafeCamera (picamera.PiCamera):
     """
     A camera class that provides a safe mechanism for multiple threads to
-    capture an image using ``safe_capture`` or get/set the monitoring status.
+    capture an image using ``jpeg_data`` or get/set the monitoring status.
     """
 
     def __init__(self, name, resolution, framerate, config_path):
         super(SafeCamera, self).__init__(resolution=resolution, framerate=framerate)
         self.__should_monitor = True
         self.__should_record = False
+        self.__motion_detected = False
         self.__lock = Lock()
+        self.__jpeg_lock = Lock()
+        self.__jpeg_data = b''
         self.__name = name
         self.__config_path = config_path
         self.load_config()
@@ -23,6 +27,19 @@ class SafeCamera (picamera.PiCamera):
     @property
     def name(self):
         return self.__name
+
+    @property
+    def motion_detected(self):
+        self.__lock.acquire()
+        motion_detected = self.__motion_detected
+        self.__lock.release()
+        return motion_detected
+
+    @motion_detected.setter
+    def motion_detected(self, value):
+        self.__lock.acquire()
+        self.__motion_detected = value
+        self.__lock.release()
 
     @property
     def should_record(self):
@@ -50,16 +67,19 @@ class SafeCamera (picamera.PiCamera):
         self.__should_monitor = value
         self.__lock.release()
 
-    def safe_capture(self, output, format='jpeg', use_video_port=True, downscale_factor=None):
-        self.__lock.acquire()
-        new_resolution = None
-        if downscale_factor is not None:
-            new_resolution = tuple(int(i * downscale_factor) for i in self.resolution)
-        self.capture(output,
-                     format=format,
-                     use_video_port=use_video_port,
-                     resize=new_resolution)
-        self.__lock.release()
+    @property
+    def jpeg_data(self):
+        data = None
+        self.__jpeg_lock.acquire()
+        data = self.__jpeg_data
+        self.__jpeg_lock.release()
+        return data
+
+    @jpeg_data.setter
+    def jpeg_data(self, value):
+        self.__jpeg_lock.acquire()
+        self.__jpeg_data = value
+        self.__jpeg_lock.release()
 
     def load_config(self):
         if os.path.exists(self.__config_path):

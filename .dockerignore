@@ -1,6 +1,7 @@
 ancillary/
 !ancillary/pi/pip.conf
 icebox/
+motion/
 instance/
 nginx/
 venv/

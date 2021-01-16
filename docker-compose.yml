@@ -12,6 +12,7 @@ services:
       - ./nginx/certs:/etc/nginx/certs
     ports:
       - "${NGINX_EXTERNAL_PORT}:${NGINX_SSL_PORT}"
+      - "8080"
     environment:
       - API_ENDPOINTS
       - FRONTEND_ENDPOINTS
@@ -58,6 +59,19 @@ services:
     environment:
       - LD_LIBRARY_PATH=/opt/vc/lib
 
+  motion: # Container that detects motion
+    build:
+      context: ./motion
+      args:
+        - MOTION_RELEASE_TAG
+    restart: on-failure
+    user: "${WATCHTOWER_UID}:${WATCHTOWER_GID}"
+    depends_on:
+      - app
+    volumes:
+      - ./config/motion.conf:/usr/local/etc/motion/motion.conf # Configuration file
+#      - ./instance/motion:/recordings
+
   app: # Container running Watchtower & uWSGI
     build:
       dockerfile: ./watchtower/Dockerfile
@@ -78,6 +92,7 @@ services:
       - ./instance:/watchtower/instance # Recordings & runtime configs
       - /var/log/watchtower:/var/log/watchtower # Logs
       - ./certs:/watchtower/certs # For encryption
+      - ./config:/watchtower/config # Static log and wt config files
     environment:
       - LD_LIBRARY_PATH=/opt/vc/lib
       - WATCHTOWER_CONFIG

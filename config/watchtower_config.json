@@ -5,6 +5,14 @@
     "VIDEO_ROTATION": 0,
     "VIDEO_DATE_FORMAT": "%Y-%m-%d %H:%M:%S",
 
+    "MJPEG_SIZE": [
+        800,
+        600
+    ],
+    
+    "MAX_EVENT_TIME": 60,
+    "RECORDING_PADDING": 8,
+
     "DESTINATIONS": {
         "disk": {
             "size": [
@@ -16,11 +24,6 @@
 
     "DIR_DAY_FORMAT": "%Y-%m-%d",
     "DIR_TIME_FORMAT": "%H.%M.%S",
-
-    "MOTION_MAX_EVENT_TIME": 60,
-    "MOTION_MIN_TRIGGER_AREA": 0.02,
-    "MOTION_SENSITIVITY": 0.8,
-    "MOTION_RECORDING_PADDING": 8,
 
     "SERVO_ANGLE_ON": 105,
     "SERVO_ANGLE_OFF": 5,

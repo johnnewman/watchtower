@@ -3,8 +3,6 @@ import sys
 from .stream_saver import StreamSaver
 from ..remote.servo import Servo
 
-MJPEG_DOWNSCALE_FACTOR = 0.666
-
 
 class MJPEGStreamer(StreamSaver):
     """
@@ -18,7 +16,7 @@ class MJPEGStreamer(StreamSaver):
                                             stop_when_empty=False)
         self.__camera = camera
         self.__servo = servo
-        self.read_wait_time = rate
+        self.read_wait_time = 1/rate
 
     def read(self, position, length=None):
         """
@@ -30,8 +28,8 @@ class MJPEGStreamer(StreamSaver):
         :return: The superclass data from ``read``.
         """
         self.stream.seek(0)  # Always reset to 0
-        self.__camera.safe_capture(self.stream,
-                                   downscale_factor=MJPEG_DOWNSCALE_FACTOR)
+        self.stream.truncate(0) # Dump the old data
+        self.stream.write(self.__camera.jpeg_data)
         return super(MJPEGStreamer, self).read(0, length=sys.maxsize)
 
     def ended(self):

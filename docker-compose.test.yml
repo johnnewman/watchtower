@@ -14,6 +14,8 @@ services:
       - /tmp:/tmp # Shared socket directory
       - /opt/vc:/opt/vc # VideoCore libraries
       - ./ancillary/decryption:/watchtower/ancillary/decryption # Logs
+      - ./config/watchtower_config.json:/watchtower/config/watchtower_config.json
+      - ./config/log_config.json:/watchtower/config/log_config.json
     environment:
       - LD_LIBRARY_PATH=/opt/vc/lib
       - WATCHTOWER_CONFIG

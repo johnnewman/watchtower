@@ -180,6 +180,15 @@ def add_api_routes(app, main_loop):
         if main_loop.servo is not None:
             main_loop.servo.disable()
 
+    @app.route('/api/internal_mjpeg')
+    def internal_stream():
+        return shared_stream(main_loop)
+
+    @app.route('/api/internal_motion')
+    def motion():
+        main_loop.camera.motion_detected = True
+        return '', 200
+
 def add_web_routes(app, main_loop):
     """
     Adds all of the routes for Watchtower's the web app.
@@ -206,32 +215,35 @@ def add_web_routes(app, main_loop):
     
     @app.route('/mjpeg')
     def stream():
-        """
-        Starts an MJPEG stream using an HTTPMultipartWriter fed to an instance
-        of MJPEGStreamer. A generator is used to continuously block, waiting on
-        a signal from the writer when a new frame is ready for output to the
-        client.
+        return shared_stream(main_loop)
 
-        An optional encoding=base64 parameter can be supplied to encode the raw
-        image data in the response.
-        """
-        encoding = request.args.get('encoding', type=str)
-        fps = 0.5
-        writer = http_writer.HTTPMultipartWriter(use_base64=(encoding == 'base64'))
-        streamer = MJPEGStreamer(main_loop.camera,
-                                 byte_writers=[writer],
-                                 name='MJPEG',
-                                 servo=main_loop.servo,
-                                 rate=fps)
-        streamer.start()
+def shared_stream(main_loop):
+    """
+    Starts an MJPEG stream using an HTTPMultipartWriter fed to an instance
+    of MJPEGStreamer. A generator is used to continuously block, waiting on
+    a signal from the writer when a new frame is ready for output to the
+    client.
 
-        @stream_with_context
-        def generate():
-            try:
-                while True:
-                    yield(writer.blocking_read())
-            except:
-                streamer.stop()
+    An optional encoding=base64 parameter can be supplied to encode the raw
+    image data in the response.
+    """
+    encoding = request.args.get('encoding', type=str)
+    fps = 4
+    writer = http_writer.HTTPMultipartWriter(use_base64=(encoding == 'base64'))
+    streamer = MJPEGStreamer(main_loop.camera,
+                            byte_writers=[writer],
+                            name='MJPEG',
+                            servo=main_loop.servo,
+                            rate=fps)
+    streamer.start()
 
-        mimetype = 'multipart/x-mixed-replace; boundary=' + http_writer.MULTIPART_BOUNDARY
-        return Response(generate(), mimetype=mimetype)
+    @stream_with_context
+    def generate():
+        try:
+            while True:
+                yield(writer.blocking_read())
+        except:
+            streamer.stop()
+
+    mimetype = 'multipart/x-mixed-replace; boundary=' + http_writer.MULTIPART_BOUNDARY
+    return Response(generate(), mimetype=mimetype)

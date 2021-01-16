@@ -49,13 +49,13 @@ class Recorder:
     can persist its stream's data to any number of Destination instances.
     """
 
-    def __init__(self, camera, padding_sec, destinations, splitter_port=1, resize_resolution=None):
+    def __init__(self, camera, padding_sec=0, destinations=None, splitter_port=0, resize_resolution=None):
         """
         :param camera: the PiCamera used for recordings.
         :param padding_sec: the amount of time to record before a motion event.
         :param destinations: all Destination instances to use when persisting.
-        :param splitter_port: the splitter port for the current recording. 1 is
-        the primary port used. 0-4 are valid.
+        :param splitter_port: the splitter port for the current recording. 0 is
+        the primary port used. 0-3 are valid.
         :param resize_resolution: the resolution to resize from the camera's
         resolution. If used, this should be smaller than the camera resolution.
         """
@@ -64,33 +64,44 @@ class Recorder:
         self.__destinations = destinations
         self.__resize_resolution = resize_resolution
         self.__splitter_port = splitter_port
-        self.__stream = picamera.PiCameraCircularIO(
-            camera,
-            seconds=padding_sec,
-            splitter_port=splitter_port
-        )
+        self.__stream = self.create_stream(padding_sec)
         self.__stream_saver = None
+
+    def create_stream(self, padding_sec):
+        return picamera.PiCameraCircularIO(
+            self.camera,
+            seconds=padding_sec,
+            splitter_port=self.splitter_port
+        )
 
     @property
     def splitter_port(self) -> int:
         return self.__splitter_port
 
+    @property
+    def camera(self) -> picamera.PiCamera:
+        return self.__camera
+
+    @property
+    def resize_resolution(self):
+        return self.__resize_resolution
+
     def start_recording(self):
         """
         Begins saving video data to an in-memory stream.
         """
-        self.__camera.start_recording(
+        self.camera.start_recording(
             self.__stream,
             format='h264',
-            resize=self.__resize_resolution,
-            splitter_port=self.__splitter_port
+            resize=self.resize_resolution,
+            splitter_port=self.splitter_port
         )
 
     def stop_recording():
         """
         Call when Watchtower stops. Closes the connection with the camera.
         """
-        self.__camera.stop_recording(splitter_port=self.__splitter_port)
+        self.camera.stop_recording(splitter_port=self.splitter_port)
     
     def persist(self, directory, start_time=0, frame=None):
         """
@@ -114,7 +125,7 @@ class Recorder:
             return list(map(
                 lambda dest: dest.create_writer(
                     path=os.path.join(directory, file_name),
-                    camera_name=self.__camera.name,
+                    camera_name=self.camera.name,
                     video=video
                 ),
                 self.__destinations
