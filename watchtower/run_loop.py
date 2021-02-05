@@ -10,6 +10,7 @@ import time
 from .camera import SafeCamera
 from .recorder import Recorder, Destination
 from .recorder.mjpeg import MJPEGRecorder
+from .remote import downstream
 from .remote import micro
 from .remote.servo import Servo
 from .util.shutdown import TerminableThread
@@ -166,6 +167,8 @@ class RunLoop(TerminableThread):
                 splitter_port=recorder.splitter_port)
 
     def run(self):
+        downstream.start_polling(self.camera, self.__instance_path)
+        
         camera = self.camera
         logger = logging.getLogger(__name__)
         logger.info('Starting main loop.')
