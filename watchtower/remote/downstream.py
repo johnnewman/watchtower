@@ -1,12 +1,11 @@
 import logging
 import os
 import requests
-import ssl
 import time
 import uuid
 from threading import Thread
 
-def poll_server(url, camera_name, instance_path):
+def __poll_server(url, camera_name, instance_path):
     uuid_string = None
     uuid_path = os.path.join(instance_path, 'uuid')
     if not os.path.exists(uuid_path):
@@ -23,33 +22,30 @@ def poll_server(url, camera_name, instance_path):
         logging.getLogger(__name__).error('Failed to find uuid. Aborting')
         return
     
-    while True:
-        response = requests.post(
-            url,
-            verify=os.path.join(instance_path, os.environ['SSL_CLIENT_CERT']),
-            cert=(
-                os.path.join(instance_path, os.environ['CLIENT_CERT']),
-                os.path.join(instance_path, os.environ['CLIENT_KEY'])
-            ),
-            json={
-                'name': camera_name,
-                'uuid': uuid_string
-            }
-        )
-        if not response.ok:
-            logging.getLogger(__name__).warn('Error polling server. Code: %i' % response.status_code)
-
-        time.sleep(5)
+    response = requests.post(
+        url,
+        verify=os.path.join(instance_path, os.environ['SSL_CLIENT_CERT']),
+        cert=(
+            os.path.join(instance_path, os.environ['CLIENT_CERT']),
+            os.path.join(instance_path, os.environ['CLIENT_KEY'])
+        ),
+        json={
+            'name': camera_name,
+            'uuid': uuid_string
+        }
+    )
+    if not response.ok:
+        logging.getLogger(__name__).error('Error polling server. Code: %i' % response.status_code)
     
-def start_polling(camera, instance_path):
+def poll_server(camera, instance_path):
     poll_thread = Thread(
         name='poll_thread',
-        target=poll_server,
+        target=__poll_server,
         args=(
             os.environ['DOWNSTREAM_SERVER_URL'],
             camera.name,
             instance_path
         )
     )
-    logging.getLogger(__name__).info('Starting downstream polling thread.')
+    logging.getLogger(__name__).info('Starting poll thread.')
     poll_thread.start()

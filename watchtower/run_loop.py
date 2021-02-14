@@ -16,8 +16,9 @@ from .remote.servo import Servo
 from .util.shutdown import TerminableThread
 
 WAIT_TIME = 0.1
-INITIALIZATION_TIME = 10  # In Seconds
-MOTION_INTERVAL_WHILE_SAVING = 1.0  # In Seconds
+INITIALIZATION_TIME = 10  # In seconds
+MOTION_INTERVAL_WHILE_SAVING = 1.0  # In seconds
+DOWNSTREAM_POLL_INTERVAL = 5 * 60 # 5 minutes
 
 
 class RunLoop(TerminableThread):
@@ -167,8 +168,6 @@ class RunLoop(TerminableThread):
                 splitter_port=recorder.splitter_port)
 
     def run(self):
-        downstream.start_polling(self.camera, self.__instance_path)
-        
         camera = self.camera
         logger = logging.getLogger(__name__)
         logger.info('Starting main loop.')
@@ -176,17 +175,23 @@ class RunLoop(TerminableThread):
             recorder.start_recording()
         
         self.__start_time = time.time()
+        last_poll = 0
         try:
-            was_not_running = True
+            was_running = False
             while self.should_run:
+
+                if time.time() - last_poll > DOWNSTREAM_POLL_INTERVAL:
+                    last_poll = time.time()
+                    downstream.poll_server(camera, self.__instance_path)
+
                 if not camera.should_monitor:
-                    if not was_not_running:
+                    if was_running:
                         micro.set_running(False)
-                    was_not_running = True
+                    was_running = False
                     self.wait()
                     continue
 
-                if was_not_running:
+                if not was_running:
                     # Start microcontroller.
                     micro.set_running(True)
                     # Allow the camera a few seconds to initialize.
@@ -194,8 +199,7 @@ class RunLoop(TerminableThread):
                         self.wait()
                     # Reset the motion flag after coming online.
                     self.camera.motion_detected = False
-                    
-                    was_not_running = False
+                    was_running = True
 
                 self.wait()
                 if camera.should_monitor and (camera.motion_detected or camera.should_record):
