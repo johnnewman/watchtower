@@ -11,5 +11,3 @@ instance/*
 icebox/*
 .vscode/*
 *.bak
-nginx/certs/*
-!nginx/certs/.gitkeep

@@ -24,10 +24,10 @@ def __poll_server(url, camera_name, instance_path):
     
     response = requests.post(
         url,
-        verify=os.path.join(instance_path, os.environ['SSL_CLIENT_CERT']),
+        verify=os.path.join(os.environ['CERT_DIR'], os.environ['SSL_CA']),
         cert=(
-            os.path.join(instance_path, os.environ['CLIENT_CERT']),
-            os.path.join(instance_path, os.environ['CLIENT_KEY'])
+            os.path.join(os.environ['CERT_DIR'], os.environ['CLIENT_CERT']),
+            os.path.join(os.environ['CERT_DIR'], os.environ['CLIENT_KEY'])
         ),
         json={
             'name': camera_name,
@@ -42,7 +42,7 @@ def poll_server(camera, instance_path):
         name='poll_thread',
         target=__poll_server,
         args=(
-            os.environ['DOWNSTREAM_SERVER_URL'],
+            f"https://{os.environ['DOWNSTREAM_SERVER_IP']}/api/camera",
             camera.name,
             instance_path
         )
