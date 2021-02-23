@@ -21,21 +21,23 @@ def __poll_server(url, camera_name, instance_path):
     if uuid_string is None:
         logging.getLogger(__name__).error('Failed to find uuid. Aborting')
         return
-    
-    response = requests.post(
-        url,
-        verify=os.path.join(os.environ['CERT_DIR'], os.environ['SSL_CA']),
-        cert=(
-            os.path.join(os.environ['CERT_DIR'], os.environ['CLIENT_CERT']),
-            os.path.join(os.environ['CERT_DIR'], os.environ['CLIENT_KEY'])
-        ),
-        json={
-            'name': camera_name,
-            'uuid': uuid_string
-        }
-    )
-    if not response.ok:
-        logging.getLogger(__name__).error('Error polling server. Code: %i' % response.status_code)
+    try:
+        response = requests.post(
+            url,
+            verify=os.path.join(os.environ['CERT_DIR'], os.environ['SSL_CA']),
+            cert=(
+                os.path.join(os.environ['CERT_DIR'], os.environ['CLIENT_CERT']),
+                os.path.join(os.environ['CERT_DIR'], os.environ['CLIENT_KEY'])
+            ),
+            json={
+                'name': camera_name,
+                'uuid': uuid_string
+            }
+        )
+        if not response.ok:
+            logging.getLogger(__name__).error('Error polling server. Code: %i' % response.status_code)
+    except Exception as ex:
+        logging.getLogger(__name__).exception(f'Exception connecting to downstream server.')
     
 def poll_server(camera, instance_path):
     poll_thread = Thread(
