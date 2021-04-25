@@ -29,7 +29,7 @@ The Watchtower project is composed of multiple Docker containers that each carry
 
 _No container runs privileged as root. Only the minimum required access is provided to each container._
 
-There is an included [install script](install.sh) for Raspberry Pi OS Lite that will set up Watchtower and place it behind a firewall. The install script only needs to be run once. After running, open a new shell session and run `docker-compose build` to build all of the containers. Finally, run `sudo systemctl start watchtower` to start the application.
+There is an included [install script](install.sh) for Raspberry Pi OS Lite that will set up Watchtower and place it behind a firewall. The install script only needs to be run once. After running, open a new shell session and run `docker-compose build` to build all of the containers. Finally, run `docker-compose up` to start the application.
 
 The final (and optional) steps outside of the script's scope are creating your SSL certificates for the web API, configuring the public-facing nginx reverse proxy, and fine-tuning your Watchtower config file for Dropbox and microcontroller support.
 
