@@ -66,4 +66,9 @@ RUN apt-get install -y --no-install-recommends \
 
 VOLUME /usr/local/etc/motion
 
+# Create a non-root user.
+RUN useradd --user-group --system motion
+
+USER motion:motion
+
 CMD [ "motion", "-n" ]

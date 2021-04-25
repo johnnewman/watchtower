@@ -5,6 +5,7 @@ services:
       args:
         - WATCHTOWER_UID
         - WATCHTOWER_GID
+    restart: always
     volumes:
       - /tmp:/tmp
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
@@ -15,16 +16,8 @@ services:
     ports:
       - "${NGINX_EXTERNAL_PORT}:${NGINX_SSL_PORT}"
       - "8080"
-    environment:
-      - API_ENDPOINTS
-      - FRONTEND_ENDPOINTS
-      - ALLOWED_CLIENT_IP
-      - NGINX_SSL_PORT
-      - UWSGI_SOCKET
-      - CERT_DIR
-      - SSL_CERT
-      - SSL_KEY
-      - SSL_CA
+    env_file:
+      - .env
 
   mc_server: # Container that communicates with microcontroller
     build: 
@@ -33,21 +26,20 @@ services:
       args:
         - WATCHTOWER_UID
         - SERIAL_GID
-    restart: on-failure
+    restart: always
     devices: 
       - ${SERIAL_DEVICE}:${SERIAL_DEVICE}
     ports:
       - "${MC_SERVER_PORT}"
     environment:
-      - SERIAL_ENABLED
-      - SERIAL_BAUD
-      - SERIAL_DEVICE
       - SERVER_PORT=${MC_SERVER_PORT}
+    env_file:
+      - .env
 
   icebox: # Container controlling case fan
     build:
       context: ./icebox/
-    restart: on-failure
+    restart: always
     user: "${WATCHTOWER_UID}:${WATCHTOWER_GID}"
     group_add:
       - ${GPIO_GID}
@@ -66,8 +58,7 @@ services:
       context: ./motion
       args:
         - MOTION_RELEASE_TAG
-    restart: on-failure
-    user: "${WATCHTOWER_UID}:${WATCHTOWER_GID}"
+    restart: always
     depends_on:
       - app
     volumes:
@@ -82,7 +73,7 @@ services:
       args:
         - WATCHTOWER_UID
         - VIDEO_GID
-    restart: on-failure
+    restart: always
     depends_on:
       - mc_server
     devices:
@@ -100,14 +91,6 @@ services:
       - ./certs/${ENCRYPT_CERT}:${CERT_DIR}/${ENCRYPT_CERT}
     environment:
       - LD_LIBRARY_PATH=/opt/vc/lib
-      - WATCHTOWER_CONFIG
-      - LOG_CONFIG
-      - DOWNSTREAM_SERVER_IP
-      - CERT_DIR
-      - SSL_CA
-      - CLIENT_CERT
-      - CLIENT_KEY
-      - UWSGI_SOCKET
       - MC_SERVER_HOST=mc_server
-      - MC_SERVER_PORT
-      - SERIAL_ENABLED
+    env_file:
+      - .env
