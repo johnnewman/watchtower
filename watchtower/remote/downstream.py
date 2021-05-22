@@ -24,14 +24,14 @@ def __poll_server(url, camera_name, instance_path):
     try:
         response = requests.post(
             url,
-            verify=os.path.join(os.environ['CERT_DIR'], os.environ['SSL_CA']),
+            verify=os.path.join(os.environ['CERT_DIR'], os.environ['DOWNSTREAM_CA']),
             cert=(
                 os.path.join(os.environ['CERT_DIR'], os.environ['CLIENT_CERT']),
                 os.path.join(os.environ['CERT_DIR'], os.environ['CLIENT_KEY'])
             ),
             json={
                 'name': camera_name,
-                'uuid': uuid_string
+                'id': uuid_string
             }
         )
         if not response.ok:
