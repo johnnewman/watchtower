@@ -12,7 +12,6 @@
 # - Adds necessary GID and UID parameters to the .env file.
 # - Downloads Icebox for cooling the system.
 # - Schedules a cron job to manage disk usage.
-# - Enables a systemd service for starting all Watchtower containers.
 
 
 set -e
@@ -80,13 +79,6 @@ CRON_JOB=`(crontab -l 2>/dev/null ; echo "$CRON_JOB")`
 echo "$CRON_JOB" | crontab
 echo "Created disk_purge cron job."
 
-# Put the user and working directory into the service file and install it.
-sed -i".bak" "s,<user>,$USER,g ; s,<watchtower_path>,$WATCHTOWER_PATH,g" "$WATCHTOWER_PATH/ancillary/pi/watchtower.service"
-sudo ln -s "$WATCHTOWER_PATH/ancillary/pi/watchtower.service" "/etc/systemd/system/"
-sudo systemctl enable watchtower.service
-echo "Created systemd watchtower.service file and configured it to run on boot."
-echo "   NOTE: This service has not been started."
-
 echo -e "\n\nInstallation finished! Watchtower is configured to record to disk at \"$WATCHTOWER_PATH/instance/recordings\". Final steps to take:
 
 REQUIRED:
@@ -96,27 +88,28 @@ REQUIRED:
 
 OPTIONAL:
 3) To use the HTTP API and frontend:
-    3.1) Upload SSL certificates to \"$WATCHTOWER_PATH/nginx/certs\". You will need:
+    3.1) For encrypting traffic, upload SSL certificates to \"$WATCHTOWER_PATH/certs/nginx\". You will need:
             a) A public SSL certificate.
             b) The corresponding private key. These two are used for encrypting traffic.
             c) A certificate authority cert for validating clients. Necessary to restrict access to trusted users.
          These 3 files must match the names defined in \"$WATCHTOWER_PATH/.env\":
             a) 'SSL_CERT=wt.crt'
             b) 'SSL_CERT_KEY=wt.key'
-            c) 'SSL_CLIENT_CERT=ca.crt'
-    3.2) Enter the IP address (typically the reverse proxy address) allowed to access this machine in \"$WATCHTOWER_PATH/.env\":
+            c) 'SSL_CA=ca.crt'
+    3.2) For connecting to the downstream reverse proxy, upload SSL certificates to \"$WATCHTOWER_PATH/certs/wt\". You will need:
+            a) A client certificate.
+            b) The corresponding private key. These two are used to authenticate with the downstream server.
+            c) A certificate authority cert for validating the downstream server's SSL certificate.
+         These 3 files must match the names defined in \"$WATCHTOWER_PATH/.env\":
+            a) 'CLIENT_CERT=client.crt'
+            b) 'CLIENT_KEY=client.key'
+            c) 'DOWNSTREAM_CA=ca.crt'
+    3.3) Enter the IP address (typically the reverse proxy address) allowed to access this machine in \"$WATCHTOWER_PATH/.env\":
             'ALLOWED_CLIENT_IP=x.x.x.x'
 4) To use a microcontroller, you will need to:
     4.1) Enable serial access via 'sudo raspiconfig'
     4.2) Set 'SERIAL_ENABLED=1' in \"$WATCHTOWER_PATH/.env\"
     4.3) Configure servo angles in \"$WATCHTOWER_PATH/config/watchtower_config.json\"
-5) Configure the reverse proxy with an upstream location to this machine. See \"$WATCHTOWER_PATH/ancillary/nginx/reverse_proxy\"
+5) Configure the downstream reverse proxy with an upstream location to this machine.
 6) Configure \"$WATCHTOWER_PATH/config/watchtower_config.json\" with Dropbox support. See watchtower_config_advanced.json for an example.
-
-After making changes to watchtower_config.json or uploading certificates, rerun 'docker-compose build' from step 1 above.
-
-To start Watchtower after building in step 1, run:
-    sudo systemctl start watchtower
-Once running, to view logs from all containers, run:
-    docker-compose logs
 "

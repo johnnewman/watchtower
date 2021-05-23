@@ -4,12 +4,12 @@ venv3/*
 *.pyc
 launch.json
 logs/*
-certs/*
-!certs/.gitkeep
+certs/wt/*
+certs/nginx/*
+!certs/wt/.gitkeep
+!certs/nginx/.gitkeep
 *.h264
 instance/*
 icebox/*
 .vscode/*
 *.bak
-nginx/certs/*
-!nginx/certs/.gitkeep
