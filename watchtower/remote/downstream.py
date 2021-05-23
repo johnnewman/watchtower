@@ -1,7 +1,6 @@
 import logging
 import os
 import requests
-import time
 import uuid
 from threading import Thread
 
@@ -44,7 +43,7 @@ def poll_server(camera, instance_path):
         name='poll_thread',
         target=__poll_server,
         args=(
-            f"https://{os.environ['DOWNSTREAM_SERVER_IP']}/api/camera",
+            f"https://{os.environ['DOWNSTREAM_SERVER_IP']}/api/cameras",
             camera.name,
             instance_path
         )
