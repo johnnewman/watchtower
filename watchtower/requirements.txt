@@ -1,4 +1,4 @@
-cryptography==3.3.2
+cryptography==39.0.1
 dropbox==10.1.1
 Flask==1.1.2
 picamera==1.13
